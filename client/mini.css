@@ -1,0 +1,23 @@
+body {
+	height:100%;
+	font-size: 250%;
+	background-size: 250%;
+	background-attachment:fixed;
+}
+
+#page{
+	max-width: none;
+	overflow: scroll;
+}
+
+#page.wide{
+	max-width: none;
+}
+
+#bottom {
+	margin: 0;
+}
+
+nav a {
+	font-size: 150%;
+}

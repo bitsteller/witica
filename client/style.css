@@ -1,0 +1,219 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700|Alegreya:400italic,700italic,400,700);
+
+::selection {
+	background: #BFC8FF;
+}
+
+
+body {
+	height:80%;
+	background-color: #ddd;
+ 	/*background: url(back.jpg) no-repeat center 0% fixed; 
+ 	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;*/
+	background: #d5d5e0; /* Old browsers */
+	background: -moz-linear-gradient(top, #d5d5e0 0%, #f5f4ef 10%, #f5f4ef 96%, #e0e0e0 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d5d5e0), color-stop(10%,#f5f4ef), color-stop(96%,#f5f4ef), color-stop(100%,#e0e0e0)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #d5d5e0 0%,#f5f4ef 10%,#f5f4ef 96%,#e0e0e0 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #d5d5e0 0%,#f5f4ef 10%,#f5f4ef 96%,#e0e0e0 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #d5d5e0 0%,#f5f4ef 10%,#f5f4ef 96%,#e0e0e0 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #d5d5e0 0%,#f5f4ef 10%,#f5f4ef 96%,#e0e0e0 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d5d5e0', endColorstr='#e0e0e0',GradientType=0 ); /* IE6-9 */
+	background-repeat:no-repeat;
+	background-attachment:fixed;
+
+	font-family: 'Alegreya', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: .8em;
+    font-family: 'Open Sans', sans-serif;
+}
+
+hr {
+	border-top: 0.1em solid #aaa;
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+}
+
+li {
+	margin-bottom: 0.5em;
+}
+
+a {
+	color: #111;
+}
+
+a:hover {
+	color: #236;
+}
+
+td {
+	padding-right: 10px;
+}
+
+table {
+	margin-left:auto;
+	margin-right:auto;
+}
+
+pre {
+	background-color: #FFd;
+	padding: 5px 5px 5px 15px;
+	border-left: 0.4em solid #ccc;
+	overflow: auto;
+	width: 95%;
+	white-space: pre-wrap;
+}
+
+pre code {
+	line-height: 1.6em;
+	color: #000;
+	background-color: none;
+	border: none;
+}
+
+code {
+	color: #0F167E;
+	font-size:1.05em;
+}
+
+.invalid *{
+	opacity: 0;
+}
+
+.box, #bottom {
+	background-color: #fff;
+	margin-bottom: 2em;
+	transition: all 1s ease;  
+	clear:both;
+
+	-webkit-box-shadow: 0em -0.2em 1.5em -0.4em #aaa;
+	-moz-box-shadow: 0em -0.2em 1.5em -0.4em #aaa;
+	box-shadow: 0em -0.2em 1.5em -0.4em #aaa;
+}
+
+nav {
+}
+
+nav ul {
+	list-style-type:none;
+	margin:0px;
+	padding:0px;
+}
+
+nav ul li {
+	line-height: 3em;
+	display:inline;
+	padding: 0.9em 12px;
+	transition: all 1s ease;
+}
+
+nav ul li a {
+	font-weight: 300;
+	font-size: 1.4em;
+	color: #111;
+    font-family: 'Open Sans', sans-serif;
+    text-decoration: none;
+}
+
+nav ul li:hover {
+	background-color: #fff;
+	-webkit-box-shadow: 0em -0.15em 0.4em -0.2em #dadada;
+	-moz-box-shadow: 0em -0.15em 0.4em -0.2em #dadada;
+	box-shadow: 0em -0.15em 0.4em -0.2em #dadada;
+}
+
+.cover {
+	background-size:cover;
+	position: relative;
+	min-height: 5em;
+}
+
+.cover h1 {
+	position: absolute;
+	bottom: 0;
+	left:0;
+	right:0;
+	margin-right:0;
+	margin-bottom: 0;
+	background: rgba(256, 256, 256, 0.8);
+	padding: 20px;
+}
+
+.body {
+	padding-top: 0px;
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-bottom: 20px;
+}
+
+.info {
+	font-family: 'Open Sans', sans-serif;
+	font-size: 0.8em;
+	color: #777;
+	padding-top: 0px;
+	padding-bottom: 20px;
+	padding-left: 20px;
+	padding-right: 20px;
+
+}
+
+.tag {
+	display:inline;
+	background-color: #ddd;
+	color: #555;
+	padding-left: 6px;
+	padding-right: 6px;
+	padding-bottom: 1px;
+	margin-left: 4px;
+	margin-right: 4px;
+	border-radius: 5px;
+}
+
+#page{
+	max-width:660px;
+	clear: both; 
+	margin: 0 auto;
+	transition: all 0.8s ease;  
+}
+
+#page.wide{
+	max-width:800px;
+}
+
+.image img {
+	width: 100%;
+}
+
+.description {
+	padding-left: 20px;
+	margin-top: 10px;
+	margin-bottom: 4px;
+	font-family: 'Open Sans', sans-serif;
+}
+
+#top{
+	width:auto;
+}
+
+#logo{
+	height: 3.5em;
+	padding-top:10px;
+	padding-bottom:20px;
+}
+
+#bottom {
+	margin-right: 55%;
+	font-size:0.8em;
+	padding: 20px;
+}
+
+#main, #main * {
+	transition: all 1s ease;
+}
