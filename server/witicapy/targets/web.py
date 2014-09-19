@@ -145,7 +145,8 @@ class ItemPattern(LinkPattern):
 		item_id = m.group(3)[1:]
 		el.set('item', item_id)
 		if not m.group(2) == None:
-			el.text = m.group(2)
+			renderparam = markdown.util.etree.Comment(m.group(2))
+			el.append(renderparam)
 		return el
 
 class InlineItemExtension(Extension):

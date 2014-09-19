@@ -430,7 +430,7 @@ Witica.View.prototype = {
 			var view = new Witica.View(viewElements[i]);
 			var params = null;
 			try {
-				 params = JSON.parse(viewElements[i].textContent);
+				 params = JSON.parse(viewElements[i].childNodes[0].textContent);
 			}
 			catch (e) {
 				//ignore
