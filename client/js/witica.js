@@ -481,6 +481,11 @@ Witica.Renderer = function (){
 
 Witica.Renderer.prototype = {
 	initWithItem: function (item, previousRenderer, params) {
+		if (this.rendered) {
+			this.view.showErrorMessage("Error", "Renderer is already initialized.");
+			return;
+		}
+
 		if (params) {
 			this.params = params;
 		}
@@ -488,19 +493,21 @@ Witica.Renderer.prototype = {
 			this.params = {};
 		}
 
-		if (this.rendered) {
-			this.view.showErrorMessage("Error", "Renderer is already initialized.");
-			return;
-		}
 		this.item = item;
 		if (this.item.isLoaded) {
-			this.initialRender(previousRenderer);
+			this.render(previousRenderer);
+			this.rendered = true;
 		}
 		else {
 			this.view.showErrorMessage("Error 404: Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.");
 		}
 	},
 	changeItem: function (item, params) {
+		if (!this.rendered) {
+			this.view.showErrorMessage("Error", "Renderer is not initialized.");
+			return;
+		}
+
 		if (params) {
 			this.params = params;
 		}
@@ -543,10 +550,6 @@ Witica.Renderer.prototype = {
 			}
 		}
 		this.renderRequests = [];
-	},
-	initialRender: function (previousRenderer) {
-		this.render(previousRenderer);
-		this.rendered = true;
 	}
 };
 
