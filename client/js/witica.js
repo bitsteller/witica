@@ -519,9 +519,6 @@ Witica.Renderer.prototype = {
 			return;
 		}
 	},
-	getItem: function () {
-		return this.item;
-	},
 	requireContent: function(filename, callback) {
 		this.addRenderRequest(this.item.downloadContent(filename, function (content,success) {
 			if (success) {
