@@ -293,10 +293,10 @@ Witica.createVirtualItem = function (metadata) {
 Witica.updateItemCache = function () {
 	currentTime = (new Date()).getTime();
 	len = Witica.itemcache.length;
-	console.log("Cached:");
+	//console.log("Cached:");
 	for (var i = 0; i < len; i++) {
 		var item = Witica.itemcache[i];
-		console.log(item.itemId + "(" + item.loadFinished.getNumberOfListeners() + ")");
+		//console.log(item.itemId + "(" + item.loadFinished.getNumberOfListeners() + ")");
 		if (item.isLoaded) {
 			//delete from cache if unused and cache full
 			if (len > Witica.CACHESIZE && item.loadFinished.getNumberOfListeners() == 0) {
