@@ -425,6 +425,9 @@ Witica.View.prototype = {
 	},
 
 	loadSubviews: function (element) {
+		if (!element) {
+			element = this.element;
+		}
 		var viewElements = element.getElementsByTagName("view");
 		for (var i = 0; i < viewElements.length; i++) {
 			var view = new Witica.View(viewElements[i]);
