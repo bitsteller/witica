@@ -1,0 +1,113 @@
+# Witica.Renderer
+
+A prototype for renderers. 
+
+To implement a renderer for some item type you inherit from this prototype to get the common renderer functionality. Additionally you have to implement the two functions
+
+	MyRenderer.render(previousRenderer)
+
+that renders `Renderer.item` with respect to `Renderer.params` and
+
+	MyRenderer.unrender(nextRenderer)
+
+that cleans up before `nextRenderer` is rendering the next item (for example destroy all subviews that were created in `MyRenderer.render()`).
+
+## Attributes
+
+* `Renderer.view`: the view that the renderer should render into,
+* `Renderer.item`: the current item that is rendered,
+* `Renderer.renderRequests`: a list of requests necessary for the current render process,
+* `Renderer.rendered`: is initially `false`, but becomes `true` after the first rendering has finished,
+* `Renderer.params`: an object with more information how the renderer should render the item.
+
+## Witica.Renderer() (Constructor)
+
+**Syntax:**
+
+	Witica.Renderer()
+
+Creates a new renderer object. Usually you don’t have to create the renderer by yourself as `View.showItem()` creates the appropriate renderer automatically.
+
+The function takes no arguments.
+
+## Renderer.initWithItem()
+
+**Syntax:**
+
+	Renderer.initWithItem(item, previousRenderer, params)
+
+Initially renders an item using the renderer. Usually you don’t have to call this function yourself as `View.showItem()` handles this for you if necessary. This function calls the `render()` function that each renderer has to define in order to render the content.
+
+**Note:** The `Renderer.item` must be loaded before this function is called otherwise an error will be shown. The function must not be called more than once on the same renderer otherwise an error will be shown.
+
+The function takes the following arguments:
+
+* `item`: the item to be rendered,
+* `previousRenderer`: the renderer that previously rendered the content in `Renderer.view`,
+* `params`: an object that tells the renderer how to renderer the content.
+
+
+## Renderer.changeItem()
+
+**Syntax:**
+
+	Renderer.changeItem(item, params)
+
+Changes the item to be rendered. Usually you don’t have to call this function yourself as `View.showItem()` handles this for you if necessary. This function calls the `render()` function that each renderer has to define in order to render the content.
+
+**Note:** The `Renderer.item` must be loaded before this function is called otherwise an error will be shown. This function can only be called after `Renderer.initWithItem()` was called once otherwise an error will be shown.
+
+The function takes the following arguments:
+
+* `item`: the item to be rendered,
+* `params`: an object that tells the renderer how to renderer the content.
+
+## Renderer.requireContent()
+
+**Syntax:**
+
+	Renderer.requireContent(filename, callback)
+
+Downloads a content file and calls `callback()` when the download is finished.
+
+Use this function when you need a content file of an item available for a part of the rendering. Using this function is preferred over calling `Item.downloadContent()` because `Renderer.requireContent()` will automatically abort the download when `Renderer.stopRendering()` is called (for example because the user already clicked on another link).
+
+The function takes the following arguments:
+
+* `filename`: the file to be requested, should be a content file of `Renderer.item`, 
+* `callback`: a callable that is called with the content of the requested file as its first argument as soon as the content files content is available.
+
+**Example:** You want to write a renderer `MyRenderer`. Inside `MyRenderer.render()` you need the html content for the item to display it.
+
+	for (var i = 0; i < this.item.contentfiles.length; i++) {
+		fn = this.item.contentfiles[i].filename;
+		if (/.html$/.test(fn)) {
+			this.requireContent(fn, function (content) {
+				//use the content of the file here to render it on the page
+			}.bind(this));
+		}
+	}
+
+## Renderer.addRenderRequest()
+
+**Syntax:**
+
+	Renderer.addRenderRequest(request)
+
+Adds a request object to the `Renderer.renderRequests` list. A request object should have an `abort()` function that cancels the request.
+
+When `Renderer.stopRendering()` is called (for example because the user has clicked on another link) the function `abort()` is called on every request object in the `Renderer.renderRequests` list and the request is removed from this list. 
+
+The function takes the following arguments:
+
+* `request`: a request object that has an `abort()` function that cancels the request.
+
+## Renderer.stopRendering()
+
+**Syntax:**
+
+	Renderer.stopRendering()
+
+Aborts all pending rendering requests and removes them from the `Renderer.renderRequests` array. You normally don’t need to call this function by yourself as Witica calls it automatically when necessary.
+
+The function takes no arguments.
