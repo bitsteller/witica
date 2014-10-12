@@ -43,7 +43,7 @@ Returns `true` if the item was loaded and is available in the WebTarget and `fal
 
 Starts the download of a content file and calls the callback function if either the download finished successfully or if the download finished with an error. If the filename is not a filename of a content file belonging to the item the function is called on, an error is thrown.
 
-**Note:** Consider using a `Witica.Renderer.requireContent()` block instead if possible. Be aware that calling `Item.downloadContent(filename, callback)` will always execute the callback even if the user has already requested to render another item in the meantime, whereas `Witica.Renderer.requireContent()` prevents that.
+**Note:** Consider using a [`Witica.Renderer`](!doc/client/witica_renderer)`.requireContent()` block instead if possible. Be aware that calling `Item.downloadContent(filename, callback)` will always execute the callback even if the user has already requested to render another item in the meantime, whereas [`Witica.Renderer`](!doc/client/witica_renderer)`.requireContent()` prevents that.
 
 The function takes the following arguments:
 

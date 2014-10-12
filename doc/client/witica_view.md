@@ -5,9 +5,9 @@ Represents an area (element) on the webpage that can display content.
 ## Attributes
 
 * `View.element`: the DOM element that the view uses to place content inside,
-* `View.renderer`: the renderer that renders the item currently displayed in the view,
+* `View.renderer`: the [`Witica.Renderer`](!doc/client/witica_renderer) that renders the item currently displayed in the view,
 * `View.subviews`: an array of associated subviews (embedded views) that live inside this view,
-* `View.item`: the item currently displayed in the view (null initially)
+* `View.item`: the [`Witica.Item`](!doc/client/witica_item) currently displayed in the view (null initially)
 * `View.params`: the render parameters that the view’s renderer was called with.
 
 **Note:** All those attributes are read-only and should not be modified manually.
@@ -55,7 +55,7 @@ The function takes the following arguments:
 
 	View.destroy()
 
-Destroys the view and all of its subviews. Makes the view stop listening to incoming item updates and calls their renderers `Renderer.stopRendering()` and `Renderer.unrender()` functions. After the view itself has been destroyed all its subviews are also being destroyed by recursion. This function should be called every time a view is no longer be needed.
+Destroys the view and all of its subviews. Makes the view stop listening to incoming item updates and calls their renderers [`Witica.Renderer`](!doc/client/witica_renderer)`.stopRendering()` and [`Witica.Renderer`](!doc/client/witica_renderer)`.unrender()` functions. After the view itself has been destroyed all its subviews are also being destroyed by recursion. This function should be called every time a view is no longer be needed.
 
 The function takes no arguments.
 
