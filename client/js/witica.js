@@ -282,6 +282,38 @@ Witica.Item.prototype.downloadContent = function (filename,callback) {
 	return http_request;
 };
 
+Witica.Item.prototype.requestLoad = function (update, callback) {
+	var requestObj = {};
+	requestObj.callback = callback;
+	requestObj.item = this;
+
+	requestObj.abort = function () {
+		this.item.loadFinished.removeListener(this, this._finished);
+	};
+
+	if (this.isLoaded) {
+		callback();
+		requestObj._finished = null;
+		if (update) {
+			requestObj._finished = function () {
+				this.callback();
+			}
+			this.loadFinished.addListener(requestObj, requestObj._finished);
+		}
+	}
+	else {
+		requestObj._finished = function () {
+			this.callback();
+			if (!update) {
+				this.item.loadFinished.removeListener(this, this._finished);
+			}
+		}
+		this.loadFinished.addListener(requestObj, requestObj._finished);
+	}
+
+	return requestObj;
+}
+
 Witica.createVirtualItem = function (metadata) {
 	var itemId = "witica:virtual-" + Witica.virtualItemCount;
 	var item = new Witica.Item(itemId, true);
