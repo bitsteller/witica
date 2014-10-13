@@ -559,11 +559,14 @@ Witica.Renderer.prototype = {
 		}
 	},
 	requireContent: function(filename, callback) {
-		this.addRenderRequest(this.item.downloadContent(filename, function (content,success) {
+		var request = this.item.downloadContent(filename, function (content,success) {
 			if (success) {
 				callback(content);
 			}
-		}));
+		});
+		this.addRenderRequest(request);
+		return request;
+	},
 	},
 	addRenderRequest: function (request) {
 		this.renderRequests.push(request);
