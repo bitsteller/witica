@@ -292,18 +292,18 @@ Witica.Item.prototype.requestLoad = function (update, callback) {
 	};
 
 	if (this.isLoaded) {
-		callback();
+		callback(true);
 		requestObj._finished = null;
 		if (update) {
 			requestObj._finished = function () {
-				this.callback();
+				this.callback(true);
 			}
 			this.loadFinished.addListener(requestObj, requestObj._finished);
 		}
 	}
 	else {
 		requestObj._finished = function () {
-			this.callback();
+			this.callback(true);
 			if (!update) {
 				this.item.loadFinished.removeListener(this, this._finished);
 			}
