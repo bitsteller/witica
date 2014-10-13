@@ -9,6 +9,7 @@ function DefaultRenderer(view) {
 	Witica.Renderer.call(this);
 	this.render = render;
 	this.unrender = unrender;
+	this.breadcrumb = breadcrumb;
 	this.view = view;
 	this.element = view.element;
 	this.headingDiv = document.createElement("div");
@@ -38,6 +39,18 @@ function DefaultRenderer(view) {
 			else {
 				document.title = "";
 			}
+		}
+
+		if (this.breadcrumbDiv) {
+			this.headingDiv.removeChild(this.breadcrumbDiv);
+		}
+		this.breadcrumbDiv = null;
+		if (this.item.metadata.hasOwnProperty("parent")) {
+			this.breadcrumbDiv = document.createElement("div");
+			this.breadcrumbDiv.classList.add("breadcrumb");
+			this.headingDiv.insertBefore(this.breadcrumbDiv, this.headingDiv.firstChild);
+			this.breadcrumb(this.breadcrumbDiv, this.item, 5);
+			this.headingDiv.style.height = "7em";
 		}
 
 		this.heading.innerHTML = this.item.metadata.title;
@@ -97,6 +110,34 @@ function DefaultRenderer(view) {
 		if (nextRenderer != this) {
 			this.element.innerHTML = "";
 		}
+	}
+
+	function breadcrumb(element, item, maxDepth, lastbreadcrumbElement) {
+		var subRequest = null;
+		return this.requireMetadata(item, function () {
+			breadcrumbElement = document.createElement("a");
+			breadcrumbElement.textContent = item.metadata.title;
+			breadcrumbElement.setAttribute("href", "#!" + item.itemId);
+
+			if (!lastbreadcrumbElement) {
+				while (element.firstChild) element.removeChild(element.firstChild);
+				element.appendChild(breadcrumbElement);
+			}
+			else {
+				while (element.firstChild != lastbreadcrumbElement) element.removeChild(element.firstChild);
+				separatorNode = document.createTextNode(" ⟩ ");
+				element.insertBefore(separatorNode, element.firstChild);
+				element.insertBefore(breadcrumbElement, element.firstChild);
+			}
+
+			if (subRequest) {
+				subRequest.abort();
+			}
+
+			if (maxDepth > 1 && item.metadata.hasOwnProperty("parent")) {
+				subRequest = this.breadcrumb(element, Witica.getItem(item.metadata.parent.match(/!([\S\s]*)/)[1]), maxDepth-1, breadcrumbElement);
+			}
+		}.bind(this));
 	}
 }
 
