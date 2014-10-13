@@ -148,18 +148,18 @@ Witica.util.Event.prototype = {
 		this._listeners.push(listener);
 	},
 
-	fire: function(argument) { //TODO: add support for arguments
-		for (var i=0; i < this._listeners.length; i++){
-			this._listeners[i].callable.call(this._listeners[i].context,argument);
-		}
-	},
-
 	removeListener: function(context, callable) {
 		for (var i=0; i < this._listeners.length; i++){
 			if (this._listeners[i].context == context && this._listeners[i].callable == callable) {
 				this._listeners.remove(i);
 				i--;
 			}
+		}
+	},
+
+	fire: function(argument) {
+		for (var i=0; i < this._listeners.length; i++){
+			this._listeners[i].callable.call(this._listeners[i].context,argument);
 		}
 	},
 
