@@ -567,6 +567,14 @@ Witica.Renderer.prototype = {
 		this.addRenderRequest(request);
 		return request;
 	},
+	requireMetadata: function(item, callback) {
+		var request = item.requestLoad(true, function (success) {
+			if (success) {
+				callback();
+			}
+		});
+		this.addRenderRequest(request);
+		return request;
 	},
 	addRenderRequest: function (request) {
 		this.renderRequests.push(request);
