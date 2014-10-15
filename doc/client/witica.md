@@ -73,15 +73,16 @@ The function takes the following arguments:
 
 * `itemId`: the id of the item to be requested
 
-**Example:** Let’s say `display()` is a function that needs the metadata of an item to display it, then you write
+**Example:** Let’s say you need to access to the metadata of an item, then you write
 
 	var item = Witica.getItem(“itemId”)
-	if (item.isLoaded) {
-		display(); //executed if the item was already in cache
-	}
-	item.loadFinished.addListener(this,display); //executed if the item was not in cache but metadata has been loaded now and on every future update of the item
+	var request = item.requestLoad(true, function() {
+			//code executed when item has been loaded or updated
+			//safe to access item.metadata here…
+	});
 
-Make sure to remove the listener when the display function should no longer be called on updates. If you only what to execute the function once and not for incoming updates, remove the listener directly in the beginning of the `display` function.
+	//… when the code in the callback block should no longer be called on updates of the item at some point call:
+	request.abort();
 
 ## Witica.loadItem()
 
@@ -90,5 +91,31 @@ Make sure to remove the listener when the display function should no longer be c
 	Witica.loadItem()
 
 Internal function that is automatically called when the hash string inside the URL changes. The function loads the item that the hash string specifies into the main view. If the hash string is empty, the *defaultItem* will be loaded into the main view.
+
+The function takes no arguments.
+
+## Witica.createVirtualItem()
+
+**Syntax:**
+
+	Item.createVirtualItem(metadata)
+
+Creates and returns a new virtual item. A virtual item is a temporary item that can only be created on the client side using this method and only exists for the current session. 
+
+Virtual items are useful to generate pages at dynamically on the client side. A good example for that are error pages, where you can create a virtual item with information about the error as the metadata and then let an error renderer display that message to the user.
+
+**Note:** Virtual items are not part of a Witica WebTarget source and can’t be found using the Witica.getItem() function. Virtual items only have metadata no content files. A call of Item.update() on a virtual item will result in an error.
+
+The function takes the following arguments:
+
+* `metadata`: an object containing the metadata for the item.
+
+## Witica.updateItemCache()
+
+**Syntax:**
+
+	Witica.updateItemCache()
+
+Internal function, that is called automatically every 10 seconds. Updates the item cache by removing unused items from the cache and checking for updates for the remaining items deepening on their age.
 
 The function takes no arguments.

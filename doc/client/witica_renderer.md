@@ -88,6 +88,25 @@ The function takes the following arguments:
 		}
 	}
 
+## Renderer.requireItem()
+
+**Syntax:**
+
+	Renderer.requireItem(item, callback)
+
+Ensures that an item is loaded and calls `callback()` when the the item has been loaded or updated.
+
+Use this function when you need the metadata of an item other then the item to be rendered itself `Renderer.item` available for a part of the rendering. Using this function is preferred over calling `Item.requestLoad()` because `Renderer.requireItem()` will automatically abort the download when `Renderer.stopRendering()` is called (for example because the user already clicked on another link).
+
+The functions returns a request object. When the `callback` function should no longer be called when the item is updated/loaded, the `abort()` function of the request object has to be called.
+
+**Note:** You don’t need to call `Renderer.requireItem` for the main item to be rendered (`Renderer.item`). This item is guaranteed to be already loaded when `Renderer.render()` is called. Instead use this function in cases where you want to display metadata of other items related to `Renderer.item` on the page.
+
+The function takes the following arguments:
+
+* `item`: the item that the callback function needs to have available,
+* `callback`: the callback function that is called when the item is loaded or the metadata of the item changed
+
 ## Renderer.addRenderRequest()
 
 **Syntax:**

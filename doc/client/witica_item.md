@@ -54,32 +54,29 @@ The function takes the following arguments:
 * `filename`: the filename of the content file to be downloaded (must belong to the item on which the function is called),
 * `callback`: the callback function to be called after the download has been finished; the callback is called with two arguments, the first one containing the content of the downloaded file (responseText) and the second one is a boolean that is `true` when the download finished successful and `false` if not (in that case the first argument will be `null`).
 
-## Witica.createVirtualItem()
+## Item.requestLoad()
 
 **Syntax:**
 
-	Item.createVirtualItem(metadata)
+	Item.requestLoad(update, callback)
 
-Creates and returns a new virtual item. A virtual item is a temporary item that can only be created on the client side using this method and only exists for the current session. 
+Calls the callback function as soon as the item metadata is loaded. If the item is already loaded, the callback will be executed immediately. If `update` is set to `true` the callback is also called when the metadata changes in future. 
 
-Virtual items are useful to generate pages at dynamically on the client side. A good example for that are error pages, where you can create a virtual item with information about the error as the metadata and then let an error renderer display that message to the user.
+The functions returns a request object. When the `callback` function should no longer be called when the item is updated/loaded, the `abort()` function of the request object has to be called.
 
-**Note:** Virtual items are not part of a Witica WebTarget source and can’t be found using the Witica.getItem() function. Virtual items only have metadata no content files. A call of Item.update() on a virtual item will result in an error.
+**Note**: The difference between the `Item.requestLoad()` function and adding a listener to the `Item.loadFinished` event is that the `callback` function of `Item.requestLoad()` is even called, if the item is already loaded, while the event only fires when the item metadata was loaded for the first time or has been updated.
 
 The function takes the following arguments:
 
-* `metadata`: an object containing the metadata for the item.
+* `update`: if `true` the `callback` is also called on future updates,
+* `callback`: a function that should be executed as soon as the item’s metadata is available.
 
-## Witica.updateItemCache()
-
-**Syntax:**
-
-	Witica.updateItemCache()
-
-Internal function, that is called automatically every 10 seconds. Updates the item cache by removing unused items from the cache and checking for updates for the remaining items deepening on their age.
-
-The function takes no arguments.
 
 ## Other functions related to items
 
-See also the related functions [`Witica.getItem()`](!doc/client/witica) and [`Witica.loadItem()`](!doc/client/witica).
+See also the following related functions:
+
+*  [`Witica.getItem()`](!doc/client/witica),
+*  [`Witica.loadItem()`](!doc/client/witica),
+*  [`Witica.updateItemCache()`](!doc/client/witica),
+*  [`Witica.createVirtualItem()`](!doc/client/witica).
