@@ -27,6 +27,8 @@ This function manually checks if a change is available in the WebTarget and upda
 
 **Note:** Items are also updated automatically (the frequency is decreasing with increasing last modification of an item, so that items that where changed in recent time are updated more frequently). Therefore only call the `Item.update()` method when it is really necessary.
 
+The function takes no arguments.
+
 ## Item.exists()
 
 **Syntax:**
@@ -34,6 +36,8 @@ This function manually checks if a change is available in the WebTarget and upda
 	Item.exists()
 
 Returns `true` if the item was loaded and is available in the WebTarget and `false` otherwise.
+
+The function takes no arguments.
 
 ## Item.downloadContent()
 
@@ -74,36 +78,8 @@ The function takes the following arguments:
 
 Internal function, that is called automatically every 10 seconds. Updates the item cache by removing unused items from the cache and checking for updates for the remaining items deepening on their age.
 
-## Witica.getItem()
-
-**Syntax:**
-
-	Witica.getItem(itemId)
-
-Returns an item from the WebTarget source. 
-
-**Note:** If the requested item is not already cached, Item.isLoaded() will return false and you have to wait for the Item.loadFinished event to fire before the metadata of the item is available.
-
-The function takes the following arguments:
-
-* `itemId`: the id of the item to be requested
-
-**Example:** Let’s say `display()` is a function that needs the metadata of an item to display it, then you write
-
-	var item = Witica.getItem(“itemId”)
-	if (item.isLoaded) {
-		display(); //executed if the item was already in cache
-	}
-	item.loadFinished.addListener(this,display); //executed if the item was not in cache but metadata has been loaded now and on every future update of the item
-
-Make sure to remove the listener when the display function should no longer be called on updates. If you only what to execute the function once and not for incoming updates, remove the listener directly in the beginning of the `display` function.
-
-## Witica.loadItem()
-
-**Syntax:**
-
-	Witica.loadItem()
-
-Internal function that is automatically called when the hash string inside the URL changes. The function loads the item that the hash string specifies into the main view. If the hash string is empty, the *defaultItem* will be loaded into the main view.
-
 The function takes no arguments.
+
+## Other functions related to items
+
+See also the related functions [`Witica.getItem()`](!doc/client/witica) and [`Witica.loadItem()`](!doc/client/witica).
