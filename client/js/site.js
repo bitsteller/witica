@@ -114,7 +114,7 @@ function DefaultRenderer(view) {
 
 	function breadcrumb(element, item, maxDepth, lastbreadcrumbElement) {
 		var subRequest = null;
-		return this.requireMetadata(item, function () {
+		return this.requireItem(item, function () {
 			breadcrumbElement = document.createElement("a");
 			breadcrumbElement.textContent = item.metadata.title;
 			breadcrumbElement.setAttribute("href", "#!" + item.itemId);
