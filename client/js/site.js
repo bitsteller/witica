@@ -125,7 +125,7 @@ function DefaultRenderer(view) {
 			}
 			else {
 				while (element.firstChild != lastbreadcrumbElement) element.removeChild(element.firstChild);
-				separatorNode = document.createTextNode(" ⟩ ");
+				separatorNode = document.createTextNode(" › ");
 				element.insertBefore(separatorNode, element.firstChild);
 				element.insertBefore(breadcrumbElement, element.firstChild);
 			}
