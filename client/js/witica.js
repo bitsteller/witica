@@ -19,12 +19,12 @@ Witica.VERSION = "0.7.7"
 Witica.CACHESIZE = 10;
 
 Witica.itemcache = new Array();
-Witica.knownHashes = new Array();
+Witica._knownHashes = new Array();
 Witica.currentItemId = null;
 Witica.registeredRenderers = new Array();
 Witica.mainView = null;
 Witica.defaultItemId = "";
-Witica.virtualItemCount = 0;
+Witica._virtualItemCount = 0;
 
 /*-----------------------------------------*/
 /* Common extensions                       */
@@ -255,7 +255,7 @@ Witica.Item.prototype.downloadContent = function (filename,callback) {
 	}
 
 	var http_request = new XMLHttpRequest();
-	if (Witica.knownHashes.contains(hash)) { //file with same hash was requested before -> allow loading from cache
+	if (Witica._knownHashes.contains(hash)) { //file with same hash was requested before -> allow loading from cache
 		http_request.open("GET", filename + "?bustCache=" + hash, true);
 	}
 	else { //new hash -> force redownloading file
@@ -275,8 +275,8 @@ Witica.Item.prototype.downloadContent = function (filename,callback) {
 
 	//add file hash to the list of known hashes
 	if (hash != "") {
-		if (!Witica.knownHashes.contains(hash)) {
-			Witica.knownHashes.push(hash);
+		if (!Witica._knownHashes.contains(hash)) {
+			Witica._knownHashes.push(hash);
 		}
 	}
 	return http_request;
@@ -315,10 +315,10 @@ Witica.Item.prototype.requestLoad = function (update, callback) {
 }
 
 Witica.createVirtualItem = function (metadata) {
-	var itemId = "witica:virtual-" + Witica.virtualItemCount;
+	var itemId = "witica:virtual-" + Witica._virtualItemCount;
 	var item = new Witica.Item(itemId, true);
 	item.metadata = metadata;
-	Witica.virtualItemCount++;
+	Witica._virtualItemCount++;
 	return item;
 };
 
