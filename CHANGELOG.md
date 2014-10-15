@@ -2,9 +2,9 @@
 
 ## Version 0.8.2 (Alpha 2)
 
-* NEW: add Renderer.requireMetadata() function
+* NEW: add Renderer.requireItem() function
 * NEW: add Item.requestLoad() function
-* NEW: added and improved documentation for witica.js
+* NEW: completed and improved documentation for witica.js
 * REMOVE: removed unnecessary function Renderer.initalRender(); 
 * REMOVE: removed Renderer.getItem(), use Renderer.item instead
 * CHANGE: better error handling in Witica.Renderer, now an error is shown if renderer was not initialised when changeItem() is called
