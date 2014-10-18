@@ -47,7 +47,7 @@ class Logger(object):
 		self._stop = TEvent()
 		self.sendercolors = dict()
 		self.worker_thread = Thread(target=self.work,name = "Logging thread")
-
+		self.last_date = datetime.now().strftime('%Y-%m-%d')
 
 	@staticmethod
 	def start(verbose=True):
@@ -96,6 +96,12 @@ class Logger(object):
 		return _logger.worker_thread
 
 	def printmsg(self,senderid,msg,logtype=Logtype.NONE):
+		current_date = datetime.now().strftime('%Y-%m-%d')
+
+		if current_date != self.last_date:
+			print ("--- " + current_date + " ---")
+			self.last_date = current_date
+
 		timestr = datetime.now().strftime('%H:%M:%S')
 		if (logtype == Logtype.INFO):
 			timestr = CColors.INFO + timestr + CColors.ENDC
