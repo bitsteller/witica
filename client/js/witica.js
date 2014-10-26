@@ -418,6 +418,12 @@ Witica.View.prototype = {
 	},
 
 	_showLoadedItem: function () {
+		//show error if item doesn't exist
+		if (!this.item.exists()) {
+			this.showErrorMessage("Error 404: Item not found", "Sorry, but the item with the ID '" + this.item.itemId + "' was not found.");
+			return;
+		}
+
 		//find appropriate renderer
 		var oldRenderer = this.renderer;
 		var newRendererClass = null;
