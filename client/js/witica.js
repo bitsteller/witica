@@ -393,6 +393,7 @@ Witica.View = function (element){
 	this.item = null;
 	this.params = {};
 	this._scrollToTopOnNextRenderRequest = false;
+	this._itemLoadRequest = null;
 };
 
 Witica.View.prototype = {
@@ -412,10 +413,8 @@ Witica.View.prototype = {
 		this.item = item;
 		this.params = params;
 		this._scrollToTopOnNextRenderRequest = true; //scroll to top when showItem() was called but not on item udpate
-		if (item.isLoaded) {
-			this._showLoadedItem();
-		}
-		item.loadFinished.addListener(this,this._showLoadedItem); //watch out for coming updates of the new item
+		
+		this._itemLoadRequest = item.requestLoad(true, this._showLoadedItem.bind(this));
 	},
 
 	_showLoadedItem: function () {
@@ -476,8 +475,7 @@ Witica.View.prototype = {
 	},
 
 	destroy: function () {
-		//stop listening for updates of the previous item
-		this.item.loadFinished.removeListener(this, this._showLoadedItem);
+		this._itemLoadRequest.abort(); //stop listening for updates for current item
 
 		this.destroySubviews();
 		if (this.renderer != null) {
