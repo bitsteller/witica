@@ -405,7 +405,26 @@ class SourceItem(Loggable):
 		#item file metadata
 		metadata.update(extractor.extract_metadata(self.source.get_absolute_path(self.itemfile)))
 		
+		metadata = self.postprocess_metadata(metadata)
+
 		return metadata
+
+	def postprocess_metadata(self, metadata):
+		if isinstance(metadata, basestring):
+			if re.match(extractor.RE_ITEM_REFERENCE, metadata):
+				if metadata.startswith("!./"): #expand relative item id
+					prefix = self.item_id.rpartition("/")[0]
+					return "!" + prefix + "/" + metadata[3:]
+				else:
+					return metadata
+			else:
+				return metadata
+		elif isinstance(metadata, list):
+			return [self.postprocess_metadata(x) for x in metadata]
+		elif isinstance(metadata, dict):
+			return {k: self.postprocess_metadata(v) for k,v in metadata.items()}
+		else:
+			return metadata
 
 	def check(self):
 		print(self.item_id + " is ok")
