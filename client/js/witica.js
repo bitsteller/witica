@@ -314,6 +314,10 @@ Witica.Item.prototype.requestLoad = function (update, callback) {
 	return requestObj;
 }
 
+Witica.Item.prototype.toString = function () {
+	return this.itemId;
+};
+
 Witica.createVirtualItem = function (metadata) {
 	var itemId = "witica:virtual-" + Witica._virtualItemCount;
 	var item = new Witica.Item(itemId, true);
