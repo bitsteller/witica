@@ -311,7 +311,12 @@ class SourceItemIterable(object):
 			last_item_id = ""
 			for root, dirs, files in os.walk(self.source.get_absolute_path(""), topdown=True):
 				for filename in files:
-					item_id = self.source.get_local_path(os.path.join(root,filename)).rpartition('.')[0]
+					local_path = self.source.get_local_path(os.path.join(root,filename))
+					item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
+					if item_id:
+						item_id = item_id.group(1)
+					else:
+						break #skip invalid item
 					if item_id != last_item_id and self.source.item_exists(item_id):
 						if count == key:
 							return SourceItem(self.source, item_id)
@@ -331,7 +336,12 @@ class SourceItemIterable(object):
 		last_item_id = ""
 		for root, dirs, files in os.walk(self.source.get_absolute_path(""), topdown=True):
 			for filename in files:
-				item_id = self.source.get_local_path(os.path.join(root,filename)).rpartition('.')[0]
+				local_path = self.source.get_local_path(os.path.join(root,filename))
+				item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
+				if item_id:
+					item_id = item_id.group(1)
+				else:
+					break #skip invalid item
 				if item_id != last_item_id and self.source.item_exists(item_id):
 					count += 1
 					last_item_id = item_id
@@ -354,7 +364,8 @@ class SourceItem(Loggable):
 
 	def _get_all_filenames(self):
 		absolute_paths = glob.glob(self.source.get_absolute_path(self.item_id + ".*")) + glob.glob(self.source.get_absolute_path(self.item_id + "@*"))
-		return [self.source.get_local_path(abspath) for abspath in absolute_paths]
+		local_paths = [self.source.get_local_path(abspath) for abspath in absolute_paths]
+		return [local_path for local_path in local_paths if re.match(extractor.RE_ITEMFILE, local_path)]
 
 	def _get_itemfile(self):
 		item_filetypes = [ext for (ext,extr) in extractor.registered_extractors] #item file is the one exisiting first from this list
@@ -393,7 +404,7 @@ class SourceItem(Loggable):
 
 		#content file metadata
 		if self.contentfile and self.contentfile != self.itemfile:
-			ext = self.contentfile.rpartition(".")[2]
+			ext = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, self.contentfile).group(2)
 			if extractor.is_supported(ext):		
 				try:
 					metadata.update(extractor.extract_metadata(self.source.get_absolute_path(self.contentfile)))
