@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.8.3 (Alpha 3)
+
+* NEW: print date change on console
+* NEW: renderers can now assume that item exists, if not an error message is generated (and the renderer that catches “type”=“error” is called)
+* NEW: Witica.Item.toString() now prints the item id
+* NEW: support for relative item reference in metadata (i.e. “!./test” is expanded to “!path/to/item/test”)
+* CHANGE: new initialisation process for renderers
+	* renderer constructors should no longer assume that the view is already known, instead wait until init() is called
+	* the sequence called over a renderers lifetime is now: init()->render()->unrender()…->render()->unrender()->deinit()
+	* init() is passed the previous renderer, deinit() the next renderer
+	* render() and unrender() is now passed the item instead of previous/next renderer
+	* it is now possible that a renderer inherits from another renderer via prototypes
+* CHANGE: item ids and filenames are now checked using regular expressions to catch illegal input
+* FIX: minor fixes, code cleanup
+
 ## Version 0.8.2 (Alpha 2)
 
 * NEW: add Renderer.requireItem() function
