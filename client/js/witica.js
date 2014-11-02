@@ -15,7 +15,7 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "0.8.2"
+Witica.VERSION = "0.8.3"
 Witica.CACHESIZE = 10;
 
 Witica.itemcache = new Array();
@@ -452,12 +452,15 @@ Witica.View.prototype = {
 			this.renderer.changeItem(this.item, this.params);
 		}
 		else {
+			this.renderer = new newRendererClass(this); //TODO: remove passing view (deprecated)
 			if (oldRenderer != null) {
 				oldRenderer.stopRendering();
-				oldRenderer.unrender(this);
+				oldRenderer.unrender(this.item);
+				if (typeof this.deinit == 'function') {
+					this.deinit(this.renderer);
+				}
 			}
-			this.renderer = new newRendererClass(this);
-			this.renderer.initWithItem(this.item, oldRenderer, this.params);
+			this.renderer.initWithItem(this, this.item, oldRenderer, this.params);
 		}
 		if (this._scrollToTopOnNextRenderRequest && this == Witica.mainView && document.body.scrollTop > Witica.util.getYCoord(this.element)) {
 			window.scrollTo(0,Witica.util.getYCoord(this.element));
@@ -490,7 +493,10 @@ Witica.View.prototype = {
 		this.destroySubviews();
 		if (this.renderer != null) {
 			this.renderer.stopRendering();
-			this.renderer.unrender(null);
+			this.renderer.unrender(this.item);
+			if (typeof this.deinit == 'function') {
+				this.deinit(null);
+			}
 		}
 	},
 
@@ -520,10 +526,15 @@ Witica.Renderer = function (){
 };
 
 Witica.Renderer.prototype = {
-	initWithItem: function (item, previousRenderer, params) {
+	initWithItem: function (view, item, previousRenderer, params) {
 		if (this.rendered) {
 			this.view.showErrorMessage("Error", "Renderer is already initialized.");
 			return;
+		}
+
+		this.view = view;
+		if (typeof this.init == 'function') {
+			this.init(previousRenderer);
 		}
 
 		if (params) {
@@ -535,7 +546,7 @@ Witica.Renderer.prototype = {
 
 		this.item = item;
 		if (this.item.isLoaded) {
-			this.render(previousRenderer);
+			this.render(item);
 			this.rendered = true;
 		}
 		else {
@@ -558,8 +569,8 @@ Witica.Renderer.prototype = {
 		this.stopRendering();
 		this.item = item;
 		if (this.item.isLoaded) {
-			this.unrender(this);
-			this.render(this);
+			this.unrender(item);
+			this.render(item);
 		}
 		else {
 			this.view.showErrorMessage("Error 404: Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.");
