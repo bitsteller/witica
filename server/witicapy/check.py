@@ -25,7 +25,7 @@ class IntegrityChecker(Loggable):
 		faults = []
 
 		#check metedata readable and title present
-		faults.extend(self.check_title(item))
+		faults.extend(self.check_metadata(item))
 
 		#check contentfiles
 		for srcfile in item.contentfiles:
@@ -39,22 +39,44 @@ class IntegrityChecker(Loggable):
 
 		return faults
 
-	def check_title(self, item):
+	def check_metadata(self, item):
 		faults = []
 
 		metadata = {}
 
+		#check if metadata readable
 		try:
 			metadata = item.get_metadata(strict = True)
 		except Exception, e:
 			faults.append(SyntaxFault(e.message, item))
 		
+		#check title present
 		if not "title" in metadata:
 			faults.append(TitleMissingFault("Item has no title attribute.", item))
 		elif metadata["title"] == "":
 			faults.append(TitleMissingFault("Item has no title attribute.", item))
 
+		#check item references in metadata
+		faults.extend(self.check_item_references(item,metadata))
+
 		return faults
+
+	def check_item_references(self, item, metadata):
+		faults = []
+
+		if isinstance(metadata, basestring):
+			if re.match(extractor.RE_ITEM_REFERENCE, metadata):
+				if not(item.source.item_exists(metadata[1:])):
+					faults.append(TargetNotFoundFault("Referenced item '" + metadata + "' in metadata of item '" + item.item_id +  "' was not found in the source '" + item.source.source_id + "'.", item))
+		elif isinstance(metadata, list):
+			for x in metadata:
+				faults.extend(self.check_item_references(item,x))
+		elif isinstance(metadata, dict):
+			for k,v in metadata.items():
+				faults.extend(self.check_item_references(item,v))
+
+		return faults
+
 
 	def check_md(self, item, srcfile):
 		faults = []
