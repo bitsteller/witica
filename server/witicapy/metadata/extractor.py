@@ -8,11 +8,11 @@ from witicapy.util import throw, sstr, suni
 #regular expressions regarding item ids
 RE_METAFILE = r'^meta/[^\n]+$'
 RE_FIRST_ITEMID = r'(?!meta/)[^\n@.]+'
-RE_ITEMFILE_EXTENSION = r'[^\n@/]+'
+RE_ITEMFILE_EXTENSION = r'[^\n@\/]+'
 RE_ITEMID = r'^' + RE_FIRST_ITEMID + '$'
 RE_ITEMFILE = r'^' + RE_FIRST_ITEMID + '\.' + RE_ITEMFILE_EXTENSION + '$'
 RE_ITEM_SPLIT_ITEMID_EXTENSION = r'^(' + RE_FIRST_ITEMID + ')\.(' + RE_ITEMFILE_EXTENSION + ')$'
-RE_ITEM_REFERENCE = r'^!(?:.\/)' + RE_FIRST_ITEMID + '$'
+RE_ITEM_REFERENCE = r'^!(?:.\/)?' + RE_FIRST_ITEMID + '$'
 
 #regular expressions to be used for md files parsing
 RE_MD_SPLIT_JSON_MD = "^\s*({[\s\S]*?})?\s*([\s\S]*)$" #splits md file into the json metadata and markdown sections as caputre groups
