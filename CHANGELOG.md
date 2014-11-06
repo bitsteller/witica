@@ -6,6 +6,7 @@
 * NEW: renderers can now assume that item exists, if not an error message is generated (and the renderer that catches “type”=“error” is called)
 * NEW: Witica.Item.toString() now prints the item id
 * NEW: support for relative item reference in metadata (i.e. “!./test” is expanded to “!path/to/item/test”)
+* NEW: support for relative links in markdown files for WebTarget and StaticHTMLTarget
 * NEW: unit test for image exif data processing
 * CHANGE: new initialisation process for renderers
 	* renderer constructors should no longer assume that the view is already known, instead wait until init() is called
