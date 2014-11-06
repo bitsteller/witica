@@ -5,3 +5,8 @@ Witica is a new way to publish things on the internet. The goal is to make editi
 ## Getting started
 
 To get started please read the getting started guide that can be found in the “doc” directory or [online](http://witica.org/#!doc/getting-started).
+
+## Developer
+
+To run all unit tests run
+	python -m unittest discover
