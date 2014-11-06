@@ -98,7 +98,7 @@ class WebTarget(Target):
 		filetype = srcfile.rpartition(".")[2]
 		if filetype == "md" or filetype == "txt": #convert to html
 			dstfile = filename + ".html"
-			self.convert_md2html(srcfile,dstfile)
+			self.convert_md2html(srcfile,dstfile,item)
 			self.publish(dstfile)
 		elif filetype == "jpg" or filetype == "jpeg":
 			dstfile = srcfile #keep filename
@@ -112,7 +112,7 @@ class WebTarget(Target):
 			util.copyfile(self.site.source.get_absolute_path(srcfile), self.get_absolute_path(dstfile))
 			self.publish(dstfile)
 
-	def convert_md2html(self,srcfile,dstfile):
+	def convert_md2html(self,srcfile,dstfile,item):
 		input_file = codecs.open(self.site.source.get_absolute_path(srcfile), mode="r", encoding="utf-8")
 		text = input_file.read()
 		html = ""
@@ -122,7 +122,7 @@ class WebTarget(Target):
 			jsonstr, mdstring = re.match(extractor.RE_MD_SPLIT_JSON_MD,text).groups()
 			#split title and body part
 			title, mdbody = re.match(extractor.RE_MD_SPLIT_TITLE_BODY,mdstring).groups()
-			link_ext = LinkExtension(self)
+			link_ext = LinkExtension(self,item)
 			inline_item_ext = InlineItemExtension(self)
 			html = markdown.markdown(mdbody, extensions = [link_ext, inline_item_ext])
 		except Exception, e:
@@ -160,21 +160,27 @@ class InlineItemExtension(Extension):
 		md.inlinePatterns.add('item_link', ItemPattern(extractor.RE_MD_ITEM_LINK, md, self.target),'>image_link')
 
 class LinkExtension(Extension):
-	def __init__(self, target):
+	def __init__(self, target, item):
 		self.target = target
+		self.item = item
 
 	def extendMarkdown(self, md, md_globals):
 		# Insert instance of 'mypattern' before 'references' pattern
-		md.treeprocessors.add("link", LinkTreeprocessor(self.target), "_end")
+		md.treeprocessors.add("link", LinkTreeprocessor(self.target, self.item), "_end")
 
 class LinkTreeprocessor(Treeprocessor):
-	def __init__(self, target):
+	def __init__(self, target, item):
 		self.target = target
+		self.item = item
 
 	def run(self, root):
 		for a in root.findall(".//a"):
-			href = a.get("href")
-			if href.startswith("!"):
-				item_id = href[1:]
+			item_id = a.get("href")
+			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+				if item_id.startswith("!./"): #expand relative item id
+					prefix = self.item.item_id.rpartition("/")[0]
+					item_id = prefix + "/" + item_id[3:]
+				else:
+					item_id = item_id[1:]
 				a.set("href", "#!" + item_id) #TODO: better write correct a tag in the first place instead of fixing here afterwards
 		return root
