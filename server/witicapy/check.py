@@ -152,9 +152,13 @@ class LinkTreeprocessor(Treeprocessor):
 
 	def run(self, root):
 		for a in root.findall(".//a"):
-			href = a.get("href")
-			if href.startswith("!"):
-				item_id = href[1:]
+			item_id = a.get("href")
+			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+				if item_id.startswith("!./"): #expand relative item id
+					prefix = self.item.item_id.rpartition("/")[0]
+					item_id = "!" + prefix + "/" + item_id[3:]
+				else:
+					item_id = item_id[1:]
 				#check if exists
 				if not(self.item.source.item_exists(item_id)):
 					self.faults.append(TargetNotFoundFault("Link target '" + item_id + "' in file '" + self.srcfile + " was not found in the source '" + self.item.source.source_id + "'.", self.item))
