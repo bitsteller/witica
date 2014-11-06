@@ -161,7 +161,7 @@ class LinkTreeprocessor(Treeprocessor):
 			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
 				if item_id.startswith("!./"): #expand relative item id
 					prefix = self.item.item_id.rpartition("/")[0]
-					item_id = "!" + prefix + "/" + item_id[3:]
+					item_id = prefix + "/" + item_id[3:]
 				else:
 					item_id = item_id[1:]
 				#check if exists
