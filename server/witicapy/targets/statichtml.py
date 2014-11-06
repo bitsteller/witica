@@ -73,7 +73,7 @@ class StaticHtmlTarget(Target):
 			title.text = item.metadata["title"]
 			titleh = ET.SubElement(body, 'h1')
 			titleh.text = item.metadata["title"]
-		body.append(ET.fromstring("<div>" + self.convert_md2html(srcfile).encode("utf-8") + "</div>"))
+		body.append(ET.fromstring("<div>" + self.convert_md2html(srcfile,item).encode("utf-8") + "</div>"))
 		metadatah = ET.SubElement(body, 'h1')
 		metadatah.text = "Metadata"
 		body.append(self.generate_metadata_table(item))
@@ -97,7 +97,7 @@ class StaticHtmlTarget(Target):
 			value.text = unicode(item.metadata[n])
 		return table
 
-	def convert_md2html(self,srcfile):
+	def convert_md2html(self,srcfile,item):
 		input_file = codecs.open(self.site.source.get_absolute_path(srcfile), mode="r", encoding="utf-8")
 		text = input_file.read()
 		html = u""
@@ -107,7 +107,7 @@ class StaticHtmlTarget(Target):
 			jsonstr, mdstring = re.match(extractor.RE_MD_SPLIT_JSON_MD,text).groups()
 			#split title and body part
 			title, mdbody = re.match(extractor.RE_MD_SPLIT_TITLE_BODY,mdstring).groups()
-			link_check_ext = LinkCheckExtension(self)
+			link_check_ext = LinkCheckExtension(self,item)
 			inline_item_ext = InlineItemExtension(self)
 			html = unicode(markdown.markdown(mdbody, extensions = [link_check_ext, inline_item_ext]))
 		except Exception, e:
@@ -176,23 +176,27 @@ class InlineItemExtension(Extension):
 		md.inlinePatterns.add('item_link', ItemPattern(ITEM_LINK_RE, md, self.target),'>image_link')
 
 class LinkCheckExtension(Extension):
-	def __init__(self, target):
+	def __init__(self, target, item):
 		self.target = target
+		self.item = item
 
 	def extendMarkdown(self, md, md_globals):
 		# Insert instance of 'mypattern' before 'references' pattern
-		md.treeprocessors.add("linkcheck", LinkCheckTreeprocessor(self.target), "_end")
+		md.treeprocessors.add("linkcheck", LinkCheckTreeprocessor(self.target,item), "_end")
 
 class LinkCheckTreeprocessor(Treeprocessor):
-	def __init__(self, target):
+	def __init__(self, target, item):
 		self.target = target
+		self.item = item
 
 	def run(self, root):
 		for a in root.findall(".//a"):
-			href = a.get("href")
-			if href.startswith("!"):
-				item_id = href[1:]
-				if not(self.target.site.source.item_exists(item_id)):
-					self.target.log("Link target not found: " + href[1:], Logtype.WARNING) #TODO: output the filename
+			item_id = a.get("href")
+			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+				if item_id.startswith("!./"): #expand relative item id
+					prefix = self.item.item_id.rpartition("/")[0]
+					item_id = prefix + "/" + item_id[3:]
+				else:
+					item_id = item_id[1:]
 				a.set("href", item_id + ".static.html")
 		return root
