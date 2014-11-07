@@ -1,5 +1,5 @@
 from abc import ABCMeta
-import codecs
+import codecs, json
 
 import markdown
 from markdown.treeprocessors import Treeprocessor
@@ -124,7 +124,10 @@ class ItemPattern(LinkPattern):
 		#check render json parameters
 		if not m.group(2) == None:
 			renderjson = m.group(2)
-			#TODO: check if renderjson is correct json
+			try:
+				json.loads(renderjson)
+			except Exception, e:
+				self.faults.append(SyntaxFault("The syntax of the render parameters of embedded item '" + item_id + "' in file '" + self.srcfile + "' is invalid. " + e.message, self.item))
 		return None
 
 class InlineItemCheckExtension(Extension):
