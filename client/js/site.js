@@ -127,7 +127,9 @@ DefaultRenderer.prototype.breadcrumb = function (element, item, maxDepth, lastbr
 		}
 
 		if (maxDepth > 1 && item.metadata.hasOwnProperty("parent")) {
-			subRequest = this.breadcrumb(element, Witica.getItem(item.metadata.parent.match(/!([\S\s]*)/)[1]), maxDepth-1, breadcrumbElement);
+			if (item.metadata.parent instanceof Witica.Item) {
+				subRequest = this.breadcrumb(element, item.metadata.parent, maxDepth-1, breadcrumbElement);
+			}
 		}
 	}.bind(this));
 };
