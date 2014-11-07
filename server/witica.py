@@ -127,6 +127,32 @@ def check_command(args):
 	log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.WARNING)
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
+def items_command(args):
+	global currentsite
+	Logger.start(verbose=args.verbose)
+
+	try:
+		currentsite = Site(args.source, target_ids = [])
+	except Exception, e:
+		log_exception("Site could not be initialized.", Logtype.ERROR)
+		shutdown()
+		return
+
+	items = get_matching_items(currentsite.source, args)
+	s = u"\n"
+	count = 0
+	for item in items:
+		s += item.item_id + u"\n"
+		count += 1
+		if count == 100:
+			log(s, Logtype.WARNING)
+			s = u"\n"
+			count = 0
+	if count > 0:
+		log(s, Logtype.WARNING)
+
+	log("Source contains " + str(len(items)) + (" matching" if (len(args.item) > 0) else "") + " items.", Logtype.WARNING)
+	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def get_matching_items(source, args):
 	items = []
@@ -188,6 +214,12 @@ parser_check.add_argument('-V', '--verbose', action='store_true', help="show als
 parser_check.add_argument('-s', '--source', required=True, help="the source configuration file to use")
 parser_check.add_argument('item', nargs='*', help="list of ids of items or indicies that should be checked")
 parser_check.set_defaults(func=check_command)
+
+parser_items = subparsers.add_parser('items', help='lists available item ids')
+parser_items.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
+parser_items.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_items.add_argument('item', nargs='*', help="list of ids of items or indicies that should be included")
+parser_items.set_defaults(func=items_command)
 
 args = parser.parse_args()
 args.func(args)
