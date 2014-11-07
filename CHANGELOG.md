@@ -8,6 +8,8 @@
 * NEW: support for relative item reference in metadata (i.e. “!./test” is expanded to “!path/to/item/test”)
 * NEW: support for relative links in markdown files for WebTarget and StaticHTMLTarget
 * NEW: unit test for image exif data processing
+* NEW: witica.py items command to list all (matching) items in a source
+* NEW: integrity check for render parameter syntax
 * CHANGE: new initialisation process for renderers
 	* renderer constructors should no longer assume that the view is already known, instead wait until init() is called
 	* the sequence called over a renderers lifetime is now: init()->render()->unrender()…->render()->unrender()->deinit()
@@ -17,6 +19,7 @@
 * CHANGE: item ids and filenames are now checked using regular expressions to catch illegal input
 * FIX: minor fixes, code cleanup
 * FIX: fixes to regular expressions for item references and markdown file processing
+* FIX: rebuild and check commands now find all items in source again
 
 ## Version 0.8.2 (Alpha 2)
 
