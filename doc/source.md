@@ -87,6 +87,8 @@ Everything in the ⊐ folder outside the meta directory, should belong to an ite
 ### The item id
 The id of an item is the full path to any file belonging to the item before the characters "@" or ".". All files that have the same filename up to "@" or "." belong to the same item. The item id is case insensitive. "MyItem" and "myitem" refers to the same item. It is recommended to write all item ids in lower case.
 
+**Note**: Item ids cannot start with "meta/" and my not contain any line breaks. 
+
 ## Item metadata
 The metadata of an item is taken from exactly one file belonging to the item, called the item file. The item file is the file that exists and comes first in the following list
 
@@ -137,6 +139,8 @@ A markdown file can optionally contain a json section in the beginning of the fi
 
 The title specified in the json metadata section in the beginning of the file has always precedence over the the title extracted from the first heading. Therefore in this case the title is "How to find cat pictures on the internet" and not "The first heading".
 
+Strings in the metadata beginning with “!” followed by a valid item id are treated as item references. Relative item ids (beginning with “!./“ are expanded to absolute ids). This is not applied to the keys in a dictionary.
+
 ### Metadata from .jpg file
 * **description**: The value of the *ImageDescription* or *UserComment* EXIF-tag if available,
 * **camera**: The value of the *Model* and *Make* EXIF-tags concatenated if available,
@@ -170,8 +174,13 @@ where $itemid is the item id of another Witica item in the same source. If the i
 
 * Reference style images where the URL begins with # are treated as embeds of Witica items. The syntax for this is
 
-		![$notused](!$itemid)
-where $itemid is the item id of another Witica item in the same source that should be embeded. If the item doesn't exist, the Witica server script will output a warning to inform you about that. The string $notused can currently be anything and is ignored by Witica. Be aware that circular embeds can make the browser end in an endless loop (for example when embedding an item into itself). 
+		!(!$itemid)
+where $itemid is the item id of another Witica item in the same source that should be embedded. Optionally it is also possible to pass render parameters that inform a renderer how to display the embedded item, the syntax for this is:
+		
+		!{"style": "compact"}(!$itemid)
+where `{"style": "compact"}` could be replaced with any valid json. Be aware that circular embeds can make the browser end in an endless loop (for example when embedding an item into itself). 
+
+Reference to items (embedding as well as in links) can be relative (beginning with “!./“). For example the reference “!./sub2” is expanded to “!parent/sub2” when the reference is inside an item with the id “parent/sub1”.
 
 ### Conversion of png files
 Currently only copied to the target.
@@ -182,4 +191,13 @@ Currently all jpeg files are being slightly compressed and converted to a progre
 ## Conversion of item content (StaticHtmlTarget)
 This target type is designed to offer a rudimentary backup version for browsers with javascript turned off and search engines that will not execute the client side javascript when crawling and therefore not find any content.
 
-More documentation will follow.
+### Conversion of md/txt files
+A static HTML version of the file is generated. If available the attribute *title* is used as the main heading and page title. The page will also contain the content of the markdown file converted to HTML. Embedded items are not supported and will instead be shown as usual links. Finally the page will contain a table containing the full metadata of the item. 
+
+### Conversion of html files
+Are uploaded unchanged except that the file extension is changed from “.html” to “.static.html”.
+
+### Conversion of other files
+Other files besides the ones named above are currently not supported and will not be uploaded.
+
+

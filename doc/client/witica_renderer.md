@@ -4,13 +4,34 @@ A prototype for renderers.
 
 To implement a renderer for some item type you inherit from this prototype to get the common renderer functionality. Additionally you have to implement the two functions
 
-	MyRenderer.render(previousRenderer)
+	MyRenderer.render(item)
 
 that renders `Renderer.item` with respect to `Renderer.params` and
 
-	MyRenderer.unrender(nextRenderer)
+	MyRenderer.unrender(item)
 
-that cleans up before `nextRenderer` is rendering the next item (for example destroy all subviews that were created in `MyRenderer.render()`).
+that cleans up the next item is rendered (for example destroy all subviews that were created in `MyRenderer.render()`).
+
+Optionally you can implement the methods
+
+	MyRenderer.init(previousRender)
+
+which is called once when the renderer is created to prepare the the basic layout (at this point `this.view` is known) and
+
+	MyRenderer.deinit(nextRender)
+
+which is called when the renderer is no longer needed and another renderer will take over to clean up.
+
+During the lifetime of a renderer the functions will be called as follows:
+
+1. `MyRenderer()` (constructor), `Renderer.view` not known
+2. `MyRenderer.init(previousRender)`, `Renderer.view` known
+3. `MyRenderer.render(item1)`, `Renderer.view`, `Renderer.item`, `MyRenderer.params` known
+4. `MyRenderer.unrender(item1)`
+5. `MyRenderer.render(item2)`
+6. `MyRenderer.unrender(item2)`
+7. …
+8. `MyRenderer.deinit(nextRender)`
 
 ## Attributes
 

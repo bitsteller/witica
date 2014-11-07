@@ -71,7 +71,7 @@ class IntegrityChecker(Loggable):
 				if not(item.source.item_exists(item_id)):
 					faults.append(TargetNotFoundFault("Referenced item '" + metadata + "' in metadata of item '" + item.item_id +  "' was not found in the source '" + item.source.source_id + "'.", item))
 				#check if self-reference
-				if item_id == self.item.item_id:
+				if item_id == item.item_id:
 					self.faults.append(CirularReferenceFault("Referenced item '" + item_id + "' in metadata of item '" + item.item_id +  "' is self-referencing.", self.item))
 		elif isinstance(metadata, list):
 			for x in metadata:

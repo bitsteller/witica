@@ -13,11 +13,11 @@ This prototype has the following attributes:
 * `mainView`: the main view that shows the item that corresponds to the current URL,
 * `defaultItemId`: the item id of the item that is loaded if the URL doesn’t contain any other item id.
 
-## registerRenderer()
+## Witica.registerRenderer()
 
 **Syntax:**
 
-	registerRenderer(renderer, supports)
+	Witica.registerRenderer(renderer, supports)
 
 Registers a new renderer that can renderer a specific type of items. When searching for a renderer that can handle a specific item, the renderer that was registered last is first checked. The item is handed to the `supports` function and if it returns `true` this renderer is used. If it returns `false` the `support` function of renderer that was registered before the last one is executed and so on. If no support function returns `true` on error will occur. 
 
@@ -34,11 +34,11 @@ The function takes the following arguments:
 * `renderer`: a renderer prototype, that inherits from the common [`Witica.Renderer`](!doc/client/witica_renderer) prototype and implements `Witica.Renderer.render()` and `Witica.Renderer.unrender()`,
 * `supports`: a function that returns `true` if the item passed as an argument can be rendered by the renderer and `false` otherwise.
 
-## initWitica()
+## Witica.initWitica()
 
 **Syntax:**
 
-	initWitica(mainView, defaultItemId)
+	Witica.initWitica(mainView, defaultItemId)
 
 Initialises the witica.js client library. Has to be executed before the library is used, but after all renderers have been registered. This function also allows Witica to take over the handling of the part after the hash in the URL, such that the appropriate item is loaded into the main view when the hash part in the URL changes.
 
@@ -79,7 +79,7 @@ The function takes the following arguments:
 	var request = item.requestLoad(true, function() {
 			//code executed when item has been loaded or updated
 			//safe to access item.metadata here…
-	});
+	}.bind(this));
 
 	//… when the code in the callback block should no longer be called on updates of the item at some point call:
 	request.abort();
