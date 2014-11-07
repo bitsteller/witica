@@ -107,9 +107,9 @@ class StaticHtmlTarget(Target):
 			jsonstr, mdstring = re.match(extractor.RE_MD_SPLIT_JSON_MD,text).groups()
 			#split title and body part
 			title, mdbody = re.match(extractor.RE_MD_SPLIT_TITLE_BODY,mdstring).groups()
-			link_check_ext = LinkCheckExtension(self,item)
+			link_ext = LinkExtension(self,item)
 			inline_item_ext = InlineItemExtension(self)
-			html = unicode(markdown.markdown(mdbody, extensions = [link_check_ext, inline_item_ext]))
+			html = unicode(markdown.markdown(mdbody, extensions = [link_ext, inline_item_ext]))
 		except Exception, e:
 			throw(IOError,"Markdown file '" + sstr(srcfile) + "' has invalid syntax.", e)
 
@@ -117,18 +117,6 @@ class StaticHtmlTarget(Target):
 
 
 #markdown extensions
-
-NOBRACKET = r'[^\]\[]*'
-BRK = ( r'\[('
-		+ (NOBRACKET + r'(\[')*6
-		+ (NOBRACKET+ r'\])*')*6
-		+ NOBRACKET + r')\]' )
-
-IMAGE_LINK_RE = r'\!' + BRK + r'\s*\((?!\!)(<.*?>|([^")]+"[^"]*"|[^\)]*))\)'
-# ![alttxt](http://x.com/) or ![alttxt](<http://x.com/>)
-
-ITEM_LINK_RE = r'\!' + BRK + r'\s*\(\!(<.*?>|([^")]+"[^"]*"|[^\)]*))\)'
-# ![alttxt](!itemid) or ![alttxt](!<itemid>)
 
 class ItemPattern(LinkPattern):
 	""" Return a img element from the given match. """
@@ -140,28 +128,10 @@ class ItemPattern(LinkPattern):
 		div = markdown.util.etree.Element("div")
 		div.text = "Embedded content not available in this static version. Please click on the link instead to view the embedded content: "
 
+		item_id = m.group(3)[1:]
 		a = markdown.util.etree.SubElement(div,"a")
-		src_parts = m.group(9).split()
-		if src_parts:
-			src = src_parts[0]
-			if src[0] == "<" and src[-1] == ">":
-				src = src[1:-1]
-			item_id = src
-			if not(self.target.site.source.item_exists(item_id)):
-					self.target.log("Link target not found: " + item_id, Logtype.WARNING) #TODO: output the filename
-			a.set('href', item_id + ".static.html")
-			a.text = item_id
-		else:
-			a.set('href', "")
-		if len(src_parts) > 1:
-			a.set('title', dequote(self.unescape(" ".join(src_parts[1:]))))
-
-		if self.markdown.enable_attributes:
-			truealt = markdown.inlinepatterns.handleAttributes(m.group(2), a)
-		else:
-			truealt = m.group(2)
-
-		a.set('alt', self.unescape(truealt))
+		a.set('href', item_id + ".static.html")
+		a.text = item_id
 
 		return div
 
@@ -172,19 +142,19 @@ class InlineItemExtension(Extension):
 
 	def extendMarkdown(self, md, md_globals):
 		""" Override existing Processors. """
-		md.inlinePatterns['image_link'] = ImagePattern(IMAGE_LINK_RE, md)
-		md.inlinePatterns.add('item_link', ItemPattern(ITEM_LINK_RE, md, self.target),'>image_link')
+		md.inlinePatterns['image_link'] = ImagePattern(extractor.RE_MD_IMAGE_LINK, md)
+		md.inlinePatterns.add('item_link', ItemPattern(extractor.RE_MD_ITEM_LINK, md, self.target),'>image_link')
 
-class LinkCheckExtension(Extension):
+class LinkExtension(Extension):
 	def __init__(self, target, item):
 		self.target = target
 		self.item = item
 
 	def extendMarkdown(self, md, md_globals):
 		# Insert instance of 'mypattern' before 'references' pattern
-		md.treeprocessors.add("linkcheck", LinkCheckTreeprocessor(self.target,item), "_end")
+		md.treeprocessors.add("linkcheck", LinkTreeprocessor(self.target,self.item), "_end")
 
-class LinkCheckTreeprocessor(Treeprocessor):
+class LinkTreeprocessor(Treeprocessor):
 	def __init__(self, target, item):
 		self.target = target
 		self.item = item
