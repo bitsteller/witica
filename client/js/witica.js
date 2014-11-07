@@ -16,7 +16,7 @@ Witica.util = Witica.util || {};
 /*-----------------------------------------*/
 
 Witica.VERSION = "0.8.3"
-Witica.CACHESIZE = 10;
+Witica.CACHESIZE = 100;
 
 Witica.itemcache = new Array();
 Witica._knownHashes = new Array();
@@ -197,8 +197,9 @@ Witica.Item.prototype._loadMeta = function(hash) {
 		var done = 4, ok = 200;
 		if (http_request.readyState == done) {
 			if (http_request.status == ok) {
-				this.metadata = JSON.parse(http_request.responseText);
-				this.contentfiles = this.metadata["witica:contentfiles"];
+				var metadata = JSON.parse(http_request.responseText);
+				this.contentfiles = metadata["witica:contentfiles"];
+				this.metadata = this._processMetadata(metadata);
 			}
 			this.isLoaded = true;
 			this.hash = hash;
@@ -206,6 +207,35 @@ Witica.Item.prototype._loadMeta = function(hash) {
 		}
 	}.bind(this);
 	http_request.send(null);
+};
+
+Witica.Item.prototype._processMetadata = function (metadata) {
+	if (typeof metadata == 'string' || metadata instanceof String) {
+		if (/^!(?:.\/)?(?!meta\/)[^\n@.]+$/.test(metadata)) {
+			var item_id = metadata.substring(1);
+			return Witica.getItem(item_id);
+		}
+		else {
+			return metadata;
+		}
+	}
+	else if (metadata instanceof Array) {
+		list = [];
+		for (value in metadata) {
+			list.push(this._processMetadata(value));
+		}
+		return list;
+	}
+	else if (metadata instanceof Object) {
+		obj = {};
+		for (key in metadata) {
+			obj[key] = this._processMetadata(metadata[key]);
+		}
+		return obj;
+	}
+	else {
+		return metadata;
+	}
 };
 
 Witica.Item.prototype.update = function () {
