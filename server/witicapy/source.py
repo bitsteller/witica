@@ -275,10 +275,10 @@ class Dropbox(Source):
 			return delta["cursor"]
 
 	def get_abs_meta_filename(self, local_filename):
-		return self.get_absolute_path('meta' + os.sep + local_filename)
+		return self.get_absolute_path(os.path.join('meta' + os.sep + local_filename))
 
 	def get_absolute_path(self, localpath):
-		return os.path.abspath(self.source_dir + os.sep  + localpath)
+		return os.path.abspath(os.path.join(self.source_dir, localpath))
 
 	def get_local_path(self, absolutepath):
 		if absolutepath.startswith(self.get_absolute_path("")):
@@ -315,13 +315,12 @@ class SourceItemIterable(object):
 					item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
 					if item_id:
 						item_id = item_id.group(1)
-					else:
-						break #skip invalid item
-					if item_id != last_item_id and self.source.item_exists(item_id):
-						if count == key:
-							return SourceItem(self.source, item_id)
-						count += 1
-						last_item_id = item_id
+						if item_id != last_item_id and self.source.item_exists(item_id):#only count valid items
+							if count == key:
+								return SourceItem(self.source, item_id)
+							count += 1
+							last_item_id = item_id
+					
 			raise (IndexError("Index out of range (" + str(key) + ")"))
 		elif isinstance(key, basestring):
 			if self.source.item_exists(key):
@@ -340,11 +339,9 @@ class SourceItemIterable(object):
 				item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
 				if item_id:
 					item_id = item_id.group(1)
-				else:
-					break #skip invalid item
-				if item_id != last_item_id and self.source.item_exists(item_id):
-					count += 1
-					last_item_id = item_id
+					if item_id != last_item_id and self.source.item_exists(item_id):#only count valid items
+						count += 1
+						last_item_id = item_id
 		return count
 
 	def get_items(self, itemidpattern):
