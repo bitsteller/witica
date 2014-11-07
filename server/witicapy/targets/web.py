@@ -6,7 +6,7 @@ from markdown.inlinepatterns import LinkPattern, ImagePattern
 from markdown.extensions import Extension
 
 from witicapy import *
-from witicapy.util import throw, sstr
+from witicapy.util import throw, sstr, get_cache_folder
 from witicapy.source import MetaChanged, ItemChanged, ItemRemoved
 from witicapy.log import *
 from witicapy.metadata import extractor
@@ -14,7 +14,7 @@ from witicapy.targets.target import Target
 from witicapy.check import IntegrityChecker, Severity
 
 
-cacheFolder = "Cache/Target"
+cache_folder = get_cache_folder("Target")
 
 class WebTarget(Target):
 	def __init__(self, site, target_id, config):

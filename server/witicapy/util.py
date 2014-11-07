@@ -5,6 +5,7 @@ from collections import deque
 from abc import ABCMeta, abstractmethod
 from threading import Event as TEvent
 import time
+import platform
 
 from witicapy.log import *
 
@@ -31,6 +32,14 @@ def suni(obj):
 		return unicode(obj)
 	except UnicodeDecodeError:
 		return unicode(str(obj).decode('utf-8'))
+
+def get_cache_folder(name):
+	if platform.system() == "Darwin":
+		return os.path.expanduser(os.path.join("~/Library/Caches/org.witica",name))
+	elif platform.system() == "Linux":
+		return os.path.expanduser(os.path.join("~/.witica/Cache",name))
+	else: #use working dir
+		return os.path.join("Cache",name)
 
 class Event(object):
 	

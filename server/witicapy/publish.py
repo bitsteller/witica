@@ -8,11 +8,11 @@ from threading import Event as TEvent
 import keyring, getpass
 import ftplib
 
-from witicapy.util import throw, AsyncWorker, sstr
+from witicapy.util import throw, AsyncWorker, sstr, get_cache_folder
 from witicapy import *
 from witicapy.log import *
 
-cacheFolder = "Cache/Target"
+cache_folder = get_cache_folder("Target")
 
 class Publish(AsyncWorker):
 	__metaclass__ = ABCMeta
@@ -64,7 +64,7 @@ class Publish(AsyncWorker):
 		self.enqueue_event(self,(None,server_path))
 
 	def get_state_filename(self):
-		return cacheFolder + os.sep + self.source_id + "." + self.target_id + "@" + self.publish_id + ".publish"
+		return cache_folder + os.sep + self.source_id + "." + self.target_id + "@" + self.publish_id + ".publish"
 
 	@staticmethod
 	def construct_from_json (source_id, target_id, config):

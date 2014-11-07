@@ -5,14 +5,14 @@ from datetime import datetime
 from threading import Lock
 from inspect import isclass, getmembers
 
-from witicapy.util import Event, throw, AsyncWorker, sstr
+from witicapy.util import Event, throw, AsyncWorker, sstr, get_cache_folder
 from witicapy.publish import Publish
 from witicapy.source import MetaChanged, ItemChanged, ItemRemoved
 from witicapy import *
 from witicapy.log import *
 
 
-cacheFolder = "Cache/Target"
+cache_folder = get_cache_folder("Target")
 
 registered_targets = {};
 
@@ -146,10 +146,10 @@ class Target(AsyncWorker):
 			p.unpublish_file(filename)
 
 	def get_target_state_filename(self):
-		return cacheFolder + os.sep + self.site.source.source_id + "." + self.target_id + ".target"
+		return cache_folder + os.sep + self.site.source.source_id + "." + self.target_id + ".target"
 
 	def get_target_dir(self):
-		return cacheFolder + os.sep + self.site.source.source_id + "." + self.target_id
+		return cache_folder + os.sep + self.site.source.source_id + "." + self.target_id
 
 	def get_abs_meta_filename(self, local_filename):
 		return self.get_absolute_path('meta' + os.sep + local_filename)

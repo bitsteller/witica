@@ -10,13 +10,13 @@ from sys import modules
 # Include the Dropbox SDK libraries
 from dropbox import client, rest, session
 
-from witicapy.util import Event, sstr, throw
+from witicapy.util import Event, sstr, throw, get_cache_folder
 from witicapy import *
 from witicapy.log import *
 from witicapy.metadata import extractor
 
 
-cache_folder = "Cache" + os.sep + "Source"
+cache_folder = get_cache_folder("Source")
 
 class Source(Loggable):
 	"""Abstract source class representing any storage containing items"""
@@ -25,6 +25,7 @@ class Source(Loggable):
 
 	def __init__(self, source_id, config):
 		self.source_id = source_id
+
 		self.items = SourceItemIterable(self)
 		self.log_id = source_id
 		self.changeEvent = Event()
