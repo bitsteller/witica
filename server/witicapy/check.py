@@ -65,8 +65,9 @@ class IntegrityChecker(Loggable):
 		faults = []
 
 		if isinstance(metadata, basestring):
-			if re.match(extractor.RE_ITEM_REFERENCE, metadata):
-				item_id = metadata[1:]
+			item_id = metadata
+			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+				item_id = item.source.resolve_reference(item_id,self.item)
 				#check target exists
 				if not(item.source.item_exists(item_id)):
 					faults.append(TargetNotFoundFault("Referenced item '" + metadata + "' in metadata of item '" + item.item_id +  "' was not found in the source '" + item.source.source_id + "'.", item))
@@ -114,7 +115,9 @@ class ItemPattern(LinkPattern):
 		self.faults = faults
 
 	def handleMatch(self, m):		
-		item_id = m.group(3)[1:]
+		item_id = m.group(3)
+		if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+			item_id = self.item.source.resolve_reference(item_id,self.item)
 		#check target exists
 		if not(self.item.source.item_exists(item_id)):
 			self.faults.append(TargetNotFoundFault("Embedded item '" + item_id + "' in file '" + self.srcfile + "' was not found in the source '" + self.item.source.source_id + "'.", self.item))
@@ -162,11 +165,7 @@ class LinkTreeprocessor(Treeprocessor):
 		for a in root.findall(".//a"):
 			item_id = a.get("href")
 			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
-				if item_id.startswith("!./"): #expand relative item id
-					prefix = self.item.item_id.rpartition("/")[0]
-					item_id = prefix + "/" + item_id[3:]
-				else:
-					item_id = item_id[1:]
+				item_id = self.item.source.resolve_reference(item_id,self.item)
 				#check if exists
 				if not(self.item.source.item_exists(item_id)):
 					self.faults.append(TargetNotFoundFault("Link target '" + item_id + "' in file '" + self.srcfile + " was not found in the source '" + self.item.source.source_id + "'.", self.item))

@@ -108,7 +108,7 @@ class StaticHtmlTarget(Target):
 			#split title and body part
 			title, mdbody = re.match(extractor.RE_MD_SPLIT_TITLE_BODY,mdstring).groups()
 			link_ext = LinkExtension(self,item)
-			inline_item_ext = InlineItemExtension(self)
+			inline_item_ext = InlineItemExtension(self,item)
 			html = unicode(markdown.markdown(mdbody, extensions = [link_ext, inline_item_ext]))
 		except Exception, e:
 			throw(IOError,"Markdown file '" + sstr(srcfile) + "' has invalid syntax.", e)
@@ -120,15 +120,19 @@ class StaticHtmlTarget(Target):
 
 class ItemPattern(LinkPattern):
 	""" Return a img element from the given match. """
-	def __init__(self, pattern, md, target):
+	def __init__(self, pattern, md, target, item):
 		LinkPattern.__init__(self, pattern, md)
 		self.target = target
+		self.item = item
 
 	def handleMatch(self, m):
 		div = markdown.util.etree.Element("div")
 		div.text = "Embedded content not available in this static version. Please click on the link instead to view the embedded content: "
 
-		item_id = m.group(3)[1:]
+		item_id = m.group(3)
+		if re.match(extractor.RE_ITEM_REFERENCE, item_id):
+				item_id = self.target.resolve_reference(item_id,self.item)
+
 		a = markdown.util.etree.SubElement(div,"a")
 		a.set('href', item_id + ".static.html")
 		a.text = item_id
@@ -137,13 +141,14 @@ class ItemPattern(LinkPattern):
 
 class InlineItemExtension(Extension):
 	""" add inline views to markdown """
-	def __init__(self, target):
+	def __init__(self, target, item):
 		self.target = target
+		self.item = item
 
 	def extendMarkdown(self, md, md_globals):
 		""" Override existing Processors. """
 		md.inlinePatterns['image_link'] = ImagePattern(extractor.RE_MD_IMAGE_LINK, md)
-		md.inlinePatterns.add('item_link', ItemPattern(extractor.RE_MD_ITEM_LINK, md, self.target),'>image_link')
+		md.inlinePatterns.add('item_link', ItemPattern(extractor.RE_MD_ITEM_LINK, md, self.target, self.item),'>image_link')
 
 class LinkExtension(Extension):
 	def __init__(self, target, item):
@@ -163,10 +168,6 @@ class LinkTreeprocessor(Treeprocessor):
 		for a in root.findall(".//a"):
 			item_id = a.get("href")
 			if re.match(extractor.RE_ITEM_REFERENCE, item_id):
-				if item_id.startswith("!./"): #expand relative item id
-					prefix = self.item.item_id.rpartition("/")[0]
-					item_id = prefix + "/" + item_id[3:]
-				else:
-					item_id = item_id[1:]
+				item_id = self.target.resolve_reference(item_id,self.item)
 				a.set("href", item_id + ".static.html")
 		return root

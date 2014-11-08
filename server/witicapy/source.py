@@ -81,6 +81,16 @@ class Source(Loggable):
 	def item_exists(self,item_id):
 		return SourceItem(self,item_id).exists
 
+	def resolve_reference(self,reference,item):
+		if re.match(extractor.RE_ITEM_REFERENCE, reference):
+			if reference.startswith("!./"): #expand relative item id
+				prefix = item.item_id.rpartition("/")[0]
+				return prefix + "/" + reference[3:]
+			else:
+				return reference[1:]
+		else:
+			raise ValueError("'" + reference + "' is not a valid reference")
+
 	@staticmethod
 	def construct_from_json (source_id, config):
 		classes = Source.get_classes()

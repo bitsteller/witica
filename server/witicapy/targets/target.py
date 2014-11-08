@@ -10,6 +10,7 @@ from witicapy.publish import Publish
 from witicapy.source import MetaChanged, ItemChanged, ItemRemoved
 from witicapy import *
 from witicapy.log import *
+from witicapy.metadata import extractor
 
 
 cache_folder = get_cache_folder("Target")
@@ -163,6 +164,9 @@ class Target(AsyncWorker):
 			return absolutepath[i+1:]
 		else:
 			raise ValueError("'" + absolutepath + "'' is no valid absolute path inside the target '" + self.target_id + "'.")
+
+	def resolve_reference(self,reference,item):
+		return self.site.source.resolve_reference(reference,item)
 
 	target_state_filename = property(get_target_state_filename)
 	target_dir = property(get_target_dir)
