@@ -220,14 +220,14 @@ Witica.Item.prototype._processMetadata = function (metadata) {
 		}
 	}
 	else if (metadata instanceof Array) {
-		list = [];
-		for (value in metadata) {
-			list.push(this._processMetadata(value));
+		var list = [];
+		for (var i = 0; i < metadata.length; i++) {
+			list.push(this._processMetadata(metadata[i]));
 		}
 		return list;
 	}
 	else if (metadata instanceof Object) {
-		obj = {};
+		var obj = {};
 		for (key in metadata) {
 			obj[key] = this._processMetadata(metadata[key]);
 		}
