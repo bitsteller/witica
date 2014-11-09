@@ -85,7 +85,10 @@ class Source(Loggable):
 		if re.match(extractor.RE_ITEM_REFERENCE, reference):
 			if reference.startswith("!./"): #expand relative item id
 				prefix = item.item_id.rpartition("/")[0]
-				return prefix + "/" + reference[3:]
+				if prefix != "":
+					return prefix + "/" + reference[3:]
+				else:
+					return reference[3:]
 			else:
 				return reference[1:]
 		else:
@@ -431,11 +434,7 @@ class SourceItem(Loggable):
 	def postprocess_metadata(self, metadata):
 		if isinstance(metadata, basestring):
 			if re.match(extractor.RE_ITEM_REFERENCE, metadata):
-				if metadata.startswith("!./"): #expand relative item id
-					prefix = self.item_id.rpartition("/")[0]
-					return "!" + prefix + "/" + metadata[3:]
-				else:
-					return metadata
+				return "!" + self.source.resolve_reference(metadata,self)
 			else:
 				return metadata
 		elif isinstance(metadata, list):
