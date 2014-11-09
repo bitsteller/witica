@@ -486,8 +486,8 @@ Witica.View.prototype = {
 			if (oldRenderer != null) {
 				oldRenderer.stopRendering();
 				oldRenderer.unrender(this.item);
-				if (typeof this.deinit == 'function') {
-					this.deinit(this.renderer);
+				if (typeof oldRenderer.deinit == 'function') {
+					oldRenderer.deinit(this.renderer);
 				}
 			}
 			this.renderer.initWithItem(this, this.item, oldRenderer, this.params);
