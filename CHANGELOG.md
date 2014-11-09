@@ -4,6 +4,7 @@
 * FIX: relative links were not working in some places
 * FIX: fixes a serious issue in metadata processing (witica.js) that could cause corrupted metadata
 * FIX: deinit() is now called on the correct renderer
+* FIX: relative links now also work for items in root directory
 
 ## Version 0.8.3 (Alpha 3)
 
