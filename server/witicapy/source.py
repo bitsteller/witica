@@ -81,16 +81,27 @@ class Source(Loggable):
 	def item_exists(self,item_id):
 		return SourceItem(self,item_id).exists
 
-	def resolve_reference(self,reference,item):
+	def resolve_reference(self,reference,item, allow_patterns = False):
 		if re.match(extractor.RE_ITEM_REFERENCE, reference):
+			itempattern = ""
 			if reference.startswith("!./"): #expand relative item id
 				prefix = item.item_id.rpartition("/")[0]
 				if prefix != "":
-					return prefix + "/" + reference[3:]
+					itempattern = prefix + "/" + reference[3:]
 				else:
-					return reference[3:]
+					itempattern = reference[3:]
 			else:
-				return reference[1:]
+				itempattern =  reference[1:]
+
+			if allow_patterns:
+				matching_items = self.items.get_items(itempattern)
+				if len(matching_items) > 0:
+					matching_item_ids = [item.item_id for item in matching_items]
+					return matching_item_ids
+				else:
+					return itempattern
+			else:
+				return itempattern
 		else:
 			raise ValueError("'" + reference + "' is not a valid reference")
 
@@ -434,11 +445,22 @@ class SourceItem(Loggable):
 	def postprocess_metadata(self, metadata):
 		if isinstance(metadata, basestring):
 			if re.match(extractor.RE_ITEM_REFERENCE, metadata):
-				return "!" + self.source.resolve_reference(metadata,self)
+				matching_item_ids = self.source.resolve_reference(metadata,self,allow_patterns=True)
+				if isinstance(matching_item_ids, list):
+					return ["!" + item_id for item_id in matching_item_ids]
+				else:
+					return matching_item_ids #only one id
 			else:
 				return metadata
 		elif isinstance(metadata, list):
-			return [self.postprocess_metadata(x) for x in metadata]
+			l = []
+			for x in metadata:
+				processed = self.postprocess_metadata(x)
+				if isinstance(x, basestring) and isinstance(processed, list):
+					l.extend(processed) #if item pattern was extended to multiple item ids extend list
+				else:
+					l.append(processed)
+			return l
 		elif isinstance(metadata, dict):
 			return {k: self.postprocess_metadata(v) for k,v in metadata.items()}
 		else:

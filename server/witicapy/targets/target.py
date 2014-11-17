@@ -165,8 +165,8 @@ class Target(AsyncWorker):
 		else:
 			raise ValueError("'" + absolutepath + "'' is no valid absolute path inside the target '" + self.target_id + "'.")
 
-	def resolve_reference(self,reference,item):
-		return self.site.source.resolve_reference(reference,item)
+	def resolve_reference(self, reference, item, allow_patterns = False):
+		return self.site.source.resolve_reference(reference,item,allow_patterns)
 
 	target_state_filename = property(get_target_state_filename)
 	target_dir = property(get_target_dir)
