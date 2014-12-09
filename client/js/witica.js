@@ -453,7 +453,7 @@ Witica.View.prototype = {
 	_showLoadedItem: function () {
 		//show error if item doesn't exist
 		if (!this.item.exists()) {
-			this.showErrorMessage("Error 404: Item not found", "Sorry, but the item with the ID '" + this.item.itemId + "' was not found.");
+			this.showErrorMessage("Item not found", "Sorry, but the item with the ID '" + this.item.itemId + "' was not found.", 404);
 			return;
 		}
 
@@ -472,7 +472,7 @@ Witica.View.prototype = {
 			}
 		};
 		if (newRendererClass == null) {
-			this.showErrorMessage("Error 404: Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' cannot be displayed, because no appropriate renderer was not found. " + '<br/><br/>Try the following: <ul><li>Click <a href="index.html">here</a> to go back to the start page.</li></ul>');
+			this.showErrorMessage("Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' cannot be displayed, because no appropriate renderer was not found. " + '<br/><br/>Try the following: <ul><li>Click <a href="index.html">here</a> to go back to the start page.</li></ul>', 404);
 			return;
 		}
 
@@ -536,11 +536,12 @@ Witica.View.prototype = {
 		};
 	},
 
-	showErrorMessage: function (title, body) {
+	showErrorMessage: function (title, body, errorcode) {
 		var error = {};
 		error.type = "error";
-		error.title = title
+		error.title = title;
 		error.description = body;
+		error.errorcode = errorcode;
 		errorItem = Witica.createVirtualItem(error);
 		this.showItem(errorItem);
 	}
@@ -557,7 +558,7 @@ Witica.Renderer = function (){
 Witica.Renderer.prototype = {
 	initWithItem: function (view, item, previousRenderer, params) {
 		if (this.rendered) {
-			this.view.showErrorMessage("Error", "Renderer is already initialized.");
+			this.view.showErrorMessage("Error", "Renderer is already initialized.", 403);
 			return;
 		}
 
@@ -579,12 +580,12 @@ Witica.Renderer.prototype = {
 			this.rendered = true;
 		}
 		else {
-			this.view.showErrorMessage("Error 404: Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.");
+			this.view.showErrorMessage("Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.", 404);
 		}
 	},
 	changeItem: function (item, params) {
 		if (!this.rendered) {
-			this.view.showErrorMessage("Error", "Renderer is not initialized.");
+			this.view.showErrorMessage("Not initialized", "Renderer is not initialized.", 403);
 			return;
 		}
 
@@ -602,7 +603,7 @@ Witica.Renderer.prototype = {
 			this.render(item);
 		}
 		else {
-			this.view.showErrorMessage("Error 404: Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.");
+			this.view.showErrorMessage("Not loaded", "Sorry, but the item with the ID '" + this.item.itemId + "' was not loaded.", 404);
 			return;
 		}
 	},
