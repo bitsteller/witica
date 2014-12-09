@@ -189,9 +189,11 @@ class Dropbox(Source):
 	def link(self):
 		request_token = self.session.obtain_request_token()
 		url = self.session.build_authorize_url(request_token)
+		Logger.get_printlock().acquire()
 		print "url:", url
 		print "Please authorize in the browser. After you're done, press enter."
 		raw_input()
+		Logger.get_printlock().release()
 
 		self.session.obtain_access_token(request_token)
 		self.write_state()

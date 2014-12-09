@@ -96,13 +96,18 @@ class FTPPublish(Publish):
 			prompt = '%s [%s]|%s: ' % fmt
 		else:
 			prompt = '%s %s|%s: ' % fmt
+
+		Logger.get_printlock().acquire()
 		while True:
 			ans = raw_input(prompt).lower()
 			if ans == '' and allow_empty:
+				Logger.get_printlock().release()
 				return default
 			elif ans == 'y':
+				Logger.get_printlock().release()
 				return True
 			elif ans == 'n':
+				Logger.get_printlock().release()
 				return False
 			else:
 				print("Please enter y or n.")

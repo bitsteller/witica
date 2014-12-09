@@ -1,7 +1,7 @@
 # coding=utf8
 from datetime import datetime
 from Queue import Queue, Empty
-from threading import Thread
+from threading import Thread, Lock
 from threading import Event as TEvent
 import hashlib
 import sys,traceback, re
@@ -48,6 +48,7 @@ class Logger(object):
 		self.sendercolors = dict()
 		self.worker_thread = Thread(target=self.work,name = "Logging thread")
 		self.last_date = datetime.now().strftime('%Y-%m-%d')
+		self.printlock = Lock()
 
 	@staticmethod
 	def start(verbose=True):
@@ -95,6 +96,10 @@ class Logger(object):
 		global _logger
 		return _logger.worker_thread
 
+	@staticmethod
+	def get_printlock():
+		return _logger.printlock
+
 	def printmsg(self,senderid,msg,logtype=Logtype.NONE):
 		current_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -122,8 +127,11 @@ class Logger(object):
 
 	def work(self):
 		while not self.pending_messages.empty() or not self._stop.is_set():
-			try:
-				senderid, msg, logtype = self.pending_messages.get(block=True, timeout = 1)
-				self.printmsg(senderid,msg,logtype)
-			except Empty:
-				pass
+			if self.printlock.acquire(False):
+				try:
+					senderid, msg, logtype = self.pending_messages.get(block=True, timeout = 1)
+					self.printmsg(senderid,msg,logtype)
+				except Empty:
+					pass
+				finally:
+					self.printlock.release()
