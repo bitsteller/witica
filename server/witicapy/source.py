@@ -81,7 +81,7 @@ class Source(Loggable):
 	def item_exists(self,item_id):
 		return SourceItem(self,item_id).exists
 
-	def resolve_reference(self,reference,item, allow_patterns = False):
+	def resolve_reference(self, reference, item, allow_patterns = False):
 		if re.match(extractor.RE_ITEM_REFERENCE, reference):
 			itempattern = ""
 			if reference.startswith("!./"): #expand relative item id
@@ -97,7 +97,10 @@ class Source(Loggable):
 				matching_items = self.items.get_items(itempattern)
 				if len(matching_items) > 0:
 					matching_item_ids = [item.item_id for item in matching_items]
-					return matching_item_ids
+					if len(matching_item_ids) == 1:
+						return matching_item_ids[0]
+					else:
+						return matching_item_ids
 				else:
 					return itempattern
 			else:
@@ -449,7 +452,7 @@ class SourceItem(Loggable):
 				if isinstance(matching_item_ids, list):
 					return ["!" + item_id for item_id in matching_item_ids]
 				else:
-					return matching_item_ids #only one id
+					return "!" + matching_item_ids #only one id
 			else:
 				return metadata
 		elif isinstance(metadata, list):
