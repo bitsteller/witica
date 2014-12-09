@@ -393,7 +393,6 @@ Witica.getItem = function (itemId) {
 	//try to find in cache
 	for (var i = Witica.itemcache.length - 1; i >= 0; i--) {
 		if (Witica.itemcache[i].itemId == itemId) {
-			Witica.itemcache[i].update();
 			return Witica.itemcache[i];
 		}
 	};
