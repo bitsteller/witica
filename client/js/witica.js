@@ -457,6 +457,11 @@ Witica.View.prototype = {
 			return;
 		}
 
+		//set title
+		if (this.item.metadata.title) {
+			this.setTitle(this.item.metadata.title);
+		}
+
 		//find appropriate renderer
 		var oldRenderer = this.renderer;
 		var newRendererClass = null;
