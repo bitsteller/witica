@@ -431,6 +431,9 @@ Witica.View = function (element){
 
 Witica.View.prototype = {
 	showItem: function (item, params) {
+		//stop listening for updates of the previous item
+		this._itemLoadRequest && this._itemLoadRequest.abort();
+
 		//update hash if main view and item not virtual
 		if (this == Witica.mainView && (!item.virtual)) {
 			window.onhashchange = null;
@@ -439,10 +442,7 @@ Witica.View.prototype = {
 			window.onhashchange = Witica.loadItem;
 		}
 
-		//stop listening for updates of the previous item
-		if (this.item) {
-			this.item.loadFinished.removeListener(this, this._showLoadedItem);
-		}
+		//show new item
 		this.item = item;
 		this.params = params;
 		this._scrollToTopOnNextRenderRequest = true; //scroll to top when showItem() was called but not on item udpate
