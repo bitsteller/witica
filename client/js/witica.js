@@ -544,6 +544,23 @@ Witica.View.prototype = {
 		error.errorcode = errorcode;
 		errorItem = Witica.createVirtualItem(error);
 		this.showItem(errorItem);
+	},
+
+	setTitle: function (title) {
+		this._title = title;
+		if (this == Witica.mainView) {
+			document.title = this._title;
+		}
+	},
+
+	getTitle: function () {
+		if (this._title) {
+			return this._title;
+		}
+		else {
+			return "(no title)";
+		}	
+	},
 	}
 };
 
