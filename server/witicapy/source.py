@@ -283,19 +283,20 @@ class Dropbox(Source):
 			if path.startswith("/"):
 				path = path[1:]
 
-			if re.match(extractor.RE_METAFILE, path): #site metadata change
-				self.log("New metafile change detected:" + sstr(path), Logtype.INFO)
-				change_event(self,MetaChanged(self,path.partition("meta/")[2]))
-			elif re.match(extractor.RE_ITEMFILE, path):
-				item = SourceItem(self, self.get_item_id(path))
-				if item.exists:
-					self.log("New item change detected:" + sstr(path), Logtype.INFO)
-					change_event(self,ItemChanged(self, self.get_item_id(path), path))
-				else:
-					self.log("Removed item detected:" + sstr(path), Logtype.INFO)
-					change_event(self,ItemRemoved(self, self.get_item_id(path)))
-			else:
-				self.log("File '" + path + "' is not supported and will be ignored. Filenames containing '@' are currently not supported.", Logtype.WARNING)
+			if metadata == None or metadata["is_dir"] == False:
+				if re.match(extractor.RE_METAFILE, path): #site metadata change
+					self.log("New metafile change detected:" + sstr(path), Logtype.INFO)
+					change_event(self,MetaChanged(self,path.partition("meta/")[2]))
+				elif re.match(extractor.RE_ITEMFILE, path):
+					item = SourceItem(self, self.get_item_id(path))
+					if item.exists:
+						self.log("New item change detected:" + sstr(path), Logtype.INFO)
+						change_event(self,ItemChanged(self, self.get_item_id(path), path))
+					else:
+						self.log("Removed item detected:" + sstr(path), Logtype.INFO)
+						change_event(self,ItemRemoved(self, self.get_item_id(path)))
+				elif not(metadata == None) and metadata["is_dir"] == False:
+					self.log("File '" + path + "' is not supported and will be ignored. Filenames containing '@' are currently not supported.", Logtype.WARNING)
 
 			if self._stop.is_set(): return
 
