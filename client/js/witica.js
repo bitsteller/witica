@@ -566,6 +566,19 @@ Witica.View.prototype = {
 			return "(no title)";
 		}	
 	},
+
+	toString: function (depth) {
+   		depth = typeof depth !== 'undefined' ? depth : 0;
+   		var str = "";
+   		for (var i = 0; i < depth; i++) {
+   			str += "  ";		
+   		};
+		str += "|-- " + this.getTitle();
+
+		for (var i = 0; i < this.subviews.length; i++) {
+			str +=  "\n" + this.subviews[i].toString(depth+1);
+		}
+		return str;
 	}
 };
 
