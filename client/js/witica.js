@@ -459,7 +459,10 @@ Witica.View.prototype = {
 
 		//set title
 		if (this.item.metadata.title) {
-			this.setTitle(this.item.metadata.title);
+			this.setTitle(this.item.metadata.title)
+		}
+		else {
+			this.setTitle("(no title)");
 		}
 
 		//find appropriate renderer
