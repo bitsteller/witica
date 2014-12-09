@@ -144,9 +144,9 @@ class ImageExtractor(MetadataExtractor):
 
 			if ("ImageDescription" in exif or "UserComment" in exif):
 				if "UserComment" in exif:
-					meta["description"] = exif["UserComment"]
+					meta["title"] = exif["UserComment"]
 				if "ImageDescription" in exif:
-					meta["description"] = exif["ImageDescription"]
+					meta["title"] = exif["ImageDescription"]
 			if ("Make" in exif or "Model" in exif):
 				meta["camera"] = (exif["Make"] if "Make" in exif else "") + " " + (exif["Model"] if "Model" in exif else "")
 			if ("Orientation" in exif):
