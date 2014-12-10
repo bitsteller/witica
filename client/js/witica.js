@@ -25,6 +25,7 @@ Witica.registeredRenderers = new Array();
 Witica.mainView = null;
 Witica.defaultItemId = "";
 Witica._virtualItemCount = 0;
+Witica._prefix = "";
 
 /*-----------------------------------------*/
 /* Common extensions                       */
@@ -192,13 +193,21 @@ Witica.Item.prototype.toString = function () {
 
 Witica.Item.prototype._loadMeta = function(hash) {
 	var http_request = new XMLHttpRequest();
-	http_request.open("GET", this.itemId + ".item" + "?bustCache=" + Math.random(), true);
+	http_request.open("GET", Witica._prefix + this.itemId + ".item" + "?bustCache=" + Math.random(), true);
 	http_request.onreadystatechange = function () {
 		var done = 4, ok = 200;
 		if (http_request.readyState == done) {
 			if (http_request.status == ok) {
 				var metadata = JSON.parse(http_request.responseText);
-				this.contentfiles = metadata["witica:contentfiles"];
+				this.contentfiles = [];
+				if (metadata["witica:contentfiles"]) {
+					for (var i = 0; i < metadata["witica:contentfiles"].length; i++) {
+						var contentfile = {};
+						contentfile.filename = Witica._prefix + metadata["witica:contentfiles"][i].filename
+						contentfile.hash = metadata["witica:contentfiles"][i].hash;
+						this.contentfiles.push(contentfile);
+					}
+				}
 				this.metadata = this._processMetadata(metadata);
 			}
 			this.isLoaded = true;
@@ -244,7 +253,7 @@ Witica.Item.prototype.update = function () {
 	}
 
 	var http_request = new XMLHttpRequest();
-	http_request.open("GET", this.itemId + ".itemhash" + "?bustCache=" + Math.random(), true);
+	http_request.open("GET", Witica._prefix + this.itemId + ".itemhash" + "?bustCache=" + Math.random(), true);
 	http_request.onreadystatechange = function () {
 		var done = 4, ok = 200, notfound = 404;
 		if (http_request.readyState == done) {
@@ -703,7 +712,10 @@ Witica.registerRenderer = function (renderer, supports) {
 	Witica.registeredRenderers.push(renderObj);
 };
 
-Witica.initWitica = function (mainView, defaultItemId) {
+Witica.initWitica = function (mainView, defaultItemId, prefix) {
+	prefix = typeof prefix !== 'undefined' ? prefix : "";
+
+	Witica._prefix = prefix;
 	Witica.mainView = mainView;
 	Witica.defaultItemId = defaultItemId;
 	window.onhashchange = Witica.loadItem;
