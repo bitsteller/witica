@@ -178,7 +178,10 @@ class WebTarget(Target):
 		filename, sep, extension = srcfile.rpartition(".")
 		dstfiles = []
 
+		keep_original = False
 		if self.imgconfig["keep-original"] == "yes":
+			keep_original = True
+			util.copyfile(self.site.source.get_absolute_path(srcfile), self.get_absolute_path(srcfile))
 			dstfiles.append(srcfile)
 
 		img = Image.open(self.site.source.get_absolute_path(srcfile))
@@ -190,7 +193,7 @@ class WebTarget(Target):
 			img = Image.open(self.site.source.get_absolute_path(srcfile))
 			if variant["size"] <= max(img.size):
 				dstfile = filename + "@" + str(variant["size"]) + sep +  extension
-				if variant["size"] == max_size:
+				if not(keep_original) and variant["size"] == max_size:
 					dstfile = srcfile #save biggest variant with original filename
 				img.thumbnail((variant["size"],variant["size"]), Image.ANTIALIAS)
 				progressive = False
