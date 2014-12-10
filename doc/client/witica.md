@@ -38,14 +38,15 @@ The function takes the following arguments:
 
 **Syntax:**
 
-	Witica.initWitica(mainView, defaultItemId)
+	Witica.initWitica(mainView, defaultItemId, prefix)
 
 Initialises the witica.js client library. Has to be executed before the library is used, but after all renderers have been registered. This function also allows Witica to take over the handling of the part after the hash in the URL, such that the appropriate item is loaded into the main view when the hash part in the URL changes.
 
 The function takes the following arguments:
 
-* `mainView`: the main view that should be used to load the item specified in the URL
-* `defaultItemId`: the id of the item that should be loaded if no other item was specified in the URL (e.g. the home page)
+* `mainView`: the main view that should be used to load the item specified in the URL,
+* `defaultItemId`: the id of the item that should be loaded if no other item was specified in the URL (e.g. the home page),
+* `prefix`: an optional prefix to the WebTarget used to fetch items (for example “webtarget/“ if path in publishing section in .target file was set to “/webtarget/“)
 
 **Example:**
 

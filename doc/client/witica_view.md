@@ -71,6 +71,37 @@ Destroys all the subviews of the view, but not the view itself. For every view i
 
 The function takes no arguments.
 
+## View.setTitle()
+
+**Syntax:**
+
+	View.setTitle(title)
+
+Sets the view’s title to `title`. If the view is the `Witica.mainView` it will also automatically set the document title.
+
+The function takes the following arguments:
+
+* `title`: the title string for the view
+
+## View.getTitle()
+
+**Syntax:**
+
+	View.getTitle()
+
+Returns the current title of the view.
+
+The function takes no arguments.
+
+## View.toString()
+
+**Syntax:**
+
+	View.toString()
+
+Returns a formatted tree with the view’s title and the titles of all subviews. This function can be used for debugging to see which subviews currently exists and if views are properly destroyed and removed from the subviews when no longer needed. For example entering `Witica.mainView.toString()` in the console will print the complete tree of currently active views.
+
+The function takes no arguments.
 
 ## View.showErrorMessage()
 
