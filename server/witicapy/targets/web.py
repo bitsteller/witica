@@ -140,7 +140,8 @@ class WebTarget(Target):
 			self.convert_md2html(srcfile,dstfile,item)
 			self.publish(dstfile)
 		elif filetype == "jpg" or filetype == "jpeg":
-			old_image_files = [filename for filename in self.get_content_files(item.item_id) if r'^' + item.item_id + '@[\s\S]*.(jpg|jpeg)$'.match(filename)]
+			re_image_files = re.compile('^' + item.item_id + '@[\s\S]*.(jpg|jpeg)$')
+			old_image_files = [filename for filename in self.get_content_files(item.item_id) if re_image_files.match(filename)]
 			for filename in old_image_files:
 				self.unpublish(filename)
 				try:
@@ -191,7 +192,6 @@ class WebTarget(Target):
 				dstfile = filename + "@" + str(variant["size"]) + sep +  extension
 				if variant["size"] == max_size:
 					dstfile = srcfile #save biggest variant with original filename
-				print(dstfile)
 				img.thumbnail((variant["size"],variant["size"]), Image.ANTIALIAS)
 				progressive = False
 				if variant["progressive"] == "yes":
