@@ -4,6 +4,8 @@ import markdown
 from markdown.treeprocessors import Treeprocessor
 from markdown.inlinepatterns import LinkPattern, ImagePattern
 from markdown.extensions import Extension
+from PIL import Image, ImageFile
+
 
 from witicapy import *
 from witicapy.util import throw, sstr, get_cache_folder
@@ -19,6 +21,33 @@ cache_folder = get_cache_folder("Target")
 class WebTarget(Target):
 	def __init__(self, site, target_id, config):
 		Target.__init__(self,site,target_id, config)
+
+		self.imgconfig = { #default image config
+			"keep-original": "no",
+			"variants": [
+				{
+					"size": 2048,
+					"quality": 0.8,
+					"progressive": "yes"
+				},
+				{
+					"size": 512,
+					"quality": 0.5,
+					"progressive": "yes"
+				},
+				{
+					"size": 256,
+					"quality": 0.4,
+					"progressive": "no"
+				}
+			]
+		}
+		if "image" in self.config:
+			self.imgconfig.update(self.config["image"])
+
+		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
+		if len(sizes) > len(set(sizes)):
+			raise IOException("Configuration of target '" + target_id + "' is invalid. All image variants must have unique sizes.")
 
 	def process_event(self, change):
 		if change.__class__ == MetaChanged:
@@ -73,11 +102,21 @@ class WebTarget(Target):
 		metadata = item.metadata
 
 		#internal metadata
-		files_JSON = []
-		for f in self.get_content_files(item.item_id):
-			hashstr = sstr(hashlib.md5(open(self.get_absolute_path(f)).read()).hexdigest())
-			files_JSON.append({"filename": f, "hash": hashstr})
-		metadata["witica:contentfiles"] = files_JSON
+		files_json = []
+		contentfiles = self.get_content_files(item.item_id)
+		extensions = set([filename.rpartition(".")[2] for filename in contentfiles])
+
+		for ext in extensions:
+			variant_files = [filename for filename in contentfiles if filename.endswith("." + ext)]
+			variants = [filename.rpartition(".")[0].rpartition("@")[2] for filename in variant_files if filename.find("@") > -1]
+
+			file_json = {}
+			file_json["filename"] = item.item_id + "." + ext
+			file_json["hash"] = sstr(hashlib.md5(open(self.get_absolute_path(variant_files[0])).read()).hexdigest())
+			if len(variants) > 0:
+				file_json["variants"] = variants
+			files_json.append(file_json)
+		metadata["witica:contentfiles"] = files_json
 
 		s = json.dumps(metadata, encoding="utf-8", indent=3)
 		filename = self.get_absolute_path(item.item_id + ".item")
@@ -101,12 +140,15 @@ class WebTarget(Target):
 			self.convert_md2html(srcfile,dstfile,item)
 			self.publish(dstfile)
 		elif filetype == "jpg" or filetype == "jpeg":
-			dstfile = srcfile #keep filename
-			from PIL import Image, ImageFile
-			ImageFile.MAXBLOCK = 2**22
-			img = Image.open(self.site.source.get_absolute_path(srcfile))
-			img.save(self.get_absolute_path(dstfile), "JPEG", quality=80, optimize=True, progressive=True)
-			self.publish(dstfile)		
+			old_image_files = [filename for filename in self.get_content_files(item.item_id) if r'^' + item.item_id + '@[\s\S]*.(jpg|jpeg)$'.match(filename)]
+			for filename in old_image_files:
+				self.unpublish(filename)
+				try:
+					os.remove(self.get_absolute_path(filename))
+				except Exception, e:
+					self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
+
+			[self.publish(dstfile) for dstfile in self.convert_image(srcfile, item)]
 		else:
 			dstfile = srcfile #keep filename
 			util.copyfile(self.site.source.get_absolute_path(srcfile), self.get_absolute_path(dstfile))
@@ -130,6 +172,34 @@ class WebTarget(Target):
 
 		output_file = codecs.open(self.get_absolute_path(dstfile), "w", encoding="utf-8", errors="xmlcharrefreplace")
 		output_file.write(html)
+
+	def convert_image(self, srcfile, item):
+		filename, sep, extension = srcfile.rpartition(".")
+		dstfiles = []
+
+		if self.imgconfig["keep-original"] == "yes":
+			dstfiles.append(srcfile)
+
+		img = Image.open(self.site.source.get_absolute_path(srcfile))
+		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
+		max_size = max([size for size in sizes if size <= max(img.size)])
+
+		for variant in self.imgconfig["variants"]:
+			ImageFile.MAXBLOCK = 2**22
+			img = Image.open(self.site.source.get_absolute_path(srcfile))
+			if variant["size"] <= max(img.size):
+				dstfile = filename + "@" + str(variant["size"]) + sep +  extension
+				if variant["size"] == max_size:
+					dstfile = srcfile #save biggest variant with original filename
+				print(dstfile)
+				img.thumbnail((variant["size"],variant["size"]), Image.ANTIALIAS)
+				progressive = False
+				if variant["progressive"] == "yes":
+					progressive = True
+				img.save(self.get_absolute_path(dstfile), "JPEG", quality=int(100*variant["quality"]), optimize=True, progressive=progressive)
+				dstfiles.append(dstfile)
+
+		return dstfiles
 
 
 #markdown extensions
