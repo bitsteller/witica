@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.8.5 (Alpha 5)
+* NEW: experimental pattern matching in item references in metadata (e.g !photos/* expands to a list of references to all items in the photos folder). Be aware that this feature is experimental and the list is only updated when the item containing the reference is changed.
+* NEW: add View.setTitle() and View.getTitle()
+* NEW: View.toString() now displays the tree of subviews for easier debugging
+* NEW: Witica.initWitica() has new parameter to set path prefix of WebTarget
+* CHANGE: don’t update cached items on every access
+* CHANGE: write exif comment/description in title field
+* CHANGE: suppress output of log messages on console as long as in input mode
+* CHANGE: improve error handling, add error codes
+* FIX: don't print file not supported warning for directories
+
 ## Version 0.8.4 (Alpha 4)
 * FIX: relative links were not working in some places
 * FIX: fixes a serious issue in metadata processing (witica.js) that could cause corrupted metadata
