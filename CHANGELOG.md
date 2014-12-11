@@ -1,6 +1,12 @@
 # Changelog
 
 ## Version 0.8.5 (Alpha 5)
+* NEW: support for content variants and greatly improved content handling in witica.js
+	* new Witica.Content represents content objects, allow downloading or getting the URL for a specific variant
+	* when variant is a number automatically the variant with the next biggest number is taken (this allows to fetch image variants for a specific size)
+	* Renderer.requireContent takes a content object as the first argument or alternatively a file extension directly
+* NEW: Renderer.requireContentVariant() allows fetching specific content variants
+* NEW: Witica.Item.getContent() returns a matching content object for a file extension (or a list of file extensions)
 * NEW: witica.py generates image variants (different sizes) by default (customizable in target config)
 * NEW: experimental pattern matching in item references in metadata (e.g !photos/* expands to a list of references to all items in the photos folder). Be aware that this feature is experimental and the list is only updated when the item containing the reference is changed.
 * NEW: add View.setTitle() and View.getTitle()
