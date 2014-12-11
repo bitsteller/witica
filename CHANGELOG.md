@@ -1,6 +1,7 @@
 # Changelog
 
 ## Version 0.8.5 (Alpha 5)
+* NEW: witica.py generates image variants (different sizes) by default (customizable in target config)
 * NEW: experimental pattern matching in item references in metadata (e.g !photos/* expands to a list of references to all items in the photos folder). Be aware that this feature is experimental and the list is only updated when the item containing the reference is changed.
 * NEW: add View.setTitle() and View.getTitle()
 * NEW: View.toString() now displays the tree of subviews for easier debugging

@@ -31,13 +31,13 @@ class WebTarget(Target):
 					"progressive": "yes"
 				},
 				{
-					"size": 512,
-					"quality": 0.5,
+					"size": 1024,
+					"quality": 0.6,
 					"progressive": "yes"
 				},
 				{
-					"size": 256,
-					"quality": 0.4,
+					"size": 512,
+					"quality": 0.5,
 					"progressive": "no"
 				}
 			]
