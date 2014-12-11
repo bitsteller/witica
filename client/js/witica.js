@@ -202,10 +202,8 @@ Witica.Item.prototype._loadMeta = function(hash) {
 				this.contentfiles = [];
 				if (metadata["witica:contentfiles"]) {
 					for (var i = 0; i < metadata["witica:contentfiles"].length; i++) {
-						var contentfile = {};
-						contentfile.filename = Witica._prefix + metadata["witica:contentfiles"][i].filename
-						contentfile.hash = metadata["witica:contentfiles"][i].hash;
-						this.contentfiles.push(contentfile);
+						var content = new Witica.Content(this, metadata["witica:contentfiles"][i]);
+						this.contentfiles.push(content);
 					}
 				}
 				this.metadata = this._processMetadata(metadata);
@@ -281,6 +279,34 @@ Witica.Item.prototype.exists = function () {
 	return !(this.metadata == null);
 };
 
+Witica.Item.prototype.getContent = function(extension) {
+	var extlist = [];
+
+	if (typeof extension == "string") {
+		extlist.push(extension);
+	}
+	else if (extension instanceof Array) {
+		extlist = extension;
+	}
+
+	var contentlist = [];
+	for (var i = 0; i < this.contentfiles.length; i++) {
+		var ext = this.contentfiles[i].filename.substring(this.contentfiles[i].filename.lastIndexOf(".") + 1);
+		if (extlist.indexOf(ext) > -1) {
+			contentlist.push(this.contentfiles[i]);
+		}	
+	};
+
+	if (typeof extension == "string") {
+		return contentlist[0];
+	}
+	else if (extension instanceof Array) {
+		return contentlist;
+	}
+	return null;
+};
+
+//TODO: remove (deprecated)
 Witica.Item.prototype.downloadContent = function (filename,callback) {
 	//get file hash
 	var hash = null;
@@ -355,6 +381,77 @@ Witica.Item.prototype.requestLoad = function (update, callback) {
 
 Witica.Item.prototype.toString = function () {
 	return this.itemId;
+};
+
+Witica.Content = function (item, json) {
+	this.item = item;
+
+	this.filename = Witica._prefix + json.filename;
+	this.hash = json.hash;
+	if (json.variants) {
+		this.variants = json.variants;
+	}
+	else {
+		this.variants = [];
+	}
+}
+
+Witica.Content.prototype.getURL = function(variant) {
+	var variant_str = "";
+	if (typeof variant == 'undefined') {
+		variant_str = "";
+	}
+	else if (typeof variant == 'number') { //when variant integer, use the next integer variant bigger or equal
+		var best_variant = Infinity;
+		for (var i = 0; i < this.variants.length; i++) {
+			if (!isNaN(parseInt(this.variants[i])) && parseInt(this.variants[i]) >= variant) {
+				if (parseInt(this.variants[i]) < best_variant) {
+					best_variant = parseInt(this.variants[i]);
+				}
+			}
+		}
+		if (best_variant != Infinity) {
+			variant_str = best_variant.toString();
+		}
+	}
+	else {
+		for (var i = 0; i < this.variants.length; i++) {
+			if (this.variants[i] == variant) {
+				variant_str = this.variants[i];
+				break;
+			}
+		}
+	}
+
+	if (variant_str != "") {
+		var ext = this.filename.substring(this.filename.lastIndexOf(".") + 1);
+		var filename = this.filename.substring(0,this.filename.lastIndexOf("."));
+		return filename + "@" + variant_str + "." + ext;
+	}
+	else { //use default variant if no matching variant found
+		return this.filename;
+	}
+};
+
+Witica.Content.prototype.downloadVariant = function(variant, callback) {
+	var http_request = new XMLHttpRequest();
+	http_request.open("GET", this.getURL(variant) + "?bustCache=" + this.hash, true);
+
+	http_request.onreadystatechange = function () {
+		var done = 4, ok = 200;
+		if (http_request.readyState == done && http_request.status == ok) {
+			callback(http_request.responseText, true);
+		}
+		else if (http_request.readyState == done && http_request.status != ok) {
+			callback(null,false);
+		}
+	};
+	http_request.send(null);
+	return http_request;
+};
+
+Witica.Content.prototype.download = function(callback) {
+	return this.downloadVariant(undefined, callback);
 };
 
 Witica.createVirtualItem = function (metadata) {
@@ -654,14 +751,33 @@ Witica.Renderer.prototype = {
 			return;
 		}
 	},
-	requireContent: function(filename, callback) {
-		var request = this.item.downloadContent(filename, function (content,success) {
-			if (success) {
-				callback(content);
+	requireContentVariant: function(content, variant, callback) {
+		if (typeof content == "string") {
+			content = this.item.getContent(content);
+		}
+		else if (content instanceof Array) {
+			for (var i = 0; i < content.length; i++) {
+				this.requireContentVariant(content[i], variant, callback);
 			}
-		});
-		this.addRenderRequest(request);
-		return request;
+			return; //TODO: better return array of requests
+		}
+
+		if (content) {
+			var request = content.downloadVariant(variant, function (content,success) {
+				if (success) {
+					callback(content);
+				}
+			});
+			this.addRenderRequest(request);
+			return request;
+		}
+		else {
+			return null;
+		}
+
+	},
+	requireContent: function(content, callback) {
+		return this.requireContentVariant(content, undefined, callback);
 	},
 	requireItem: function(item, callback) {
 		var request = item.requestLoad(true, function (success) {
