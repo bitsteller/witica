@@ -7,7 +7,8 @@ The Witica client library (witica.js) gives you access to the items in a *WebTar
 
 ## Witica
 * [`Witica`](!doc/client/witica) (global functionality and initialisation)
-* [`Witica.Item`](!doc/client/witica_item) (accessing metadata and content from a *WebTarget*)
+* [`Witica.Item`](!doc/client/witica_item) (accessing metadata from a *WebTarget*)
+* [`Witica.Content`](!doc/client/witica_content) (accessing content files from a *WebTarget*)
 * [`Witica.View`](!doc/client/witica_view) (page area that can display content)
 * [`Witica.Renderer`](!doc/client/witica_renderer) (render item metadata and content)
 

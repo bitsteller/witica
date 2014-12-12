@@ -83,7 +83,11 @@ The function takes the following arguments:
 * `item`: the item to be rendered,
 * `params`: an object that tells the renderer how to renderer the content.
 
-## Renderer.requireContent()
+## Renderer.requireContentVariant()
+
+**Syntax:**
+
+	Renderer.requireContentVariant(content, variant, callback)
 
 **Syntax:**
 
@@ -95,19 +99,29 @@ Use this function when you need a content file of an item available for a part o
 
 The function takes the following arguments:
 
-* `filename`: the file to be requested, should be a content file of `Renderer.item`, 
+* `content`: the [`Witica.Content`](!doc/client/witica_content) to be requested, 
+* `variant`: the variant to be downloaded (see [`Witica.Content`](!doc/client/witica_content)`.getURL()` for more info)
 * `callback`: a callable that is called with the content of the requested file as its first argument as soon as the content files content is available.
 
 **Example:** You want to write a renderer `MyRenderer`. Inside `MyRenderer.render()` you need the html content for the item to display it.
 
-	for (var i = 0; i < this.item.contentfiles.length; i++) {
-		fn = this.item.contentfiles[i].filename;
-		if (/.html$/.test(fn)) {
-			this.requireContent(fn, function (content) {
-				//use the content of the file here to render it on the page
-			}.bind(this));
-		}
-	}
+	this.requireContent(“html”, function (content) {
+		//use the content of the file here to render it on the page
+		this.boxDiv.innerHtml = content;
+	}.bind(this));
+
+## Renderer.requireContent()
+
+**Syntax:**
+
+	Renderer.requireContent(content, callback)
+
+Downloads the default variant of content file and calls `callback()` when the download is finished. See `Renderer.requireContentVariant()` for more info.
+
+The function takes the following arguments:
+
+* `content`: the [`Witica.Content`](!doc/client/witica_content) to be requested, 
+* `callback`: a callable that is called with the content of the requested file as its first argument as soon as the content files content is available.
 
 ## Renderer.requireItem()
 

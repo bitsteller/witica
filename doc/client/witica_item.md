@@ -11,7 +11,7 @@ Represents a Witica item. An item is either an item that exists in the *WebTarge
 * `Item.isLoaded`: `true` if the the item metadata is already available, `false` if not,
 * `Item.itemId`: the item id of the item inside the WebTarget or an automatically generated string prefixed with *virtual:* for virtual items,
 * `Item.metadata`: an object containing the metadata of the item,
-* `Item.contentfiles`: a list of all content filenames belonging to the item,
+* `Item.contents`: a list of all `Witica.Content` objects belonging to the item,
 * `Item.hash`: the hash of the current version of the item, changes if the metadata or a content file is changed in the *WebTarget*,
 * `Item.lastUpdate`: an object of type `Date()` that contains the time when the item was last checked for a change (not to confuse with the time when the item in deed has been modified last in the WebTarget `Item.metadata[“last-modified”]`; can be `null` if the item is not yet loaded),
 * `Item.virtual`: `true` if the item is virtual, `false` otherwise,
@@ -41,6 +41,8 @@ The function takes no arguments.
 
 ## Item.downloadContent()
 
+**This function is deprecated since 0.8.5 (Alpha 5), use Content.download() instead!**
+
 **Syntax:**
 
 	Item.downloadContent(filename, callback)
@@ -53,6 +55,18 @@ The function takes the following arguments:
 
 * `filename`: the filename of the content file to be downloaded (must belong to the item on which the function is called),
 * `callback`: the callback function to be called after the download has been finished; the callback is called with two arguments, the first one containing the content of the downloaded file (responseText) and the second one is a boolean that is `true` when the download finished successful and `false` if not (in that case the first argument will be `null`).
+
+## Item.getContent()
+
+**Syntax:**
+
+	Item.getContent(extension)
+
+Returns a [`Witica.Content`](!doc/client/witica_content) object that matches the given file extension. Alternatively you can pass an array of extensions to get back a list of matching content objects.
+
+The function takes the following arguments:
+
+* `extension`: the file extension the content should have
 
 ## Item.requestLoad()
 
