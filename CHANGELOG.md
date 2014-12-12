@@ -17,6 +17,8 @@
 * CHANGE: suppress output of log messages on console as long as in input mode
 * CHANGE: improve error handling, add error codes
 * FIX: don't print file not supported warning for directories
+* FIX: Dropbox source could hang in endless cache refresh loop
+* FIX: Unnecessary download of files multiple times from a Dropbox source
 
 ## Version 0.8.4 (Alpha 4)
 * FIX: relative links were not working in some places

@@ -16,7 +16,7 @@ from witicapy.targets import target, web, statichtml
 from witicapy.check import IntegrityChecker
 from witicapy.util import sstr, suni, throw
 
-VERSION = "0.8.4"
+VERSION = "0.8.5"
 
 currentsite = None
 

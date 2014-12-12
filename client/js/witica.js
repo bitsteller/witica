@@ -15,7 +15,7 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "0.8.4"
+Witica.VERSION = "0.8.5"
 Witica.CACHESIZE = 100;
 
 Witica.itemcache = new Array();
