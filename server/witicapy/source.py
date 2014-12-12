@@ -472,10 +472,6 @@ class SourceItem(Loggable):
 		else:
 			return metadata
 
-	def check(self):
-		print(self.item_id + " is ok")
-		return True
-
 	files = property(_get_all_filenames)
 	itemfile = property(_get_itemfile)
 	exists = property(_exists)
