@@ -49,7 +49,8 @@ class Source(Loggable):
 		if self.continuous == False: #fetch changes only once
 			try:
 				cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
-				if cursor:
+
+				if not(cursor == None):
 					self.state["cursor"] = cursor
 					self.cursorEvent(self,self.state["cursor"])
 					self.write_state()
@@ -162,9 +163,11 @@ class Dropbox(Source):
 			self.state = json.loads(codecs.open(self.state_filename, "r", "utf-8").read())
 			if self.state["version"] != 1:
 				raise IOError("Version of source file is not compatible. Must be 1.")
+			self.cache_cursor = self.state["cursor"]
 		else:
 			self.state["version"] = 1
 			self.state["cursor"] = ""
+			self.cache_cursor = ""
 		try:
 			self.session.set_token(self.state["token_key"], self.state["token_secret"])
 		except Exception, e:
@@ -198,12 +201,9 @@ class Dropbox(Source):
 		self.session.obtain_access_token(request_token)
 		self.write_state()
 
-	def update_cache(self, cursor=None):
-		if cursor == None:
-			cursor = self.state["cursor"]
-
+	def update_cache(self):
 		if os.path.isdir(self.source_dir):
-			delta = self.api_client.delta(cursor, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
+			delta = self.api_client.delta(self.cache_cursor, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 		else:
 			os.makedirs(self.source_dir)
 			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
@@ -252,9 +252,11 @@ class Dropbox(Source):
 					self.log_exception("Downloading '" + sstr(path) + "' failed (skipping file).", Logtype.ERROR)
 
 			if self._stop.is_set(): return
+		
+		self.cache_cursor = delta["cursor"]
 
 		if delta["has_more"]:
-			self.update_cache(delta["cursor"]) #TODO: to be tested
+			self.update_cache()
 
 		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.INFO)
 
@@ -300,10 +302,11 @@ class Dropbox(Source):
 
 			if self._stop.is_set(): return
 
+		cursor = delta["cursor"]
 		if delta["has_more"]:
-			self.fetch_changes(change_event,delta["cursor"])
-		else:
-			return delta["cursor"]
+			cursor = self.fetch_changes(change_event,delta["cursor"])
+		
+		return cursor
 
 	def get_abs_meta_filename(self, local_filename):
 		return self.get_absolute_path(os.path.join('meta' + os.sep + local_filename))
