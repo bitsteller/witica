@@ -177,7 +177,8 @@ Witica.Item = function (itemId, virtual) {
 	this.isLoaded = false;
 	this.itemId = itemId;
 	this.metadata = null;
-	this.contentfiles = new Array();
+	this.contentfiles = new Array(); //TODO: deprecated
+	this.contents = new Array();
 	this.hash = null;
 	this.lastUpdate = null;
 	this.virtual = virtual;
@@ -199,13 +200,14 @@ Witica.Item.prototype._loadMeta = function(hash) {
 		if (http_request.readyState == done) {
 			if (http_request.status == ok) {
 				var metadata = JSON.parse(http_request.responseText);
-				this.contentfiles = [];
+				this.contents = [];
 				if (metadata["witica:contentfiles"]) {
 					for (var i = 0; i < metadata["witica:contentfiles"].length; i++) {
 						var content = new Witica.Content(this, metadata["witica:contentfiles"][i]);
-						this.contentfiles.push(content);
+						this.contents.push(content);
 					}
 				}
+				this.contentfiles = this.contents; //TODO: deprecated, remove alias
 				this.metadata = this._processMetadata(metadata);
 			}
 			this.isLoaded = true;
