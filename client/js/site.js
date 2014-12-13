@@ -9,15 +9,6 @@ function renderInfo (item, infoDiv) {
 	else {
 		infoDiv.innerHTML = "";
 	}
-
-	if (item.metadata.hasOwnProperty("tags")) {
-		for (var i = 0; i < item.metadata.tags.length; i++) {
-			var tagDiv = document.createElement("div");
-			tagDiv.className = "tag";
-			tagDiv.innerHTML = item.metadata.tags[i].toString();
-			infoDiv.appendChild(tagDiv);
-		};
-	}
 }
 
 /*------------------------------------------*/
