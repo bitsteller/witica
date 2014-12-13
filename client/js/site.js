@@ -1,7 +1,28 @@
 /*------------------------------------------*/
+/* general rendering functions */
+/*------------------------------------------*/
+function renderInfo (item, infoDiv) {
+	if (item.metadata.hasOwnProperty("last-modified")) {
+		var datestr = Witica.util.getHumanReadableDate(new Date(item.metadata["last-modified"]*1000));
+		infoDiv.innerHTML = "Published " + datestr + " ";
+	}
+	else {
+		infoDiv.innerHTML = "";
+	}
+
+	if (item.metadata.hasOwnProperty("tags")) {
+		for (var i = 0; i < item.metadata.tags.length; i++) {
+			var tagDiv = document.createElement("div");
+			tagDiv.className = "tag";
+			tagDiv.innerHTML = item.metadata.tags[i].toString();
+			infoDiv.appendChild(tagDiv);
+		};
+	}
+}
+
+/*------------------------------------------*/
 /* site specific renderers */
 /*------------------------------------------*/
-
 DefaultRenderer.prototype = new Witica.Renderer();
 DefaultRenderer.prototype.constructor = DefaultRenderer;
 
@@ -27,15 +48,6 @@ DefaultRenderer.prototype.init = function(previousRenderer) {
 };
 
 DefaultRenderer.prototype.render = function(item) {
-	if (this.view == Witica.mainView) {
-		if (this.item.metadata.hasOwnProperty("title")) {
-			document.title = this.item.metadata["title"];
-		}
-		else {
-			document.title = "";
-		}
-	}
-
 	if (this.breadcrumbDiv) {
 		this.headingDiv.removeChild(this.breadcrumbDiv);
 	}
@@ -49,48 +61,27 @@ DefaultRenderer.prototype.render = function(item) {
 	}
 
 	this.heading.innerHTML = this.item.metadata.title;
+	renderInfo(this.item, this.infoDiv);
 
-	if (this.item.metadata.hasOwnProperty("last-modified")) {
-		var datestr = Witica.util.getHumanReadableDate(new Date(this.item.metadata["last-modified"]*1000));
-		this.infoDiv.innerHTML = "Published " + datestr + " ";
-	}
-	else {
-		this.infoDiv.innerHTML = "";
-	}
-
-	if (this.item.metadata.hasOwnProperty("tags")) {
-		for (var i = 0; i < this.item.metadata.tags.length; i++) {
-			var tagDiv = document.createElement("div");
-			tagDiv.className = "tag";
-			tagDiv.innerHTML = this.item.metadata.tags[i].toString();
-			this.infoDiv.appendChild(tagDiv);
-		};
-	}
-
-	var foundContent = false;
-	for (var i = 0; i < this.item.contentfiles.length; i++) {
-		fn = this.item.contentfiles[i].filename;
-		if (/.html$/.test(fn)) {
-			this.requireContent(fn, function (content) {
-				if (this.params.preview) {
-					this.bodyDiv.innerHTML = Witica.util.shorten(content,200);
-					this.bodyDiv.innerHTML += ' <a href="#!' + this.item.itemId + '">more</a>'
-				}
-				else {
-					this.bodyDiv.innerHTML = content;
-					this.view.loadSubviews(this.bodyDiv);
-				}
-				this.view.element.classList.remove("invalid");
-			}.bind(this));
-			foundContent = true;
+	this.requireContent("html", function (content) {
+		if (this.params.preview) {
+			this.bodyDiv.innerHTML = Witica.util.shorten(content,200);
+			this.bodyDiv.innerHTML += ' <a href="#!' + this.item.itemId + '">more</a>'
 		}
-		else if (/.jpg$/.test(fn)) {
-			this.headingDiv.style.backgroundImage = "url(" + fn + ")";
-			this.headingDiv.style.height = "15em";
+		else {
+			this.bodyDiv.innerHTML = content;
+			this.view.loadSubviews(this.bodyDiv);
 		}
+		this.view.element.classList.remove("invalid");
+	}.bind(this));
+
+	var headerContent = this.item.getContent("jpg");
+	if (headerContent) {
+		this.headingDiv.style.backgroundImage = "url(" + headerContent.getURL(1024) + ")";
+		this.headingDiv.style.height = "15em";
 	}
 
-	if (!foundContent) {
+	if (!this.item.getContent("html")) {
 		this.bodyDiv.innerHTML = "";
 		this.view.element.classList.remove("invalid");
 	}
@@ -147,7 +138,6 @@ function ImageRenderer() {
 	this.descriptionDiv.className = "description";
 	this.infoDiv = document.createElement("div");
 	this.infoDiv.className = "info"
-
 }
 
 ImageRenderer.prototype.init = function(previousRenderer) {
@@ -159,58 +149,25 @@ ImageRenderer.prototype.init = function(previousRenderer) {
 };
 
 ImageRenderer.prototype.render = function(item) {
-	if (this.view == Witica.mainView) {
-		document.getElementById("page").classList.add("wide")
-		if (this.item.metadata.hasOwnProperty("title")) {
-			document.title = this.item.metadata["title"];
-		}
-		else {
-			document.title = "";
-		}
-	}
-
 	if (this.item.metadata.hasOwnProperty("title")) {
 		this.descriptionDiv.innerHTML = this.item.metadata["title"];
 	}
 	else {
 		this.descriptionDiv.innerHTML = "";
 	}
+	renderInfo(this.item, this.infoDiv);
 
-	if (this.item.metadata.hasOwnProperty("last-modified")) {
-		var datestr = Witica.util.getHumanReadableDate(new Date(this.item.metadata["last-modified"]*1000));
-		this.infoDiv.innerHTML = "Published " + datestr + " ";
+	var images = this.item.getContent(["png", "jpg", "gif"]);
+	if (images.length >= 1) {
+		var img = document.createElement("img");
+		img.setAttribute("src",images[0].getURL(2048));
+		this.bodyDiv.appendChild(img);
+		this.view.element.classList.remove("invalid");
 	}
 	else {
-		this.infoDiv.innerHTML = "";
-	}
-
-	if (this.item.metadata.hasOwnProperty("tags")) {
-		for (var i = 0; i < this.item.metadata.tags.length; i++) {
-			var tagDiv = document.createElement("div");
-			tagDiv.className = "tag";
-			tagDiv.innerHTML = this.item.metadata.tags[i].toString();
-			this.infoDiv.appendChild(tagDiv);
-		};
-	}
-
-	var foundContent = false;
-	this.bodyDiv.innerHTML = "";
-	for (var i = 0; i < this.item.contentfiles.length; i++) {
-		fn = this.item.contentfiles[i].filename;
-		if (/(?:.png)|(?:.jpg)|(?:.gif)$/i.test(fn)) {
-			var img = document.createElement("img");
-			img.setAttribute("src",fn);
-			this.bodyDiv.appendChild(img);
-			foundContent = true;
-			break;
-		}
-	}
-
-	if (!foundContent) {
 		this.view.showErrorMessage("404 Image not found", "The image with id '" + this.item.itemId + "' doesn't exist.");
 		return;
 	}
-	this.view.element.classList.remove("invalid");
 }
 
 ImageRenderer.prototype.unrender = function(item) {
@@ -223,60 +180,23 @@ ImageRenderer.prototype.unrender = function(item) {
 };
 
 
-ErrorRenderer.prototype = new Witica.Renderer();
+ErrorRenderer.prototype = new DefaultRenderer();
 ErrorRenderer.prototype.constructor = ErrorRenderer;
 
 function ErrorRenderer() {
-	Witica.Renderer.call(this);
-
-	this.headingDiv = document.createElement("div");
-	this.headingDiv.classList.add("cover");
-	this.headingDiv.style.backgroundImage = "url(missing.jpg)";
-	this.headingDiv.style.height = "15em";
-	this.heading = document.createElement("h1");
-	this.bodyDiv = document.createElement("div");
-	this.bodyDiv.classList.add("body");
+	DefaultRenderer.call(this);
 }
 
-ErrorRenderer.prototype.init = function(previousRenderer) {
-	this.element = this.view.element;
-	this.element.innerHTML = "";
-	this.element.appendChild(this.headingDiv);
-	this.headingDiv.appendChild(this.heading);
-	this.element.appendChild(this.bodyDiv);
-};
-
 ErrorRenderer.prototype.render = function(item) {
-	if (this.view == Witica.mainView) {
-		if (this.item.metadata.title) {
-			document.title = this.item.metadata.title;
-		}
-		else {
-			document.title = "";
-		}
-	}
+	this.headingDiv.style.backgroundImage = "url(missing.jpg)";
+	this.headingDiv.style.height = "15em";
 
-	if (this.item.metadata.title) {
-		this.heading.innerHTML = this.item.metadata.title;
-	}
-	else {
-		this.heading.innerHTML = "Unkown error";
-	}
-
-	if (this.item.metadata.description) {
-		this.bodyDiv.innerHTML = this.item.metadata.description;
-	}
-	else {
-		this.bodyDiv.innerHTML = "No description available.";
-	}
+	this.heading.innerHTML = "Error " + this.item.metadata.errorcode + ": " + this.item.metadata.title;
+	this.bodyDiv.innerHTML = this.item.metadata.description;
 
 	this.view.element.classList.remove("invalid");
 };
 
-ErrorRenderer.prototype.unrender = function(item) {		
-	this.view.element.classList.add("invalid");
-	this.view.destroySubviews();
-};
 
 function initSite () {
 	Witica.registerRenderer(DefaultRenderer, function (item) {return true;});
