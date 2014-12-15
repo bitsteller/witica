@@ -156,7 +156,7 @@ ImageRenderer.prototype.render = function(item) {
 		this.view.element.classList.remove("invalid");
 	}
 	else {
-		this.view.showErrorMessage("404 Image not found", "The image with id '" + this.item.itemId + "' doesn't exist.");
+		this.view.showErrorMessage("Image not found", "The image with id '" + this.item.itemId + "' doesn't exist.", 400);
 		return;
 	}
 }
