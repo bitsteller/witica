@@ -359,18 +359,18 @@ Witica.Item.prototype.requestLoad = function (update, callback) {
 	};
 
 	if (this.isLoaded) {
-		callback(true);
+		callback(this, true);
 		requestObj._finished = null;
 		if (update) {
 			requestObj._finished = function () {
-				this.callback(true);
+				this.callback(this.item, true);
 			}
 			this.loadFinished.addListener(requestObj, requestObj._finished);
 		}
 	}
 	else {
 		requestObj._finished = function () {
-			this.callback(true);
+			this.callback(this.item, true);
 			if (!update) {
 				this.item.loadFinished.removeListener(this, this._finished);
 			}
@@ -782,9 +782,9 @@ Witica.Renderer.prototype = {
 		return this.requireContentVariant(content, undefined, callback);
 	},
 	requireItem: function(item, callback) {
-		var request = item.requestLoad(true, function (success) {
+		var request = item.requestLoad(true, function (item, success) {
 			if (success) {
-				callback();
+				callback(item);
 			}
 		});
 		this.addRenderRequest(request);
