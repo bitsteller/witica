@@ -1,4 +1,4 @@
-import os, json, shutil, time, glob, calendar, codecs, fnmatch, re
+import os, json, shutil, time, glob, calendar, codecs, fnmatch, re, unicodedata
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from threading import Thread
@@ -10,7 +10,7 @@ from sys import modules
 # Include the Dropbox SDK libraries
 from dropbox import client, rest, session
 
-from witicapy.util import Event, sstr, throw, get_cache_folder
+from witicapy.util import Event, sstr, suni, throw, get_cache_folder
 from witicapy import *
 from witicapy.log import *
 from witicapy.metadata import extractor
@@ -380,8 +380,8 @@ class SourceItemIterable(object):
 
 	def get_items(self, itemidpattern):
 		"""Returns all items where the itemid expression matches. The expression can contain * as placeholder."""
-
-		filenames = glob.glob(self.source.get_absolute_path("") + os.sep + itemidpattern + ".*")
+		full_pattern = unicodedata.normalize('NFD', suni(self.source.get_absolute_path("") + os.sep + itemidpattern + ".*"))
+		filenames = glob.glob(full_pattern)
 		itemids = set([self.source.get_item_id(self.source.get_local_path(filename)) for filename in filenames])
 		return [SourceItem(self.source, itemid) for itemid in itemids if self.source.item_exists(itemid)]
 
