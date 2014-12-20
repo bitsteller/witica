@@ -8,7 +8,7 @@ from threading import Event as TEvent
 import keyring, getpass
 import ftplib
 
-from witicapy.util import throw, AsyncWorker, sstr, get_cache_folder
+from witicapy.util import throw, AsyncWorker, sstr, suni, get_cache_folder
 from witicapy import *
 from witicapy.log import *
 
@@ -261,7 +261,7 @@ class FTPServer(Loggable):
 			_file = open(local_path, "rb")
 
 			self._ftp.voidcmd('TYPE I')
-			conn = self._ftp.transfercmd('STOR ' + filename)
+			conn = self._ftp.transfercmd('STOR ' + sstr(filename))
 
 			while 1:
 				if self._stop.is_set(): 
@@ -324,7 +324,7 @@ class FTPServer(Loggable):
 			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
 			self._ftp.cwd(self.path) #go home
 			self._ftp.cwd(directory)
-			self._ftp.delete(filename)
+			self._ftp.delete(sstr(filename))
 			self._ftp_lock.release()
 			self.idle_event.set()
 		except ftplib.error_perm as e:

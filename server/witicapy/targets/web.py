@@ -65,9 +65,9 @@ class WebTarget(Target):
 
 			for fault in faults:
 				if fault.severity == Severity.FATAL:
-					raise ValueError("Integrity check of item '" + change.item.item_id + "' detected fatal fault:\n" + str(fault))
+					raise ValueError("Integrity check of item '" + sstr(change.item.item_id) + "' detected fatal fault:\n" + sstr(fault))
 				else:
-					self.log(str(fault), Logtype.WARNING)
+					self.log(sstr(fault), Logtype.WARNING)
 
 			#make sure the target cache directory exists
 			filename = self.get_absolute_path(change.item.item_id + ".item")
@@ -192,7 +192,7 @@ class WebTarget(Target):
 			ImageFile.MAXBLOCK = 2**22
 			img = Image.open(self.site.source.get_absolute_path(srcfile))
 			if variant["size"] <= max(img.size):
-				dstfile = filename + "@" + str(variant["size"]) + sep +  extension
+				dstfile = filename + "@" + sstr(variant["size"]) + sep +  extension
 				if not(keep_original) and variant["size"] == max_size:
 					dstfile = srcfile #save biggest variant with original filename
 				img.thumbnail((variant["size"],variant["size"]), Image.ANTIALIAS)
