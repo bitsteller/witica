@@ -8,7 +8,7 @@ from threading import Event as TEvent
 import keyring, getpass
 import ftplib
 
-from witicapy.util import throw, AsyncWorker, sstr, suni, get_cache_folder
+from witicapy.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile
 from witicapy import *
 from witicapy.log import *
 
@@ -81,6 +81,29 @@ class Publish(AsyncWorker):
 	    return classes
 
 	state_filename = property(get_state_filename)
+
+class FolderPublish(Publish):
+	def __init__(self, source_id, target_id, config):
+		Publish.__init__(self, source_id, target_id, config)
+		self.path = config["path"]
+
+	def process_event(self,event):
+		local_path, server_path = event
+
+		#check if root path exists
+		root = self.path.rpartition(os.sep)[0]
+		if not os.path.exists(root):
+			raise IOError("'" + root + "' does not exist. Directory must exist to publish to folder.")
+
+		server_file = self.path + os.sep + server_path
+		if not(local_path == None): #upload file
+			copyfile(local_path, server_file)
+		else: #delete file
+			if os.path.exists(server_file):
+				if os.path.isdir(server_file):
+					shutil.rmtree(server_file)
+				else:
+					os.remove(server_file)
 
 class FTPPublish(Publish):
 	def __init__(self, source_id, target_id, config):
