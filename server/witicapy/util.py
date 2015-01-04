@@ -3,7 +3,7 @@ import os, shutil
 from datetime import datetime
 from collections import deque
 from abc import ABCMeta, abstractmethod
-from threading import Event as TEvent
+from threading import Event as TEvent, Thread
 import time
 import platform
 
@@ -151,3 +151,15 @@ class AsyncWorker(Loggable):
 
 	def stop(self):
 		self._stop.set()
+
+class KillableThread(Thread):
+	'''A thread class that supports killing by throwing a ThreadKilledException'''
+
+	def kill(self):
+		res = ctypes.pythonapi.PyThreadState_SetAsyncExc(self.ident, ctypes.py_object(ThreadKilledException))
+		if res != 1:
+			ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+			raise SystemError("Killing thread failed")
+
+class ThreadKilledException (Exception):
+	pass

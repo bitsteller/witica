@@ -10,7 +10,7 @@ from sys import modules
 # Include the Dropbox SDK libraries
 from dropbox import client, rest, session
 
-from witicapy.util import Event, sstr, suni, throw, get_cache_folder
+from witicapy.util import Event, KillableThread, sstr, suni, throw, get_cache_folder
 from witicapy import *
 from witicapy.log import *
 from witicapy.metadata import extractor
@@ -268,8 +268,20 @@ class Dropbox(Source):
 		#for i in range(1,30): #sleep 30s
 		#	time.sleep(1)
 		#	if self._stop.is_set(): break
+		self.changes_available = False
+		t = KillableThread(target=self.update_change_status_blocking, name=self.source_id + " Dropbox (longpoll)")
+		t.start()
+		while t.isAlive():
+			if not(self._stop.is_set()):
+				t.join(1)
+			else:
+				try:
+					t.kill()
+				except Exception, e:
+					pass
+
+	def update_change_status_blocking(self):
 		if self.state["cursor"]:
-			longpoll = lambda self.api_client.longpoll_delta(self.state["cursor"],30)
 			try:
 				delta = self.api_client.longpoll_delta(self.state["cursor"],30)
 				self.changes_available = delta["changes"]
@@ -277,9 +289,6 @@ class Dropbox(Source):
 				self.changes_available = False
 		else:
 			self.changes_available = True
-
-	def update_change_status_thread(self):
-		
 
 
 	def fetch_changes(self,change_event,cursor=None):
