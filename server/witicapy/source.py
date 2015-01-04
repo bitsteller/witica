@@ -58,18 +58,18 @@ class Source(Loggable):
 				self.log_exception("Fetching changes failed.", Logtype.ERROR)
 		else: #fetch changes every 30s	
 			while not self._stop.is_set():
-				for i in range(1,30): #sleep 30s
-					time.sleep(1)
-					if self._stop.is_set(): break
+				self.update_change_status()
+				if self._stop.is_set(): break
 
-				try:
-					cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
-					if cursor:
-						self.state["cursor"] = cursor
-						self.cursorEvent(self,self.state["cursor"])
-						self.write_state()
-				except Exception, e:
-					self.log_exception("Fetching changes failed.", Logtype.ERROR)
+				if self.changes_available:
+					try:
+						cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
+						if cursor:
+							self.state["cursor"] = cursor
+							self.cursorEvent(self,self.state["cursor"])
+							self.write_state()
+					except Exception, e:
+						self.log_exception("Fetching changes failed.", Logtype.ERROR)
 		self.stoppedEvent(self,None)
 		self.log("Worker thread stopped.", Logtype.INFO)
 
@@ -122,6 +122,10 @@ class Source(Loggable):
 			if isclass(obj):
 				classes[name] = obj
 		return classes
+
+	@abstractmethod
+	def update_change_status(self):
+		pass
 
 	@abstractmethod
 	def fetch_changes(self):
@@ -259,6 +263,24 @@ class Dropbox(Source):
 			self.update_cache()
 
 		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.INFO)
+
+	def update_change_status(self):
+		#for i in range(1,30): #sleep 30s
+		#	time.sleep(1)
+		#	if self._stop.is_set(): break
+		if self.state["cursor"]:
+			longpoll = lambda self.api_client.longpoll_delta(self.state["cursor"],30)
+			try:
+				delta = self.api_client.longpoll_delta(self.state["cursor"],30)
+				self.changes_available = delta["changes"]
+			except Exception, e:
+				self.changes_available = False
+		else:
+			self.changes_available = True
+
+	def update_change_status_thread(self):
+		
+
 
 	def fetch_changes(self,change_event,cursor=None):
 		global cache_folder
