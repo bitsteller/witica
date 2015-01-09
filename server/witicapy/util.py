@@ -1,5 +1,5 @@
 # coding=utf8
-import os, shutil
+import os, shutil, ctypes
 from datetime import datetime
 from collections import deque
 from abc import ABCMeta, abstractmethod
@@ -156,9 +156,9 @@ class KillableThread(Thread):
 	'''A thread class that supports killing by throwing a ThreadKilledException'''
 
 	def kill(self):
-		res = ctypes.pythonapi.PyThreadState_SetAsyncExc(self.ident, ctypes.py_object(ThreadKilledException))
+		res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.ident), ctypes.py_object(ThreadKilledException))
 		if res != 1:
-			ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+			ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.ident), 0)
 			raise SystemError("Killing thread failed")
 
 class ThreadKilledException (Exception):

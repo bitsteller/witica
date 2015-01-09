@@ -265,20 +265,17 @@ class Dropbox(Source):
 		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.INFO)
 
 	def update_change_status(self):
-		#for i in range(1,30): #sleep 30s
-		#	time.sleep(1)
-		#	if self._stop.is_set(): break
 		self.changes_available = False
 		t = KillableThread(target=self.update_change_status_blocking, name=self.source_id + " Dropbox (longpoll)")
 		t.start()
 		while t.isAlive():
-			if not(self._stop.is_set()):
-				t.join(1)
-			else:
+			if self._stop.is_set():
 				try:
 					t.kill()
 				except Exception, e:
+					self.log_exception(e)
 					pass
+			t.join(1)
 
 	def update_change_status_blocking(self):
 		if self.state["cursor"]:
@@ -289,7 +286,6 @@ class Dropbox(Source):
 				self.changes_available = False
 		else:
 			self.changes_available = True
-
 
 	def fetch_changes(self,change_event,cursor=None):
 		global cache_folder
