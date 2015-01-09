@@ -140,9 +140,17 @@ class Target(AsyncWorker):
 
 	def publish(self,filename):	
 		for p in self.publishing:
-			p.publish_file(self.get_absolute_path(filename), filename)
+			p.publish_file(self.get_absolute_path(filename), self.target_id + "/" + filename)
 
 	def unpublish(self,filename):
+		for p in self.publishing:
+			p.unpublish_file(self.target_id + "/" + filename)
+
+	def publish_meta(self,filename):	
+		for p in self.publishing:
+			p.publish_file(self.get_abs_meta_filename(filename), filename)
+
+	def unpublish_meta(self,filename):
 		for p in self.publishing:
 			p.unpublish_file(filename)
 

@@ -51,12 +51,14 @@ class WebTarget(Target):
 
 	def process_event(self, change):
 		if change.__class__ == MetaChanged:
-			#just copy and publishing
-			if os.path.isfile(self.site.source.get_abs_meta_filename(change.item_id)):
-				util.copyfile(self.site.source.get_abs_meta_filename(change.item_id), self.get_abs_meta_filename(change.item_id))
-				self.publish("meta" + os.sep + change.item_id)
-			else:
-				self.unpublish("meta" + os.sep + change.item_id)
+			#copy files in target meta dir to server
+			if change.item_id.startswith(self.target_id + os.sep):
+				filename = change.item_id.partition(self.target_id + os.sep)[2]
+				if os.path.isfile(self.site.source.get_abs_meta_filename(change.item_id)):
+					util.copyfile(self.site.source.get_abs_meta_filename(change.item_id), self.get_abs_meta_filename(filename))
+					self.publish_meta(filename)
+				else:
+					self.unpublish_meta(filename)
 		elif change.__class__ == ItemChanged:
 			#self.log("id: " + change.item_id + ", \nall files: " + sstr(change.item.files) + ", \nitem file: " + sstr(change.item.itemfile) + ", \nmain content: " + sstr(change.item.contentfile) + ", \ncontentfiles: " + sstr(change.item.contentfiles), Logtype.WARNING)
 			#check integrity of the item
