@@ -83,6 +83,7 @@ class Source(Loggable):
 		return SourceItem(self,item_id).exists
 
 	def resolve_reference(self, reference, item, allow_patterns = False):
+		reference = reference.lower()
 		if re.match(extractor.RE_ITEM_REFERENCE, reference):
 			itempattern = ""
 			if reference.startswith("!./"): #expand relative item id
