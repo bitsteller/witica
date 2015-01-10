@@ -177,7 +177,6 @@ Witica.Item = function (itemId, virtual) {
 	this.isLoaded = false;
 	this.itemId = itemId;
 	this.metadata = null;
-	this.contentfiles = new Array(); //TODO: deprecated
 	this.contents = new Array();
 	this.hash = null;
 	this.lastUpdate = null;
@@ -207,7 +206,6 @@ Witica.Item.prototype._loadMeta = function(hash) {
 						this.contents.push(content);
 					}
 				}
-				this.contentfiles = this.contents; //TODO: deprecated, remove alias
 				this.metadata = this._processMetadata(metadata);
 			}
 			this.isLoaded = true;
@@ -306,47 +304,6 @@ Witica.Item.prototype.getContent = function(extension) {
 		return contentlist;
 	}
 	return null;
-};
-
-//TODO: remove (deprecated)
-Witica.Item.prototype.downloadContent = function (filename,callback) {
-	//get file hash
-	var hash = null;
-	for (var i = 0; i < this.contentfiles.length; i++) {
-		if (this.contentfiles[i].filename == filename) {
-			hash = this.contentfiles[i].hash;
-		}
-	}
-	if (hash == null) {
-		throw new Error("Item '" + this.itemId + "' has no content file '" + filename + "'");
-	}
-
-	var http_request = new XMLHttpRequest();
-	if (Witica._knownHashes.contains(hash)) { //file with same hash was requested before -> allow loading from cache
-		http_request.open("GET", filename + "?bustCache=" + hash, true);
-	}
-	else { //new hash -> force redownloading file
-		http_request.open("GET", filename + "?bustCache=" + Math.random(), true);
-	}
-
-	http_request.onreadystatechange = function () {
-		var done = 4, ok = 200;
-		if (http_request.readyState == done && http_request.status == ok) {
-			callback(http_request.responseText, true);
-		}
-		else if (http_request.readyState == done && http_request.status != ok) {
-			callback(null,false);
-		}
-	};
-	http_request.send(null);
-
-	//add file hash to the list of known hashes
-	if (hash != "") {
-		if (!Witica._knownHashes.contains(hash)) {
-			Witica._knownHashes.push(hash);
-		}
-	}
-	return http_request;
 };
 
 Witica.Item.prototype.requestLoad = function (update, callback) {
@@ -597,7 +554,7 @@ Witica.View.prototype = {
 			this.renderer.changeItem(this.item, this.params);
 		}
 		else {
-			this.renderer = new newRendererClass(this); //TODO: remove passing view (deprecated)
+			this.renderer = new newRendererClass();
 			if (oldRenderer != null) {
 				oldRenderer.stopRendering();
 				oldRenderer.unrender(this.item);
