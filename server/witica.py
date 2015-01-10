@@ -11,7 +11,7 @@ from witicapy.site import Site
 from witicapy import *
 from witicapy.log import *
 from witicapy.metadata import extractor
-from witicapy.source import ItemChanged, ItemRemoved
+from witicapy.source import Source, ItemChanged, ItemRemoved
 from witicapy.targets import target, web, statichtml
 from witicapy.check import IntegrityChecker
 from witicapy.util import sstr, suni, throw
@@ -52,12 +52,18 @@ def log(msg, logtype = Logtype.NONE):
 def log_exception(msg, logtype = Logtype.NONE, exc_info=None):
 	Logger.log_exception("witica", msg, logtype, exc_info)
 
+def create_source(args):
+	if args.source:
+		return Source.construct_from_file(args.source)
+	else:
+		return Source.construct_from_working_dir()
+
 def update_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
 	try:
-		log(args.source)
-		currentsite = Site(args.source, target_ids = args.targets)
+		source = create_source(args)
+		currentsite = Site(source, target_ids = args.targets)
 		currentsite.source.start_update(continuous = args.deamon)
 	except Exception, e:
 		log_exception("Site could not be initialized.", Logtype.ERROR)
@@ -67,7 +73,8 @@ def rebuild_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
 	try:
-		currentsite = Site(args.source, target_ids = args.targets)
+		source = create_source(args)
+		currentsite = Site(source, target_ids = args.targets)
 	except Exception, e:
 		log_exception("Site could not be initialized.", Logtype.ERROR)
 		shutdown()
@@ -88,7 +95,8 @@ def remove_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
 	try:
-		currentsite = Site(args.source, target_ids = args.targets)
+		source = create_source(args)
+		currentsite = Site(source, target_ids = args.targets)
 	except Exception, e:
 		log_exception("Site could not be initialized.", Logtype.ERROR)
 		shutdown()
@@ -109,7 +117,8 @@ def check_command(args):
 	Logger.start(verbose=args.verbose)
 
 	try:
-		currentsite = Site(args.source, target_ids = [])
+		source = create_source(args)
+		currentsite = Site(source, target_ids = [])
 	except Exception, e:
 		log_exception("Site could not be initialized.", Logtype.ERROR)
 		shutdown()
@@ -132,7 +141,8 @@ def items_command(args):
 	Logger.start(verbose=args.verbose)
 
 	try:
-		currentsite = Site(args.source, target_ids = [])
+		source = create_source(args)
+		currentsite = Site(source, target_ids = [])
 	except Exception, e:
 		log_exception("Site could not be initialized.", Logtype.ERROR)
 		shutdown()
@@ -189,7 +199,7 @@ subparsers = parser.add_subparsers(title='sub-commands', help='sub-commands')
 #update command parser
 parser_update = subparsers.add_parser('update', help='fetch changes and update targets')
 parser_update.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-parser_update.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_update.add_argument('-s', '--source', help="the source configuration file to use")
 parser_update.add_argument('-d', '--deamon', action='store_true', help="keep running in background and process incoming events")
 parser_update.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be used for the conversion")
 parser_update.set_defaults(func=update_command)
@@ -197,27 +207,27 @@ parser_update.set_defaults(func=update_command)
 
 parser_rebuild = subparsers.add_parser('rebuild', help='update single items or indicies')
 parser_rebuild.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-parser_rebuild.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_rebuild.add_argument('-s', '--source', help="the source configuration file to use")
 parser_rebuild.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be used for the conversion, default: all")
 parser_rebuild.add_argument('item', nargs='*', help="list of ids of items or indicies that should be updated")
 parser_rebuild.set_defaults(func=rebuild_command)
 
 parser_remove = subparsers.add_parser('remove', help='remove single items or indicies (deprecated)')
 parser_remove.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-parser_remove.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_remove.add_argument('-s', '--source', help="the source configuration file to use")
 parser_remove.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be used for the conversion, default: all")
 parser_remove.add_argument('item', nargs='*', help="list of ids of items or indicies that should be removed")
 parser_remove.set_defaults(func=remove_command)
 
 parser_check = subparsers.add_parser('check', help='checks the integrity of the source')
 parser_check.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-parser_check.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_check.add_argument('-s', '--source', help="the source configuration file to use")
 parser_check.add_argument('item', nargs='*', help="list of ids of items or indicies that should be checked")
 parser_check.set_defaults(func=check_command)
 
 parser_items = subparsers.add_parser('items', help='lists available item ids')
 parser_items.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-parser_items.add_argument('-s', '--source', required=True, help="the source configuration file to use")
+parser_items.add_argument('-s', '--source', help="the source configuration file to use")
 parser_items.add_argument('item', nargs='*', help="list of ids of items or indicies that should be included")
 parser_items.set_defaults(func=items_command)
 

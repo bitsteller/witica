@@ -5,15 +5,8 @@ from witicapy.source import Source
 from witicapy.targets.target import Target
 
 class Site:
-	def __init__(self, source_filename, target_ids = None):
-		#load source
-		try:
-			source_id = os.path.split(source_filename)[1].rsplit(".")[0]
-			config = json.loads(codecs.open(source_filename, "r", "utf-8").read())
-			self.source = Source.construct_from_json(source_id, config)
-		except Exception as e:
-			throw(IOError, "Loading source config file '" + sstr(source_filename) + "' failed", e)
-
+	def __init__(self, source, target_ids = None):
+		self.source = source
 		self.source.update_cache()
 		self.targets = []
 

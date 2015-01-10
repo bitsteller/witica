@@ -117,6 +117,21 @@ class Source(Loggable):
 		return instance
 
 	@staticmethod
+	def construct_from_file(filename):
+		#load source file
+		try:
+			source_id = os.path.split(filename)[1].rsplit(".")[0]
+			config = json.loads(codecs.open(filename, "r", "utf-8").read())
+			return Source.construct_from_json(source_id, config)
+		except Exception as e:
+			throw(IOError, "Loading source config file '" + sstr(filename) + "' failed", e)
+
+	@staticmethod
+	def construct_from_working_dir():
+		raise IOError("Working directory is not a valid source.")
+		#TODO: implement
+
+	@staticmethod
 	def get_classes():
 		classes = {}
 		for name, obj in getmembers(modules[__name__]):
