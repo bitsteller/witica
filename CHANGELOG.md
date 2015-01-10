@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.8.6 (Alpha 6)
+* NEW: support for uploading target specific code (html, css, js)
+* NEW: publish to folder
+* NEW: instant processing of changes in Dropbox (long polling)
+* CHANGE: target content is now published to a folder with the name of the target on the server+
+* CHANGE: prefix parameter in `Witica.init` doesn’t need an “/“ in the end anymore
+* CHANGE: `Item.requestLoad()`, `Renderer.requireItem()` now pass item to callback function
+* CHANGE: updated site.js to new content management
+* CHANGE: item references are now case-insensitive
+* CHANGE: remove deprecated functions/attributes (old content management)
+* FIX: improved unicode support
+* FIX: rebuild command not finding items with non-ascii id on MacOS
+
 ## Version 0.8.5 (Alpha 5)
 * NEW: support for content variants and greatly improved content handling in witica.js
 	* new Witica.Content represents content objects, allow downloading or getting the URL for a specific variant
