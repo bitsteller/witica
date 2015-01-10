@@ -831,7 +831,7 @@ Witica.registerRenderer = function (renderer, supports) {
 };
 
 Witica.initWitica = function (mainView, defaultItemId, prefix) {
-	prefix = typeof prefix !== 'undefined' ? prefix : "";
+	prefix = typeof prefix !== 'undefined' ? prefix + "/" : "";
 
 	Witica._prefix = prefix;
 	Witica.mainView = mainView;
