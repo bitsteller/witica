@@ -128,8 +128,21 @@ class Source(Loggable):
 
 	@staticmethod
 	def construct_from_working_dir():
-		raise IOError("Working directory is not a valid source.")
-		#TODO: implement
+		cwd = os.getcwd()
+		if cwd.find(os.sep + "Dropbox" + os.sep) > -1:
+			if os.path.exists(cwd + os.sep + "meta") and os.path.isdir(cwd + os.sep + "meta"):
+				folder = cwd.partition(os.sep + "Dropbox")[2]
+				config = {}
+				config["version"] = 1
+				config["type"] = "DropboxFolder"
+				config["app_key"] = "fgpviq15t751f6n"
+				config["app_secret"] = "e4auyq6wzrz04p6"
+				config["folder"] = folder
+				return Source.construct_from_json(folder.replace(os.sep, "__"), config)
+			else:
+				raise IOError("Working directory is not a valid source. Must contain /meta directory.")
+		else:
+			raise IOError("Working directory is not a valid source. Must be a folder inside your Dropbox.")
 
 	@staticmethod
 	def get_classes():
