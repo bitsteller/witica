@@ -2,6 +2,7 @@
 
 ## Version 0.8.6 (Alpha 6)
 * NEW: support for uploading target specific code (html, css, js)
+* NEW: source is created from the current working directory if no source file is specified
 * NEW: publish to folder
 * NEW: instant processing of changes in Dropbox (long polling)
 * CHANGE: target content is now published to a folder with the name of the target on the server+
