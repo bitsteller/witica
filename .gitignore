@@ -1,3 +1,6 @@
 Server/*.source
 Cache/
 *.pyc
+*.egg-info/
+dist/
+build/
