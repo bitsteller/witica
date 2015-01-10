@@ -10,3 +10,6 @@ To get started please read the getting started guide that can be found in the â€
 
 To run all unit tests run
 	python -m unittest discover
+
+To create egg distribution file run
+	python setup.py bdist_egg
