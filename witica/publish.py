@@ -8,9 +8,9 @@ from threading import Event as TEvent
 import keyring, getpass
 import ftplib
 
-from witicapy.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile
-from witicapy import *
-from witicapy.log import *
+from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile
+from witica import *
+from witica.log import *
 
 cache_folder = get_cache_folder("Target")
 

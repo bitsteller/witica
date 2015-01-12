@@ -1,8 +1,8 @@
 import os.path, json, glob, codecs
 
-from witicapy.util import throw, sstr
-from witicapy.source import Source
-from witicapy.targets.target import Target
+from witica.util import throw, sstr
+from witica.source import Source
+from witica.targets.target import Target
 
 class Site:
 	def __init__(self, source, target_ids = None):

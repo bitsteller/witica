@@ -7,12 +7,12 @@ from markdown.extensions import Extension
 
 import xml.etree.ElementTree as ET
 
-from witicapy import *
-from witicapy.util import throw, sstr, get_cache_folder
-from witicapy.source import MetaChanged, ItemChanged, ItemRemoved
-from witicapy.log import *
-from witicapy.metadata import extractor
-from witicapy.targets.target import Target
+from witica import *
+from witica.util import throw, sstr, get_cache_folder
+from witica.source import MetaChanged, ItemChanged, ItemRemoved
+from witica.log import *
+from witica.metadata import extractor
+from witica.targets.target import Target
 
 
 cache_folder = get_cache_folder("Target")

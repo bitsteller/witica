@@ -10,10 +10,10 @@ from sys import modules
 # Include the Dropbox SDK libraries
 from dropbox import client, rest, session
 
-from witicapy.util import Event, KillableThread, sstr, suni, throw, get_cache_folder
-from witicapy import *
-from witicapy.log import *
-from witicapy.metadata import extractor
+from witica.util import Event, KillableThread, sstr, suni, throw, get_cache_folder
+from witica import *
+from witica.log import *
+from witica.metadata import extractor
 
 
 cache_folder = get_cache_folder("Source")

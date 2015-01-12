@@ -6,11 +6,11 @@ from markdown.treeprocessors import Treeprocessor
 from markdown.inlinepatterns import LinkPattern, ImagePattern
 from markdown.extensions import Extension
 
-from witicapy.util import sstr, suni, throw
-from witicapy import *
-from witicapy.log import *
-from witicapy.source import Source, SourceItem
-from witicapy.metadata import extractor
+from witica.util import sstr, suni, throw
+from witica import *
+from witica.log import *
+from witica.source import Source, SourceItem
+from witica.metadata import extractor
 
 class IntegrityChecker(Loggable):
 	"""Provides methods to check the integrity of an item"""

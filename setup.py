@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.8.5.1'
+version = '0.8.5.34'
 
 setup(name='witica',
       version=version,
@@ -24,7 +24,7 @@ Witica is a new way to publish things on the internet. The goal is to make editi
       author_email='mail@witica.org',
       url='witica.org',
       license='MIT License',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      packages=find_packages(),
       include_package_data=True,
       zip_safe=True,
       install_requires=[
@@ -32,7 +32,9 @@ Witica is a new way to publish things on the internet. The goal is to make editi
           "keyring>=3.2",
           "dropbox>=2.2.0"
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      #scripts = ["bin/witica"]
+      entry_points= {
+            "console_scripts": [
+                  "witica = witica.main:main"
+            ]},
       )

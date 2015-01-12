@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from witicapy.metadata.extractor import MDExtractor, ImageExtractor
+from witica.metadata.extractor import MDExtractor, ImageExtractor
 
 class TestMDExtractor(unittest.TestCase):
 	def setUp(self):

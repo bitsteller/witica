@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import Image, ExifTags
 
 
-from witicapy.util import throw, sstr, suni
+from witica.util import throw, sstr, suni
 
 #regular expressions regarding item ids
 RE_METAFILE = r'^meta\/[^\n]+$'

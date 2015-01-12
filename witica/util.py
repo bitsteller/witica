@@ -7,7 +7,7 @@ from threading import Event as TEvent, Thread
 import time
 import platform
 
-from witicapy.log import *
+from witica.log import *
 
 def throw(ex,msg,innerEx):
 	raise ex(msg +  ".\n  ﹂" + innerEx.__class__.__name__ + ": " + sstr(innerEx))

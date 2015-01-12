@@ -5,12 +5,12 @@ from datetime import datetime
 from threading import Lock
 from inspect import isclass, getmembers
 
-from witicapy.util import Event, throw, AsyncWorker, sstr, get_cache_folder
-from witicapy.publish import Publish
-from witicapy.source import MetaChanged, ItemChanged, ItemRemoved
-from witicapy import *
-from witicapy.log import *
-from witicapy.metadata import extractor
+from witica.util import Event, throw, AsyncWorker, sstr, get_cache_folder
+from witica.publish import Publish
+from witica.source import MetaChanged, ItemChanged, ItemRemoved
+from witica import *
+from witica.log import *
+from witica.metadata import extractor
 
 
 cache_folder = get_cache_folder("Target")
