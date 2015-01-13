@@ -75,6 +75,7 @@ def init_command(args):
 						shutil.copytree(abs_fn, cwd + os.sep + fn)
 					else:
 						shutil.copy2(abs_fn, cwd)
+				log("Source successfully initialized. Please adjust meta/web.target configuration file.", Logtype.INFO)
 			except Exception, e:
 				log_exception("Init finished with errors.", Logtype.ERROR)
 		else:
