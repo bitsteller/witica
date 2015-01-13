@@ -168,7 +168,7 @@ class FTPPublish(Publish):
 
 		self.prepare_ftp()
 		if not(local_path == None): #upload file
-			self.log("Uploading file " + sstr(server_path) + "...", Logtype.INFO)
+			self.log("Uploading file " + sstr(server_path) + "...", Logtype.DEBUG)
 			while not self.ftp_server.idle_event.is_set() and not self._stop.is_set():
 				self.ftp_server.idle_event.wait(1)
 			if self._stop.is_set(): 
@@ -181,12 +181,12 @@ class FTPPublish(Publish):
 				self.ftp_server.idle_event.wait(1)
 
 			if self.ftp_server.last_error == None:
-				self.log("Successfully uploaded file " + sstr(server_path) + ".", Logtype.INFO)
+				self.log("Successfully uploaded file " + sstr(server_path) + ".", Logtype.DEBUG)
 			else:
 				self.log("Uploading " + sstr(server_path) + " failed: " + sstr(self.ftp_server.last_error), Logtype.ERROR)
 
 		else: #delete file on server
-			self.log("Deleting file " + sstr(server_path) + " on server...", Logtype.INFO)
+			self.log("Deleting file " + sstr(server_path) + " on server...", Logtype.DEBUG)
 			while not self.ftp_server.idle_event.is_set() and not self._stop.is_set():
 				self.ftp_server.idle_event.wait(1)
 			if self._stop.is_set(): 
@@ -199,7 +199,7 @@ class FTPPublish(Publish):
 				self.ftp_server.idle_event.wait(1)
 
 			if self.ftp_server.last_error == None:
-				self.log("Successfully deleted file " + sstr(server_path) + ".", Logtype.INFO)
+				self.log("Successfully deleted file " + sstr(server_path) + ".", Logtype.DEBUG)
 			else:
 				self.log("Deleting " + sstr(server_path) + " failed: " + sstr(self.ftp_server.last_error), Logtype.ERROR)
 			if self._stop.is_set():
@@ -261,7 +261,7 @@ class FTPServer(Loggable):
 				pass
 			finally:
 				self._ftp = None
-				self.log("Disconnected from server.", Logtype.INFO)
+				self.log("Disconnected from server.", Logtype.DEBUG)
 
 	def _upload_file(self, local_path, server_path, attempts = 3):
 		conn = None
@@ -270,7 +270,7 @@ class FTPServer(Loggable):
 			self._ftp_lock.acquire()
 			if self._ftp == None:
 				self._ftp = UnicodeFTP(self.host,self.user,self._passwd, timeout = self.TIMEOUT)
-				self.log("Connected to server.", Logtype.INFO)
+				self.log("Connected to server.", Logtype.DEBUG)
 
 			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
 			self._ftp.cwd(self.path) #go home
@@ -342,7 +342,7 @@ class FTPServer(Loggable):
 			self._ftp_lock.acquire()
 			if self._ftp == None:
 				self._ftp = UnicodeFTP(self.host,self.user,self._passwd, timeout = self.TIMEOUT)
-				self.log("Connected to server.", Logtype.INFO)
+				self.log("Connected to server.", Logtype.DEBUG)
 
 			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
 			self._ftp.cwd(self.path) #go home

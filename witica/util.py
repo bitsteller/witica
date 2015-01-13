@@ -84,7 +84,7 @@ class AsyncWorker(Loggable):
 			self.worker_thread = Thread(target=self.work, name = name)
 
 			self.worker_thread.start()
-			self.log("Initialized " + name + ".", Logtype.INFO)
+			self.log("Initialized " + name + ".", Logtype.DEBUG)
 		except Exception, e:
 			self.log("Initializing " + name + " failed.", Logtype.ERROR)
 			raise e
@@ -104,7 +104,7 @@ class AsyncWorker(Loggable):
 		doc = "Processes the event that is first in the queue"
 
 	def work(self):
-		self.log("Worker thread started.", Logtype.INFO)
+		self.log("Worker thread started.", Logtype.DEBUG)
 
 		while not self._stop.is_set():
 			event = None
@@ -113,15 +113,15 @@ class AsyncWorker(Loggable):
 					time.sleep(1)
 				else:
 					self.stoppedEvent(self,None)
-					self.log("Worker thread stopped.", Logtype.INFO)
+					self.log("Worker thread stopped.", Logtype.DEBUG)
 					return
 				
 			if self._stop.is_set(): break
 
-			self.log("Pending events in queue: " + sstr(len(self.pending_events)), Logtype.INFO)
+			self.log("Pending events in queue: " + sstr(len(self.pending_events)), Logtype.DEBUG)
 
 			event = self.pending_events[0] #peek next event
-			self.log("Processing event " + sstr(event) + "...", Logtype.INFO)
+			self.log("Processing event " + sstr(event) + "...", Logtype.DEBUG)
 
 			try:
 				self.process_event(event)
@@ -134,17 +134,17 @@ class AsyncWorker(Loggable):
 			self.write_state()
 
 			if len(self.pending_events) == 0:
-				self.log("Pending events in queue: 0", Logtype.INFO)
+				self.log("Pending events in queue: 0", Logtype.DEBUG)
 
 		self.stoppedEvent(self,None)
-		self.log("Worker thread stopped.", Logtype.INFO)
+		self.log("Worker thread stopped.", Logtype.DEBUG)
 
 	def enqueue_event(self, sender, earg):
 		if not self.accept_events:
 			raise RuntimeError("Worker doesn't accept new events")
 		self.pending_events.append(earg)
 		self.write_state()
-		self.log("Enqueued new event: " + sstr(earg), Logtype.INFO)
+		self.log("Enqueued new event: " + sstr(earg), Logtype.DEBUG)
 
 	def close_queue(self):
 		self.accept_events = False

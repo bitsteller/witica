@@ -44,7 +44,7 @@ class Source(Loggable):
 		self.worker_thread.start()
 
 	def work(self):
-		self.log("Sourcing thread started.", Logtype.INFO)
+		self.log("Sourcing thread started.", Logtype.DEBUG)
 
 		if self.continuous == False: #fetch changes only once
 			try:
@@ -189,7 +189,7 @@ class Dropbox(Source):
 		self.state = {}
 		self.load_state()
 
-		self.log("Initialized source.", Logtype.INFO)
+		self.log("Initialized source.", Logtype.DEBUG)
 
 	def load_state(self):
 		if os.path.isfile(self.state_filename):
@@ -242,7 +242,7 @@ class Dropbox(Source):
 			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 
 		if delta["reset"]:
-			self.log("Cache reset. Cleaning up...", Logtype.INFO)
+			self.log("Cache reset. Cleaning up and rebuilding source cache...", Logtype.INFO)
 			shutil.rmtree(self.source_dir)
 			os.makedirs(self.source_dir)
 		if self._stop.is_set(): return
@@ -264,7 +264,7 @@ class Dropbox(Source):
 				if not(os.path.exists(self.source_dir + path)):
 					os.makedirs(self.source_dir + path)
 			else: #new/changed file
-				self.log("Downloading '" + path + "'...", Logtype.INFO)
+				self.log("Downloading '" + path + "'...", Logtype.DEBUG)
 				try:
 					#download file
 					out = open(self.source_dir + path, 'w')
@@ -291,7 +291,7 @@ class Dropbox(Source):
 		if delta["has_more"]:
 			self.update_cache()
 
-		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.INFO)
+		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.DEBUG)
 
 	def update_change_status(self):
 		self.changes_available = False
@@ -319,7 +319,7 @@ class Dropbox(Source):
 	def fetch_changes(self,change_event,cursor=None):
 		global cache_folder
 
-		self.log("Fetching changes...", Logtype.INFO)
+		self.log("Fetching changes...", Logtype.DEBUG)
 
 		if cursor == "":
 			cursor = None
@@ -343,15 +343,15 @@ class Dropbox(Source):
 
 			if metadata == None or metadata["is_dir"] == False:
 				if re.match(extractor.RE_METAFILE, path): #site metadata change
-					self.log("New metafile change detected:" + sstr(path), Logtype.INFO)
+					self.log("New metafile change detected: " + sstr(path), Logtype.INFO)
 					change_event(self,MetaChanged(self,path.partition("meta/")[2]))
 				elif re.match(extractor.RE_ITEMFILE, path):
 					item = SourceItem(self, self.get_item_id(path))
 					if item.exists:
-						self.log("New item change detected:" + sstr(path), Logtype.INFO)
+						self.log("New item change detected: " + sstr(path), Logtype.INFO)
 						change_event(self,ItemChanged(self, self.get_item_id(path), path))
 					else:
-						self.log("Removed item detected:" + sstr(path), Logtype.INFO)
+						self.log("Removed item detected: " + sstr(path), Logtype.INFO)
 						change_event(self,ItemRemoved(self, self.get_item_id(path)))
 				elif not(metadata == None) and metadata["is_dir"] == False:
 					self.log("File '" + path + "' is not supported and will be ignored. Filenames containing '@' are currently not supported.", Logtype.WARNING)

@@ -28,7 +28,7 @@ def shutdown():
 	except Exception, e:
 		log_exception("Shutdown failed.", Logtype.ERROR)
 	finally:
-		seconds_left = 20
+		seconds_left = 30
 		while seconds_left > 0 and threading.active_count() > 2: #main + logging thread
 			time.sleep(1)
 			seconds_left -= 1
@@ -44,7 +44,7 @@ def shutdown():
 		pkg_resources.cleanup_resources(force=False)
 
 def signal_handler(signal, frame):
-	log("Shutdown requested by user.", Logtype.WARNING)
+	log("Shutdown requested by user.", Logtype.INFO)
 	shutdown()
 
 def log(msg, logtype = Logtype.NONE):
@@ -132,11 +132,10 @@ def check_command(args):
 	numberfaults = 0
 	ic = IntegrityChecker(currentsite.source)
 	for item in items:
-		#log("Checking item " + item.item_id + "...")
 		for fault in ic.check(item):
 			log(sstr(fault), Logtype.WARNING)
 			numberfaults += 1
-	log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.WARNING)
+	log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.INFO)
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def list_command(args):
@@ -158,13 +157,13 @@ def list_command(args):
 		s += suni(item.item_id) + u"\n"
 		count += 1
 		if count == 100:
-			log(s, Logtype.WARNING)
+			log(s, Logtype.INFO)
 			s = u"\n"
 			count = 0
 	if count > 0:
-		log(s, Logtype.WARNING)
+		log(s, Logtype.INFO)
 
-	log("Source contains " + str(len(items)) + (" matching" if (len(args.item) > 0) else "") + " items.", Logtype.WARNING)
+	log("Source contains " + str(len(items)) + (" matching" if (len(args.item) > 0) else "") + " items.", Logtype.INFO)
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def get_matching_items(source, args):

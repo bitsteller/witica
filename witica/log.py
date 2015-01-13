@@ -16,12 +16,14 @@ def sstr(obj):
 		return unicode(obj).encode('utf-8')
 
 class Logtype(object):
-	INFO = 1
-	WARNING = 2
-	ERROR = 3
+	DEBUG = 1
+	INFO = 2
+	WARNING = 3
+	ERROR = 4
 	NONE = 99
 
 class CColors(object):
+	DEBUG = '\033[92m'
 	INFO = '\033[92m'
 	WARNING = '\033[93m'
 	ERROR = '\033[91m'
@@ -62,7 +64,7 @@ class Logger(object):
 		if _logger == None:
 			raise(RuntimeError("Logger is not initialized"))
 
-		if _logger.verbose or (logtype != Logtype.NONE and logtype != Logtype.INFO):
+		if _logger.verbose or (logtype != Logtype.NONE and logtype != Logtype.DEBUG):
 			_logger.pending_messages.put((sstr(senderid),sstr(msg),logtype))
 
 	@staticmethod
@@ -108,7 +110,10 @@ class Logger(object):
 			self.last_date = current_date
 
 		timestr = datetime.now().strftime('%H:%M:%S')
-		if (logtype == Logtype.INFO):
+
+		if (logtype == Logtype.DEBUG):
+			timestr = CColors.DEBUG + timestr + CColors.ENDC
+		elif (logtype == Logtype.INFO):
 			timestr = CColors.INFO + timestr + CColors.ENDC
 		elif (logtype == Logtype.WARNING):
 			timestr = CColors.WARNING + timestr + CColors.ENDC
