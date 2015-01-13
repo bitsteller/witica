@@ -6,6 +6,7 @@ import threading
 import argparse
 import codecs, locale
 from kitchen.text.converters import getwriter
+import pkg_resources
 
 from witica.site import Site
 from witica.log import *
@@ -15,7 +16,7 @@ from witica.targets import target, web, statichtml
 from witica.check import IntegrityChecker
 from witica.util import sstr, suni, throw
 
-VERSION = "0.8.5"
+VERSION = pkg_resources.get_distribution("witica").version
 
 currentsite = None
 
