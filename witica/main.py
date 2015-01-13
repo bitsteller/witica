@@ -58,6 +58,22 @@ def create_source(args):
 	else:
 		return Source.construct_from_working_dir()
 
+def init_command(args):
+	global currentsite
+	Logger.start(verbose=args.verbose)
+	try:
+		source = create_source(args)
+	except Exception, e:
+		log_exception("Source could not be initialized.", Logtype.ERROR)
+		shutdown()
+
+	cwd = os.getcwd()
+	if os.path.isemtpy(cwd):
+		print("do init")
+	else:
+		log("Init is only possible when the source is empty.", Logtype.ERROR)
+
+
 def update_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
@@ -88,28 +104,6 @@ def rebuild_command(args):
 				currentsite.source.changeEvent(currentsite.source, ItemChanged(currentsite.source, item.item_id, path))	
 		except Exception, e:
 			log_exception("Item '" + item.item_id + "'' could not be enqued for rebuilding.", Logtype.ERROR)	
-	currentsite.source.stoppedEvent(currentsite.source, None)
-
-def remove_command(args):
-	#TODO: remove (deprecated)
-	global currentsite
-	Logger.start(verbose=args.verbose)
-	try:
-		source = create_source(args)
-		currentsite = Site(source, target_ids = args.targets)
-	except Exception, e:
-		log_exception("Site could not be initialized.", Logtype.ERROR)
-		shutdown()
-		return
-
-	items = get_matching_items(currentsite.source, args)
-
-	for item in items:
-		try:
-			for path in item.files:
-				currentsite.source.changeEvent(currentsite.source, ItemRemoved(currentsite.source, item.item_id))	
-		except Exception, e:
-			log_exception("Item '" + item.item_id + "'' could not be enqued for removing.", Logtype.ERROR)	
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def check_command(args):
@@ -206,7 +200,7 @@ def main():
 	parser_update.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be used for the conversion")
 	parser_update.set_defaults(func=update_command)
 
-
+	#rebuild command parser
 	parser_rebuild = subparsers.add_parser('rebuild', help='update single items or indicies')
 	parser_rebuild.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_rebuild.add_argument('-s', '--source', help="the source configuration file to use")
@@ -214,13 +208,7 @@ def main():
 	parser_rebuild.add_argument('item', nargs='*', help="list of ids of items or indicies that should be updated")
 	parser_rebuild.set_defaults(func=rebuild_command)
 
-	parser_remove = subparsers.add_parser('remove', help='remove single items or indicies (deprecated)')
-	parser_remove.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-	parser_remove.add_argument('-s', '--source', help="the source configuration file to use")
-	parser_remove.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be used for the conversion, default: all")
-	parser_remove.add_argument('item', nargs='*', help="list of ids of items or indicies that should be removed")
-	parser_remove.set_defaults(func=remove_command)
-
+	#check command parser
 	parser_check = subparsers.add_parser('check', help='checks the integrity of the source')
 	parser_check.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_check.add_argument('-s', '--source', help="the source configuration file to use")
