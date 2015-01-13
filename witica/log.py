@@ -121,7 +121,8 @@ class Logger(object):
 			colornum = (int(m.hexdigest()[:1],16) % 6) + 4
 			self.sendercolors[senderid] = '\033[9' + str(colornum) + 'm'
 
-		header = timestr + " [" + self.sendercolors[senderid] + senderid + CColors.ENDC + "] "
+		short_senderid = senderid.rpartition("__")[2]
+		header = timestr + " [" + self.sendercolors[senderid] + short_senderid + CColors.ENDC + "] "
 		body = re.sub(r'\n', "\n" + ''.join([" " for x in range(9)]),msg)
 		print (header + body)
 
