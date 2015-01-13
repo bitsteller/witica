@@ -137,8 +137,8 @@ class Source(Loggable):
 				config["type"] = "DropboxFolder"
 				config["app_key"] = "fgpviq15t751f6n"
 				config["app_secret"] = "e4auyq6wzrz04p6"
-				config["folder"] = folder
-				return Source.construct_from_json(folder.replace(os.sep, "__"), config)
+				config["folder"] = folder.decode("utf-8")
+				return Source.construct_from_json(folder.replace(os.sep, "__").decode("utf-8").encode("ascii", "ignore"), config)
 			else:
 				raise IOError("Working directory is not a valid source. Must contain /meta directory.")
 		else:

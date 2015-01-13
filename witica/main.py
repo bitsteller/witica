@@ -151,7 +151,7 @@ def items_command(args):
 	s = u"\n"
 	count = 0
 	for item in items:
-		s += item.item_id + u"\n"
+		s += suni(item.item_id) + u"\n"
 		count += 1
 		if count == 100:
 			log(s, Logtype.WARNING)
