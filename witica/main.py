@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import time, signal, sys
+import time, signal, sys, os
 import threading
 import argparse
 import codecs, locale
@@ -67,8 +67,8 @@ def init_command(args):
 		log_exception("Source could not be initialized.", Logtype.ERROR)
 		shutdown()
 
-	cwd = os.getcwd()
-	if os.path.isemtpy(cwd):
+	folder = source.get_absolute_path("")
+	if os.listdir(folder) == []: #if dir is empty
 		print("do init")
 	else:
 		log("Init is only possible when the source is empty.", Logtype.ERROR)
@@ -192,6 +192,12 @@ def main():
 
 	subparsers = parser.add_subparsers(title='sub-commands', help='sub-commands')
 
+	#init command parser
+	parser_init = subparsers.add_parser('init', help='inits a source with an example web site (WARNING: modifies the source)')
+	parser_init.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
+	parser_init.add_argument('-s', '--source', help="the source configuration file to use")
+	parser_init.set_defaults(func=init_command)
+
 	#update command parser
 	parser_update = subparsers.add_parser('update', help='fetch changes and update targets')
 	parser_update.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
@@ -216,11 +222,11 @@ def main():
 	parser_check.set_defaults(func=check_command)
 
 	#items command parser
-	parser_items = subparsers.add_parser('list', help='lists available item ids')
-	parser_items.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-	parser_items.add_argument('-s', '--source', help="the source configuration file to use")
-	parser_items.add_argument('item', nargs='*', help="list of ids of items or indicies that should be included")
-	parser_items.set_defaults(func=list_command)
+	parser_list = subparsers.add_parser('list', help='lists available item ids')
+	parser_list.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
+	parser_list.add_argument('-s', '--source', help="the source configuration file to use")
+	parser_list.add_argument('item', nargs='*', help="list of ids of items or indicies that should be included")
+	parser_list.set_defaults(func=list_command)
 
 	args = parser.parse_args()
 	args.func(args)
