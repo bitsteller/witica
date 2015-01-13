@@ -136,7 +136,7 @@ def check_command(args):
 	log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.WARNING)
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
-def items_command(args):
+def list_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
 
@@ -227,11 +227,12 @@ def main():
 	parser_check.add_argument('item', nargs='*', help="list of ids of items or indicies that should be checked")
 	parser_check.set_defaults(func=check_command)
 
-	parser_items = subparsers.add_parser('items', help='lists available item ids')
+	#items command parser
+	parser_items = subparsers.add_parser('list', help='lists available item ids')
 	parser_items.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_items.add_argument('-s', '--source', help="the source configuration file to use")
 	parser_items.add_argument('item', nargs='*', help="list of ids of items or indicies that should be included")
-	parser_items.set_defaults(func=items_command)
+	parser_items.set_defaults(func=list_command)
 
 	args = parser.parse_args()
 	args.func(args)
