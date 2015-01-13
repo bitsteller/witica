@@ -1,5 +1,5 @@
 /*------------------------------------------*/
-/* general rendering functions */
+/* general rendering functions              */
 /*------------------------------------------*/
 function renderInfo (item, infoDiv) {
 	if (item.metadata.hasOwnProperty("last-modified")) {
@@ -12,7 +12,7 @@ function renderInfo (item, infoDiv) {
 }
 
 /*------------------------------------------*/
-/* site specific renderers */
+/* site specific renderers                  */
 /*------------------------------------------*/
 DefaultRenderer.prototype = new Witica.Renderer();
 DefaultRenderer.prototype.constructor = DefaultRenderer;

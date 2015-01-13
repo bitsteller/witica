@@ -1,0 +1,13 @@
+{
+	"version": 1,
+	"type": "WebTarget",
+	"publishing": [
+		{
+			"publish_id" : "ftp",
+			"type": "FTPPublish",
+			"domain": "<yourdomain.com>",
+			"user": "<YourFTPUsername>",
+			"path": "</path/to/website>" 
+		}
+	]
+}
