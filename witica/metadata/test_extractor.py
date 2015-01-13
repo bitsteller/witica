@@ -2,25 +2,17 @@
 
 import os
 import unittest
+import pkg_resources
 
 from witica.metadata.extractor import MDExtractor, ImageExtractor
 
 class TestMDExtractor(unittest.TestCase):
 	def setUp(self):
-		#find test resource files
-		self.resource_path = None
-		resource_path = "test" + os.sep + "files"
-		for i in range(3):
-			if os.path.isdir(resource_path):
-				self.resource_path = resource_path
-				break
-			else:
-				resource_path = ".." + os.sep + resource_path
-
-		if self.resource_path == None:
-			raise IOError("Test resources not found.")
-
+		self.resource_path = pkg_resources.resource_filename("witica","test/files")
 		self.extractor = MDExtractor()
+
+	def tearDown(self):
+		pkg_resources.cleanup_resources()
 
 	def test_simple(self):
 		metadata = self.extractor.extract_metadata(self.resource_path + os.sep + "simple.md")
@@ -49,20 +41,11 @@ class TestMDExtractor(unittest.TestCase):
 
 class TestImageExtractor(unittest.TestCase):
 	def setUp(self):
-		#find test resource files
-		self.resource_path = None
-		resource_path = "test" + os.sep + "files"
-		for i in range(3):
-			if os.path.isdir(resource_path):
-				self.resource_path = resource_path
-				break
-			else:
-				resource_path = ".." + os.sep + resource_path
-
-		if self.resource_path == None:
-			raise IOError("Test resources not found.")
-
+		self.resource_path = pkg_resources.resource_filename("witica","test/files")
 		self.extractor = ImageExtractor()
+
+	def tearDown(self):
+		pkg_resources.cleanup_resources()
 
 	def test_exif(self):
 		metadata = self.extractor.extract_metadata(self.resource_path + os.sep + "photo.jpg")
