@@ -1,16 +1,19 @@
 # Changelog
 
 ## Version 0.8.6 (Alpha 6)
+* NEW: `witica init` command to create example website in an empty dropbox folder
+* NEW: witica can now be installed using setup.py or easy_install
 * NEW: support for uploading target specific code (html, css, js)
 * NEW: source is created from the current working directory if no source file is specified
 * NEW: publish to folder
 * NEW: instant processing of changes in Dropbox (long polling)
+* CHANGE: `witica items` command was renamed to `witica list`
 * CHANGE: target content is now published to a folder with the name of the target on the server+
 * CHANGE: prefix parameter in `Witica.init` doesn’t need an “/“ in the end anymore
 * CHANGE: `Item.requestLoad()`, `Renderer.requireItem()` now pass item to callback function
 * CHANGE: updated site.js to new content management
 * CHANGE: item references are now case-insensitive
-* CHANGE: remove deprecated functions/attributes (old content management)
+* CHANGE: remove deprecated functions/attributes in witica.js (old content management) and the witica.py remove command
 * FIX: improved unicode support
 * FIX: rebuild command not finding items with non-ascii id on MacOS
 
