@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import time, signal, sys, os
+import time, signal, sys, os, shutil
 import threading
 import argparse
 import codecs, locale
@@ -41,6 +41,7 @@ def shutdown():
 			Logger.stop()
 			sys.exit(0) #TODO: does this really kill all threads?
 		Logger.stop()
+		pkg_resources.cleanup_resources(force=False)
 
 def signal_handler(signal, frame):
 	log("Shutdown requested by user.", Logtype.WARNING)
@@ -61,18 +62,25 @@ def create_source(args):
 def init_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
-	try:
-		source = create_source(args)
-	except Exception, e:
-		log_exception("Source could not be initialized.", Logtype.ERROR)
-		shutdown()
 
-	folder = source.get_absolute_path("")
-	if os.listdir(folder) == []: #if dir is empty
-		print("do init")
+	target_id = "web"
+
+	cwd = os.getcwd()
+	if cwd.find(os.sep + "Dropbox" + os.sep) > -1:
+		if os.listdir(cwd) == []: #if dir is empty
+			try: #copy sample source
+				for fn in os.listdir(pkg_resources.resource_filename("witica","client")):
+					abs_fn = pkg_resources.resource_filename("witica","client") + os.sep + fn
+					if os.path.isdir(abs_fn):
+						shutil.copytree(abs_fn, cwd + os.sep + fn)
+					else:
+						shutil.copy2(abs_fn, cwd)
+			except Exception, e:
+				log_exception("Init finished with errors.", Logtype.ERROR)
+		else:
+			log("Init is only possible when the current folder is empty.", Logtype.ERROR)
 	else:
-		log("Init is only possible when the source is empty.", Logtype.ERROR)
-
+		log("Working directory is not a valid source. Must be a folder inside your Dropbox.", Logtype.ERROR)
 
 def update_command(args):
 	global currentsite
@@ -193,9 +201,8 @@ def main():
 	subparsers = parser.add_subparsers(title='sub-commands', help='sub-commands')
 
 	#init command parser
-	parser_init = subparsers.add_parser('init', help='inits a source with an example web site (WARNING: modifies the source)')
+	parser_init = subparsers.add_parser('init', help='inits a source with an example web site (WARNING: modifies the current working dir)')
 	parser_init.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
-	parser_init.add_argument('-s', '--source', help="the source configuration file to use")
 	parser_init.set_defaults(func=init_command)
 
 	#update command parser
