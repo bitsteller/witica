@@ -195,5 +195,5 @@ function initSite () {
 	Witica.registerRenderer(ErrorRenderer, function (item) {return item.metadata.type == "error";});
 
 	mainview = new Witica.View(document.getElementById("main"));
-	Witica.initWitica(mainview,"home");
+	Witica.initWitica(mainview,"home", "web");
 }

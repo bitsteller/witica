@@ -1,8 +1,8 @@
 {
-	"type": "page”,
+	"type": "page",
 	"author": "Your Name"
 }
 
 # Home
 
-<Your content goes here>
+Your content goes here…
