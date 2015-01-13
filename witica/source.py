@@ -251,7 +251,7 @@ class Dropbox(Source):
 		filecount = 0
 		for entry in delta["entries"]:
 			path, metadata = entry
-			path = unicode(path).encode("utf-8")
+			path = unicodedata.normalize("NFC",unicode(path))
 			if path.startswith(self.path_prefix):
 				path = path[len(self.path_prefix):]
 			if metadata == None: #removed file/directory
@@ -335,7 +335,7 @@ class Dropbox(Source):
 		#fire change events
 		for entry in delta["entries"]:
 			path, metadata = entry #if metadata == None: removed file/directory
-			path = unicode(path).encode("utf-8")
+			path = unicodedata.normalize("NFC",unicode(path))
 			if path.startswith(self.path_prefix):
 				path = path[len(self.path_prefix):]
 			if path.startswith("/"):
@@ -386,7 +386,7 @@ class DropboxAppFolder(Dropbox): #TODO: remove (legacy)
 class DropboxFolder(Dropbox):
 	def __init__(self,source_id,config):
 		super(DropboxFolder, self).__init__(source_id, config)
-		self.path_prefix = config["folder"].encode('utf-8').lower()
+		self.path_prefix = unicodedata.normalize("NFC",config["folder"].lower())
 		self.start_session()
 
 class SourceItemIterable(object):
