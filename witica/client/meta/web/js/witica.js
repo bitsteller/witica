@@ -267,7 +267,6 @@ Witica.Item.prototype.update = function () {
 				this.metadata = null;
 				this.isLoaded = true;
 				this.hash = "";
-				this.contentfiles = new Array();	
 				this.loadFinished.fire(this);
 			}
 		}
@@ -290,10 +289,10 @@ Witica.Item.prototype.getContent = function(extension) {
 	}
 
 	var contentlist = [];
-	for (var i = 0; i < this.contentfiles.length; i++) {
-		var ext = this.contentfiles[i].filename.substring(this.contentfiles[i].filename.lastIndexOf(".") + 1);
+	for (var i = 0; i < this.contents.length; i++) {
+		var ext = this.contents[i].filename.substring(this.contents[i].filename.lastIndexOf(".") + 1);
 		if (extlist.indexOf(ext) > -1) {
-			contentlist.push(this.contentfiles[i]);
+			contentlist.push(this.contents[i]);
 		}	
 	};
 
