@@ -4,3 +4,4 @@ Cache/
 *.egg-info/
 dist/
 build/
+*.item
