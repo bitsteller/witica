@@ -11,7 +11,7 @@ import pkg_resources
 from witica.site import Site
 from witica.log import *
 from witica.metadata import extractor
-from witica.source import Source, ItemChanged, ItemRemoved
+from witica.source import Source, MetaChanged, ItemChanged, ItemRemoved
 from witica.targets import target, web, statichtml
 from witica.check import IntegrityChecker
 from witica.util import sstr, suni, throw
@@ -21,7 +21,7 @@ VERSION = pkg_resources.get_distribution("witica").version
 currentsite = None
 
 def shutdown():
-	log("Shutting down...", Logtype.INFO)
+	log("Shutting down...", Logtype.DEBUG)
 	try:
 		if currentsite:
 			currentsite.shutdown()
@@ -94,6 +94,14 @@ def update_command(args):
 		log_exception("Site could not be initialized.", Logtype.ERROR)
 		shutdown()
 
+def rebuild_meta(source, path = ""):
+	abspath = source.get_abs_meta_filename(path)
+	if os.path.isdir(abspath):
+		for fn in os.listdir(abspath):
+			rebuild_meta(source, fn)
+	else:
+		source.changeEvent(source, MetaChanged(source, path))
+
 def rebuild_command(args):
 	global currentsite
 	Logger.start(verbose=args.verbose)
@@ -105,6 +113,10 @@ def rebuild_command(args):
 		shutdown()
 		return
 
+	if len(args.item) == 0:
+		rebuild_meta(currentsite.source)
+		log("Site metadata enqued for rebuilding.", Logtype.INFO)
+
 	items = get_matching_items(currentsite.source, args)
 
 	for item in items:
@@ -113,6 +125,8 @@ def rebuild_command(args):
 				currentsite.source.changeEvent(currentsite.source, ItemChanged(currentsite.source, item.item_id, path))	
 		except Exception, e:
 			log_exception("Item '" + item.item_id + "'' could not be enqued for rebuilding.", Logtype.ERROR)	
+	log(str(len(items)) + " item" + ("s" if len(items) != 1 else "") + " enqued for rebuilding.", Logtype.INFO)
+
 	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def check_command(args):
@@ -183,7 +197,6 @@ def main():
 
 	UTF8Writer = getwriter('utf8')
 	sys.stdout = UTF8Writer(sys.stdout)
-
 
 	extractor.register("item", extractor.JSONExtractor)
 	extractor.register("json", extractor.JSONExtractor)
