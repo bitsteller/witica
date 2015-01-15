@@ -1,6 +1,6 @@
 # Changelog
 
-0.8.7 (2015-01-15)
+0.9.1 (2015-01-15)
 ******************
 
 * NEW: `witica init` command to create example website in an empty dropbox folder
