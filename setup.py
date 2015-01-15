@@ -30,7 +30,8 @@ Witica is a new way to publish things on the internet. The goal is to make editi
       install_requires=[
           "markdown>=2.4",
           "keyring>=3.2",
-          "dropbox>=2.2.0"
+          "dropbox>=2.2.0",
+          "kitchen>=1.2.1"
       ],
       entry_points= {
             "console_scripts": [
