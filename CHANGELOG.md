@@ -1,38 +1,10 @@
 # Changelog
 
-0.8.11 (unreleased)
-*******************
-
-- Nothing changed yet.
-
-
-0.8.10 (2015-01-15)
-*******************
-
-- Nothing changed yet.
-
-
-0.8.9 (2015-01-15)
-******************
-
-- Nothing changed yet.
-
-
-0.8.8 (2015-01-15)
-******************
-
-- Nothing changed yet.
-
-
 0.8.7 (2015-01-15)
 ******************
 
-- Nothing changed yet.
-
-
-0.8.6 (2015-01-15)
 * NEW: `witica init` command to create example website in an empty dropbox folder
-* NEW: witica can now be installed using setup.py or easy_install
+* NEW: witica can now be installed using setup.py or easy_install and using pip
 * NEW: support for uploading target specific code (html, css, js)
 * NEW: source is created from the current working directory if no source file is specified
 * NEW: publish to folder
@@ -46,9 +18,12 @@
 * CHANGE: item references are now case-insensitive
 * CHANGE: remove deprecated functions/attributes in witica.js (old content management) and the witica.py remove command
 * CHANGE: Renderer.requireContentVariant() returns an array of render requests if multiple extensions are passed
+* CHANGE: improved comments in site template (site.js, style.css, index.html)
+* CHANGE: Replaced dependency PIL by Pillow
 * FIX: improved unicode support
 * FIX: rebuild command not finding items with non-ascii id on MacOS
 * FIX: creation of subdirectories on FTP server failed in some cases
+* FIX: small fixes to some log messages
 
 ## Version 0.8.5 (Alpha 5)
 * NEW: support for content variants and greatly improved content handling in witica.js
