@@ -15,7 +15,7 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "0.8.6"
+Witica.VERSION = "0.9.1"
 Witica.CACHESIZE = 100;
 
 Witica.itemcache = new Array();
@@ -716,7 +716,7 @@ Witica.Renderer.prototype = {
 		else if (content instanceof Array) {
 			var requests = [];
 			for (var i = 0; i < content.length; i++) {
-				requests.push(this.requireContentVariant(content[i], variant, callback);)
+				requests.push(this.requireContentVariant(content[i], variant, callback));
 			}
 			return requests;
 		}
