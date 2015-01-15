@@ -1,5 +1,11 @@
 # Changelog
 
+0.8.8 (unreleased)
+******************
+
+- Nothing changed yet.
+
+
 0.8.7 (2015-01-15)
 ******************
 
