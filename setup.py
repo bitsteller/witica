@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.8.5.34'
+version = '0.8.7.dev0'
 
 setup(name='witica',
       version=version,
@@ -32,7 +32,6 @@ Witica is a new way to publish things on the internet. The goal is to make editi
           "keyring>=3.2",
           "dropbox>=2.2.0"
       ],
-      #scripts = ["bin/witica"]
       entry_points= {
             "console_scripts": [
                   "witica = witica.main:main"

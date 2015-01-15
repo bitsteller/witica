@@ -1,6 +1,12 @@
 # Changelog
 
-## Version 0.8.6 (Alpha 6)
+0.8.7 (unreleased)
+******************
+
+- Nothing changed yet.
+
+
+0.8.6 (2015-01-15)
 * NEW: `witica init` command to create example website in an empty dropbox folder
 * NEW: witica can now be installed using setup.py or easy_install
 * NEW: support for uploading target specific code (html, css, js)
