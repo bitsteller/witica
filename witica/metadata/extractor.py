@@ -1,6 +1,6 @@
 import json, codecs, re
 from abc import ABCMeta, abstractmethod
-import Image, ExifTags
+from PIL import Image, ExifTags
 
 
 from witica.util import throw, sstr, suni
