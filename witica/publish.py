@@ -274,15 +274,23 @@ class FTPServer(Loggable):
 
 			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
 			self._ftp.cwd(self.path) #go home
-			
-			try:
-				self._ftp.mkd(directory)
-			except Exception as e:
-				pass
+
+			#create directories recursively
+			directories = directory.split("/")
+			for index in range(1, len(directories)):
+				directory_part = "/".join(directories[:index+1])
+				try:
+					self._ftp.mkd(directory_part)
+				except Exception, e:
+					pass
+
+			self._ftp.cwd(self.path) #go home
+
+			#enter directory
 			self._ftp.cwd(directory)
 
+			#transfer file
 			_file = open(local_path, "rb")
-
 			self._ftp.voidcmd('TYPE I')
 			conn = self._ftp.transfercmd('STOR ' + sstr(filename))
 
