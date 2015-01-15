@@ -168,7 +168,7 @@ class LinkTreeprocessor(Treeprocessor):
 				item_id = self.item.source.resolve_reference(item_id,self.item)
 				#check if exists
 				if not(self.item.source.item_exists(item_id)):
-					self.faults.append(TargetNotFoundFault("Link target '" + item_id + "' in file '" + self.srcfile + " was not found in the source '" + self.item.source.source_id + "'.", self.item))
+					self.faults.append(TargetNotFoundFault("Link target '" + item_id + "' in file '" + self.srcfile + "' was not found in the source '" + self.item.source.source_id + "'.", self.item))
 				#check if self-reference
 				if item_id == self.item.item_id:
 					self.faults.append(CirularReferenceFault("Link target '" + item_id + "' in file '" + self.srcfile + "' is self-referencing.", self.item))

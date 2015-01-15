@@ -71,7 +71,7 @@ class Source(Loggable):
 					except Exception, e:
 						self.log_exception("Fetching changes failed.", Logtype.ERROR)
 		self.stoppedEvent(self,None)
-		self.log("Worker thread stopped.", Logtype.INFO)
+		self.log("Worker thread stopped.", Logtype.DEBUG)
 
 	def stop(self):
 		self._stop.set()
