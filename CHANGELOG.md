@@ -15,6 +15,7 @@
 * CHANGE: updated site.js to new content management
 * CHANGE: item references are now case-insensitive
 * CHANGE: remove deprecated functions/attributes in witica.js (old content management) and the witica.py remove command
+* CHANGE: Renderer.requireContentVariant() returns an array of render requests if multiple extensions are passed
 * FIX: improved unicode support
 * FIX: rebuild command not finding items with non-ascii id on MacOS
 * FIX: creation of subdirectories on FTP server failed in some cases
