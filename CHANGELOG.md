@@ -7,8 +7,9 @@
 * NEW: source is created from the current working directory if no source file is specified
 * NEW: publish to folder
 * NEW: instant processing of changes in Dropbox (long polling)
+* NEW: running `witica rebuild` will also rebuild site metadata
 * CHANGE: `witica items` command was renamed to `witica list`
-* CHANGE: target content is now published to a folder with the name of the target on the server+
+* CHANGE: target content is now published to a folder with the name of the target on the server
 * CHANGE: prefix parameter in `Witica.init` doesn’t need an “/“ in the end anymore
 * CHANGE: `Item.requestLoad()`, `Renderer.requireItem()` now pass item to callback function
 * CHANGE: updated site.js to new content management
@@ -16,6 +17,7 @@
 * CHANGE: remove deprecated functions/attributes in witica.js (old content management) and the witica.py remove command
 * FIX: improved unicode support
 * FIX: rebuild command not finding items with non-ascii id on MacOS
+* FIX: creation of subdirectories on FTP server failed in some cases
 
 ## Version 0.8.5 (Alpha 5)
 * NEW: support for content variants and greatly improved content handling in witica.js
