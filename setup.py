@@ -31,7 +31,7 @@ Witica is a new way to publish things on the internet. The goal is to make editi
           "markdown>=2.4",
           "keyring>=3.2",
           "dropbox>=2.2.0",
-          "kitchen>=1.2.1",
+          "kitchen>=1.1.1",
           "pillow>=2.7.0"
       ],
       entry_points= {
