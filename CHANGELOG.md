@@ -1,5 +1,11 @@
 # Changelog
 
+0.9.2 (unreleased)
+******************
+
+- Nothing changed yet.
+
+
 0.9.1 (2015-01-15)
 ******************
 
