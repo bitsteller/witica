@@ -89,17 +89,15 @@ The function takes the following arguments:
 
 	Renderer.requireContentVariant(content, variant, callback)
 
-**Syntax:**
-
-	Renderer.requireContent(filename, callback)
-
 Downloads a content file and calls `callback()` when the download is finished.
 
-Use this function when you need a content file of an item available for a part of the rendering. Using this function is preferred over calling `Item.downloadContent()` because `Renderer.requireContent()` will automatically abort the download when `Renderer.stopRendering()` is called (for example because the user already clicked on another link).
+Use this function when you need a content file of an item available as part of the rendering. Using this function is preferred over calling `Item.downloadContent()` because `Renderer.requireContent()` will automatically abort the download when `Renderer.stopRendering()` is called (for example because the user already clicked on another link).
+
+The function returns a request object if the call was succesfull. If `content` was an array of file extensions, an array of request objects will be returned instead.
 
 The function takes the following arguments:
 
-* `content`: the [`Witica.Content`](!doc/client/witica_content) to be requested, 
+* `content`: the [`Witica.Content`](!doc/client/witica_content) to be requested or a file extension string/an array of file extensions that should be requested for the current `Renderer.item`, 
 * `variant`: the variant to be downloaded (see [`Witica.Content`](!doc/client/witica_content)`.getURL()` for more info)
 * `callback`: a callable that is called with the content of the requested file as its first argument as soon as the content files content is available.
 

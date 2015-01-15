@@ -1,4 +1,4 @@
-# Witica Targets
+# Targets
 Before the [witica.py](!doc/server) script can publish anything, you have to create at least one target file. This target file has to specify at least one publishing location that says Witica where to publish the content.
 
 Currently only two types of targets are supported, which are the *WebTarget* used for generic websites and *StaticHtmlTarget* to generate a static version of the content for search bots. Target files are placed in the ⊐/meta directory and the filename has to end with *.target*. 

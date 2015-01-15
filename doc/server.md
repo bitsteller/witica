@@ -1,6 +1,6 @@
-# witica.py command line tool
+# Witica command line interface (Publisher)
 
-The witica server script is called from the console. For each command you need to make sure that you are executing witica while being in the folder of the source (or specify a source file with the -s option) that you want to use. The script can do different actions that are selected by specifing a sub command. The general syntax for calling witica on the console is
+The *Witica Publisher* script is called from the console. For each command you need to make sure that you are executing *Witica* while being in the folder of the source (or specify a source file with the -s option) that you want to use. The script can do different actions that are selected by specifing a sub command. The general syntax for calling witica on the console is
 
 	witica <subcommand> <paramters>
 
@@ -24,7 +24,7 @@ to set up an example website in that folder. It will create the needed /meta dir
 ## Update
 Fetches all changes in the source and updates targets.
 
-To process all changes for the source specified in the [source file](!doc/source) *mysource.source* since the script was run the last time, you write for example:
+To process all changes for the source specified in the [source file](!doc/source/source) *mysource.source* since the script was run the last time, you write for example:
 
 	witica update
 

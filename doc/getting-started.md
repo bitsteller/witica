@@ -2,8 +2,6 @@
 
 This guide will help you to understand the basic concepts of Witica and go step-by-step through how you setup your own website. Once a everything is set up, basically everyone that can use a computer is able to create content for Witica. To setup the website for the first time however at least some basic knowledge of web technologies like HTML, json, Javascript is recommended.
 
-**Note:** As Witica is currently alpha, the set-up process is not yet that painless as it should be. 
-
 ## The basics
 Before starting with the setup process it is helpful to understand some basic concepts and terms.
 
@@ -17,13 +15,15 @@ Witica consists of mainly two parts:
 With this basic knowledge you are now ready to begin with setting up a website.
 
 ## Step 1: Get the server script
-Currently there is no automatic way to install Witica (this will probably follow). Currently you need to download the source and install dependencies by yourself.
+Before you can use *witica* you need Python 2.7 installed on your computer. You also need to make sure that you have all prerequisites installed needed for the Pillow imaging library. Please follow the instructions for your operating system at [pillow.readthedocs.org](http://pillow.readthedocs.org/installation.html).
 
-Before you can use Witica you need Python 2.7 installed on your computer. When Python is installed use [pip](http://en.wikipedia.org/wiki/Pip_(package_manager)) to install the following witica:
+The easiest way to install *witica* is to use [pip](http://en.wikipedia.org/wiki/Pip_(package_manager)):
 
 	pip install witica
 
-Alternatively can extract the source code from [here](!get) and run `setup.py install`.
+**Note**: You might need to run this with *sudo* depending on your systems configuration.
+
+Alternatively you can extract the source code from [here](!get) and run `setup.py install`.
 
 ## Step 2: Set up the source
 
@@ -37,7 +37,7 @@ This will create the basic structure you need for your website.
 
 Before the witica.py script will actually do something useful, you have to setup at least one target. A target is a place where the converted content and metadata will be stored. The client script will then fetch the content from there.
 
-If you created the source with `witica init`, you will find a *WebTarget* prepared in the /meta directory. To make it work you need to alter the file *web.target* with the following content:
+If you created the source with `witica init`, you will find a *WebTarget* prepared in the ⊐/meta directory. To make it work you need to alter the file *web.target* with the following content:
 
 		{
 			"version": 1,
@@ -79,4 +79,4 @@ Content is added by just putting files in the source folder in your Dropbox. Aft
 
 	witica update -d
 
-Detailed information about the input format can be found [here](!doc/source).
+Detailed information about the input format can be found [here](!doc/source/source).

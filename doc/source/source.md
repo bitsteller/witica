@@ -1,4 +1,4 @@
-# Witica Input Format (Source)
+# Input Format (Source)
 
 All input to *witica* is placed in a source, which is a folder inside your Dropbox.
 
