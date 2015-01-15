@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.8.10'
+version = '0.8.11.dev0'
 
 setup(name='witica',
       version=version,
