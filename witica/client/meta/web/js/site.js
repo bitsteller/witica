@@ -1,5 +1,5 @@
 /*------------------------------------------*/
-/* general rendering functions              */
+/* General rendering functions              */
 /*------------------------------------------*/
 function renderInfo (item, infoDiv) {
 	if (item.metadata.hasOwnProperty("last-modified")) {
@@ -12,8 +12,9 @@ function renderInfo (item, infoDiv) {
 }
 
 /*------------------------------------------*/
-/* site specific renderers                  */
+/* Default renderer (markdown/html content) */
 /*------------------------------------------*/
+
 DefaultRenderer.prototype = new Witica.Renderer();
 DefaultRenderer.prototype.constructor = DefaultRenderer;
 
@@ -116,6 +117,9 @@ DefaultRenderer.prototype.breadcrumb = function (element, item, maxDepth, lastbr
 	}.bind(this));
 };
 
+/*------------------------------------------*/
+/* Image renderer                           */
+/*------------------------------------------*/
 
 ImageRenderer.prototype = new Witica.Renderer();
 ImageRenderer.prototype.constructor = ImageRenderer;
@@ -170,6 +174,9 @@ ImageRenderer.prototype.unrender = function(item) {
 	}
 };
 
+/*------------------------------------------*/
+/* Error page renderer                      */
+/*------------------------------------------*/
 
 ErrorRenderer.prototype = new DefaultRenderer();
 ErrorRenderer.prototype.constructor = ErrorRenderer;
@@ -188,6 +195,9 @@ ErrorRenderer.prototype.render = function(item) {
 	this.view.element.classList.remove("invalid");
 };
 
+/*------------------------------------------*/
+/* Initialization                           */
+/*------------------------------------------*/
 
 function initSite () {
 	Witica.registerRenderer(DefaultRenderer, function (item) {return true;});
