@@ -714,10 +714,11 @@ Witica.Renderer.prototype = {
 			content = this.item.getContent(content);
 		}
 		else if (content instanceof Array) {
+			var requests = [];
 			for (var i = 0; i < content.length; i++) {
-				this.requireContentVariant(content[i], variant, callback);
+				requests.push(this.requireContentVariant(content[i], variant, callback);)
 			}
-			return; //TODO: better return array of requests
+			return requests;
 		}
 
 		if (content) {
