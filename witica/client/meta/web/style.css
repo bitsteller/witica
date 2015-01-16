@@ -191,6 +191,7 @@ nav ul li:hover {
 
 .cover {
 	background-size:cover;
+	background-position: center;
 	position: relative;
 	min-height: 5em;
 }

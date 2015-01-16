@@ -67,10 +67,13 @@ DefaultRenderer.prototype.render = function(item) {
 		this.view.element.classList.remove("invalid");
 	}.bind(this));
 
-	var headerContent = this.item.getContent("jpg");
-	if (headerContent) {
-		this.headingDiv.style.backgroundImage = "url(" + headerContent.getURL(1024) + ")";
+	var headerContent = this.item.getContent(["jpg", "png"]);
+	if (!this.params.preview && headerContent.length > 0) {
+		this.headingDiv.style.backgroundImage = "url(" + headerContent[0].getURL(1024) + ")";
 		this.headingDiv.style.height = "15em";
+	}
+	else {
+		this.headingDiv.style.backgroundImage = "none";
 	}
 
 	if (!this.item.getContent("html")) {
