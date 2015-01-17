@@ -127,7 +127,6 @@ nav ul li:hover {
 .box, #bottom {
 	background-color: #fff;
 	margin-bottom: 2em;
-	transition: all 1s ease;  
 	clear:both;
 
 	-webkit-box-shadow: 0em -0.2em 1.5em -0.4em #aaa;
@@ -136,7 +135,7 @@ nav ul li:hover {
 }
 
 #main, #main * {
-	transition: all 1s ease;
+	transition: opacity 1s ease;
 }
 
 .invalid *{
@@ -171,11 +170,6 @@ nav ul li:hover {
 	max-width:660px;
 	clear: both; 
 	margin: 0 auto;
-	transition: all 0.8s ease;  
-}
-
-#page.wide{
-	max-width:800px;
 }
 
 .breadcrumb {
@@ -194,6 +188,7 @@ nav ul li:hover {
 	background-position: center;
 	position: relative;
 	min-height: 5em;
+	transition: all 1s ease !important;
 }
 
 .cover h1 {

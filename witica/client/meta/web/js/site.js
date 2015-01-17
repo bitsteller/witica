@@ -57,7 +57,7 @@ DefaultRenderer.prototype.render = function(item) {
 
 	this.requireContent("html", function (content) {
 		if (this.params.preview) {
-			this.bodyDiv.innerHTML = Witica.util.shorten(content,200);
+			this.bodyDiv.innerHTML = Witica.util.shorten(content,300);
 			this.bodyDiv.innerHTML += ' <a href="#!' + this.item.itemId + '">more</a>'
 		}
 		else {
@@ -84,7 +84,6 @@ DefaultRenderer.prototype.render = function(item) {
 
 DefaultRenderer.prototype.unrender = function(item) {		
 	this.view.element.classList.add("invalid");
-	this.headingDiv.style.backgroundImage = "none";
 	this.headingDiv.style.height = "auto";
 
 	this.view.destroySubviews();
@@ -171,10 +170,6 @@ ImageRenderer.prototype.render = function(item) {
 ImageRenderer.prototype.unrender = function(item) {
 	this.view.element.classList.add("invalid");
 	this.view.destroySubviews();
-
-	if (this.view == Witica.mainView) {
-		document.getElementById("page").classList.remove("wide");	
-	}
 };
 
 /*------------------------------------------*/
