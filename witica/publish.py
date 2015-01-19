@@ -277,7 +277,7 @@ class FTPServer(Loggable):
 
 			#create directories recursively
 			directories = directory.split("/")
-			for index in range(1, len(directories)):
+			for index in range(len(directories)):
 				directory_part = "/".join(directories[:index+1])
 				try:
 					self._ftp.mkd(directory_part)
