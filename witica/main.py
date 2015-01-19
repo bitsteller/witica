@@ -98,7 +98,8 @@ def rebuild_meta(source, path = ""):
 	abspath = source.get_abs_meta_filename(path)
 	if os.path.isdir(abspath):
 		for fn in os.listdir(abspath):
-			rebuild_meta(source, fn)
+			pth = os.path.join(abspath, fn).rpartition(source.get_abs_meta_filename(""))[2][1:]
+			rebuild_meta(source, pth)
 	else:
 		source.changeEvent(source, MetaChanged(source, path))
 
