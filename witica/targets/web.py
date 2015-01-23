@@ -79,6 +79,9 @@ class WebTarget(Target):
 			#convert and publish content and metadata
 			if change.filename in change.item.contentfiles:
 				self.publish_contentfile(change.item,change.filename)
+			else:
+				self.unpublish_contentfile(change.item,change.filename)
+
 			self.publish_metadata(change.item)
 		elif change.__class__ == ItemRemoved:
 			#remove all files from server and target cache
@@ -148,6 +151,21 @@ class WebTarget(Target):
 			dstfile = srcfile #keep filename
 			util.copyfile(self.site.source.get_absolute_path(srcfile), self.get_absolute_path(dstfile))
 			self.publish(dstfile)
+
+	def unpublish_contentfile(self,item,srcfile):
+		filename = srcfile.rpartition(".")[0]
+		filetype = srcfile.rpartition(".")[2]
+		if filetype == "md" or filetype == "txt":
+			dstfile = filename + ".html"
+			self.unpublish(dstfile)
+		elif filetype == "jpg" or filetype == "jpeg":
+			re_image_files = re.compile('^' + item.item_id + '@[\s\S]*.(jpg|jpeg)$')
+			old_image_files = [filename for filename in self.get_content_files(item.item_id) if re_image_files.match(filename)]
+			for filename in old_image_files:
+				self.unpublish(filename)
+		else:
+			dstfile = srcfile
+			self.unpublish(dstfile)
 
 	def convert_md2html(self,srcfile,dstfile,item):
 		input_file = codecs.open(self.site.source.get_absolute_path(srcfile), mode="r", encoding="utf-8")
