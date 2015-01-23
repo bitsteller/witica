@@ -145,6 +145,11 @@ class Target(AsyncWorker):
 	def unpublish(self,filename):
 		for p in self.publishing:
 			p.unpublish_file(self.target_id + "/" + filename)
+		
+		try:
+			os.remove(self.get_absolute_path(filename))
+		except Exception, e:
+			self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
 	def publish_meta(self,filename):	
 		for p in self.publishing:
@@ -153,6 +158,11 @@ class Target(AsyncWorker):
 	def unpublish_meta(self,filename):
 		for p in self.publishing:
 			p.unpublish_file(filename)
+
+		try:
+			os.remove(self.get_abs_meta_filename(filename))
+		except Exception, e:
+			self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
 	def get_target_state_filename(self):
 		return cache_folder + os.sep + self.site.source.source_id + "." + self.target_id + ".target"

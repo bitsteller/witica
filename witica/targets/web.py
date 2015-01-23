@@ -86,10 +86,6 @@ class WebTarget(Target):
 			files.append(change.item_id + ".item")
 			for filename in files:
 				self.unpublish(filename)
-				try:
-					os.remove(self.get_absolute_path(filename))
-				except Exception, e:
-					self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 			#TODO: check if dir is empty and delete if so
 
 	def get_content_files(self,item_id):
@@ -146,10 +142,6 @@ class WebTarget(Target):
 			old_image_files = [filename for filename in self.get_content_files(item.item_id) if re_image_files.match(filename)]
 			for filename in old_image_files:
 				self.unpublish(filename)
-				try:
-					os.remove(self.get_absolute_path(filename))
-				except Exception, e:
-					self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
 			[self.publish(dstfile) for dstfile in self.convert_image(srcfile, item)]
 		else:

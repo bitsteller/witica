@@ -38,10 +38,6 @@ class StaticHtmlTarget(Target):
 			files = self.get_content_files(change.item_id)
 			for filename in files:
 				self.unpublish(filename)
-				try:
-					os.remove(self.get_absolute_path(filename))
-				except Exception, e:
-					self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 			#TODO: check if dir is empty and delete if so
 
 	def get_content_files(self,item_id):
