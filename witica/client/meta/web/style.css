@@ -25,6 +25,20 @@ body {
 	font-family: 'Alegreya', serif;
 }
 
+@media all and (max-width: 600px), all and (max-device-width: 800px) {
+	body {
+		height:100%;
+		background-size: 250%;
+		background-attachment:fixed;
+	}
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2),(min-resolution: 192dpi) {
+  	body { /*adjust font for retina displays*/
+  		font-size: 250%;
+  	}
+}
+
 h1, h2, h3, h4, h5, h6 {
 	font-weight: 300;
     line-height: 1.1;
@@ -89,7 +103,10 @@ code {
 /* Menu/Navigation styles                  */
 /*-----------------------------------------*/
 
-nav {
+@media all and (max-width: 600px), all and (max-device-width: 800px){
+	nav a {
+		font-size: 150%;
+	}
 }
 
 nav ul {
@@ -162,6 +179,12 @@ nav ul li:hover {
 	padding: 20px;
 }
 
+@media all and (max-width: 600px), all and (max-device-width: 800px){
+	#bottom {
+		margin-right: 0;
+	}
+}
+
 /*-----------------------------------------*/
 /* Content styles                          */
 /*-----------------------------------------*/
@@ -170,6 +193,13 @@ nav ul li:hover {
 	max-width:660px;
 	clear: both; 
 	margin: 0 auto;
+}
+
+@media all and (max-width: 600px), all and (max-device-width: 800px){
+	#page{
+		max-width: none;
+		overflow: scroll;
+	}
 }
 
 .breadcrumb {
