@@ -1,4 +1,5 @@
 import os, json, shutil, time, codecs, hashlib, glob, re
+from datetime import datetime
 
 import markdown
 from markdown.treeprocessors import Treeprocessor
@@ -90,6 +91,15 @@ class WebTarget(Target):
 			for filename in files:
 				self.unpublish(filename)
 			#TODO: check if dir is empty and delete if so
+
+		#update HASH file
+		self.update_target_hash()
+
+	def update_target_hash(self):
+		hash_str = sstr(hashlib.md5(datetime.now().strftime("%s")).hexdigest())
+		hash_file = codecs.open(self.get_absolute_path("TARGET_HASH"), "w", encoding="utf-8", errors="xmlcharrefreplace")
+		hash_file.write(hash_str)
+		self.publish("TARGET_HASH")
 
 	def get_content_files(self,item_id):
 		absolute_paths = glob.glob(self.get_absolute_path(item_id + ".*")) + glob.glob(self.get_absolute_path(item_id + "@*"))
