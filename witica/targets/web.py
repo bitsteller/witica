@@ -159,6 +159,9 @@ class WebTarget(Target):
 			dstfile = filename + ".html"
 			self.unpublish(dstfile)
 		elif filetype == "jpg" or filetype == "jpeg":
+			dstfile = srcfile
+			self.unpublish(dstfile)
+			#unpublish all variants as well
 			re_image_files = re.compile('^' + item.item_id + '@[\s\S]*.(jpg|jpeg)$')
 			old_image_files = [filename for filename in self.get_content_files(item.item_id) if re_image_files.match(filename)]
 			for filename in old_image_files:
