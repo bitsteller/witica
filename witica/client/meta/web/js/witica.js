@@ -15,11 +15,10 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "0.9.1"
+Witica.VERSION = "0.9.2"
 Witica.CACHESIZE = 100;
 
 Witica.itemcache = new Array();
-Witica._knownHashes = new Array();
 Witica.currentItemId = null;
 Witica.registeredRenderers = new Array();
 Witica.mainView = null;
@@ -384,16 +383,16 @@ Witica.Content.prototype.getURL = function(variant) {
 	if (variant_str != "") {
 		var ext = this.filename.substring(this.filename.lastIndexOf(".") + 1);
 		var filename = this.filename.substring(0,this.filename.lastIndexOf("."));
-		return filename + "@" + variant_str + "." + ext;
+		return filename + "@" + variant_str + "." + ext + "?bustCache=" + this.hash;
 	}
 	else { //use default variant if no matching variant found
-		return this.filename;
+		return this.filename + "?bustCache=" + this.hash;
 	}
 };
 
 Witica.Content.prototype.downloadVariant = function(variant, callback) {
 	var http_request = new XMLHttpRequest();
-	http_request.open("GET", this.getURL(variant) + "?bustCache=" + this.hash, true);
+	http_request.open("GET", this.getURL(variant), true);
 
 	http_request.onreadystatechange = function () {
 		var done = 4, ok = 200;
