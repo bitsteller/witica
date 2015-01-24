@@ -154,6 +154,7 @@ ImageRenderer.prototype.render = function(item) {
 	}
 	renderInfo(this.item, this.infoDiv);
 
+	this.bodyDiv.innerHTML = "";
 	var images = this.item.getContent(["png", "jpg", "gif"]);
 	if (images.length >= 1) {
 		var img = document.createElement("img");
