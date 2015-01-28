@@ -121,7 +121,13 @@ class Target(AsyncWorker):
 		self.state["pendingChanges"] = []
 
 		toJSON = lambda change: dict({"type": change.__class__.__name__, "item_id": change.item_id}.items() + ({"filename": change.filename}.items() if change.__class__.__name__ == "ItemChanged" else []))
-		self.state["pendingChanges"] = map(toJSON, self.pending_events)
+		self.pending_events_lock.acquire()
+		try:
+			self.state["pendingChanges"] = map(toJSON, self.pending_events)
+		except Exception, e:
+			raise
+		finally:
+			self.pending_events_lock.release()
 
 		s = json.dumps(self.state, indent=3)
 		

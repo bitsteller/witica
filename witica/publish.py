@@ -49,7 +49,13 @@ class Publish(AsyncWorker):
 		self.state["pendingUploads"] = []
 
 		toJSON = lambda event: {"local_path": event[0], "server_path": event[1]}
-		self.state["pendingUploads"] = map(toJSON, self.pending_events)
+		self.pending_events_lock.acquire()
+		try:
+			self.state["pendingUploads"] = map(toJSON, self.pending_events)
+		except Exception, e:
+			raise
+		finally:
+			self.pending_events_lock.release()
 
 		s = json.dumps(self.state, encoding="utf-8", indent=3)
 				

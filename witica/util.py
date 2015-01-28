@@ -3,7 +3,7 @@ import os, shutil, ctypes
 from datetime import datetime
 from collections import deque
 from abc import ABCMeta, abstractmethod
-from threading import Event as TEvent, Thread
+from threading import Event as TEvent, Thread, Lock
 import time
 import platform
 
@@ -77,6 +77,7 @@ class AsyncWorker(Loggable):
 			self.name = name
 			self.log_id = name
 			self.pending_events = deque()
+			self.pending_events_lock = Lock()
 			self._stop = TEvent()
 			self.stoppedEvent = Event()
 			self.accept_events = True
@@ -130,7 +131,14 @@ class AsyncWorker(Loggable):
 
 			if self._stop.is_set(): break
 
-			self.pending_events.popleft()
+			self.pending_events_lock.acquire()
+			try:
+				self.pending_events.popleft()
+			except Exception, e:
+				self.log_exception("Could not pop event.", Logtype.ERROR)
+			finally:
+				self.pending_events_lock.release()
+
 			self.write_state()
 
 			if len(self.pending_events) == 0:
@@ -142,7 +150,14 @@ class AsyncWorker(Loggable):
 	def enqueue_event(self, sender, earg):
 		if not self.accept_events:
 			raise RuntimeError("Worker doesn't accept new events")
-		self.pending_events.append(earg)
+		self.pending_events_lock.acquire()
+		try:
+			self.pending_events.append(earg)
+		except Exception, e:
+			self.log_exception("Could not enque event.", Logtype.ERROR)
+		finally:
+			self.pending_events_lock.release()
+
 		self.write_state()
 		self.log("Enqueued new event: " + sstr(earg), Logtype.DEBUG)
 
