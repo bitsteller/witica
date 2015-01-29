@@ -45,6 +45,14 @@ def register(extension, extractor):
 	registered_extractors.append((extension,extractor))
 	#print("registered: " + extension + " " + sstr(extractor))
 
+def register_default_extractors():
+	register("item", JSONExtractor)
+	register("json", JSONExtractor)
+	register("md", MDExtractor)
+	register("txt", MDExtractor)
+	register("jpg", ImageExtractor)
+	register("jpeg", ImageExtractor)
+
 def is_supported(extension):
 	for (ext,extractor) in registered_extractors:
 		if extension == ext:

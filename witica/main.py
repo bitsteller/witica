@@ -199,12 +199,7 @@ def main():
 	UTF8Writer = getwriter('utf8')
 	sys.stdout = UTF8Writer(sys.stdout)
 
-	extractor.register("item", extractor.JSONExtractor)
-	extractor.register("json", extractor.JSONExtractor)
-	extractor.register("md", extractor.MDExtractor)
-	extractor.register("txt", extractor.MDExtractor)
-	extractor.register("jpg", extractor.ImageExtractor)
-	extractor.register("jpeg", extractor.ImageExtractor)
+	extractor.register_default_extractors()
 
 	target.register("WebTarget", web.WebTarget)
 	target.register("StaticHtmlTarget", statichtml.StaticHtmlTarget)
