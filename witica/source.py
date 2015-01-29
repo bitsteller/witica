@@ -110,6 +110,13 @@ class Source(Loggable):
 		else:
 			raise ValueError("'" + reference + "' is not a valid reference")
 
+	def get_local_path(self, absolutepath):
+		if absolutepath.startswith(self.get_absolute_path("")):
+			i = len(self.get_absolute_path(""))
+			return absolutepath[i+1:]
+		else:
+			raise ValueError("'" + absolutepath + "'' is no valid absolute path inside the source '" + self.source_id + "'.")
+
 	@staticmethod
 	def construct_from_json (source_id, config):
 		classes = Source.get_classes()
@@ -151,6 +158,10 @@ class Source(Loggable):
 			if isclass(obj):
 				classes[name] = obj
 		return classes
+
+	@abstractmethod
+	def update_cache(self):
+		pass
 
 	@abstractmethod
 	def update_change_status(self):
@@ -369,13 +380,6 @@ class Dropbox(Source):
 
 	def get_absolute_path(self, localpath):
 		return os.path.abspath(os.path.join(self.source_dir, localpath))
-
-	def get_local_path(self, absolutepath):
-		if absolutepath.startswith(self.get_absolute_path("")):
-			i = len(self.get_absolute_path(""))
-			return absolutepath[i+1:]
-		else:
-			raise ValueError("'" + absolutepath + "'' is no valid absolute path inside the source '" + self.source_id + "'.")
 
 class DropboxAppFolder(Dropbox): #TODO: remove (legacy)
 	def __init__(self,source_id,config):
