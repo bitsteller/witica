@@ -40,16 +40,26 @@ class TestWebTarget(unittest.TestCase):
 
 	def tearDown(self):
 		self.site.source.stoppedEvent(self.site.source, None)
+		extractor.registered_extractors = []
 		pkg_resources.cleanup_resources()
 		shutil.rmtree(self.target_path)
 		Logger.stop()
 
-	def test_simple(self):
-		self.site.source.changeEvent(self.site.source, ItemChanged(self.site.source, "simple", "simple.md"))	
+	def convert_file(self, filename):
+		item_id, _d, ext = filename.rpartition(".")
+		self.site.source.changeEvent(self.site.source, ItemChanged(self.site.source, item_id, filename))	
 		while len(self.target.pending_events) > 0 or len(self.target.publishing[0].pending_events) > 0:
-			time.sleep(1)
+			time.sleep(0.1)
+
+	def test_simple(self):
+		self.convert_file("simple.md")
 		result = open(os.path.join(self.publish_path, "simple.html")).read()
 		self.assertEqual(result, "<p>This is a test markdown file without json part.</p>")
+
+	def test_special_characters(self):
+		self.convert_file("special_characters.md")
+		result = open(os.path.join(self.publish_path, "special_characters.html")).read()
+		self.assertEqual(result, "<p>This is a test markdown file without json part and many evil characters: öäüß¡““¢≠}{|][¢¶“∞…–∞œäö</p>")
 
 
 class FolderSource(Source):
