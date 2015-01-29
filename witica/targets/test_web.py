@@ -1,8 +1,10 @@
 # coding=utf-8
 
-import os, tempfile, shutil, time
+import os, tempfile, shutil, time, codecs, json
 import unittest
 import pkg_resources
+
+from PIL import Image
 
 from witica.log import Logger
 from witica.site import Site
@@ -61,6 +63,31 @@ class TestWebTarget(unittest.TestCase):
 		result = open(os.path.join(self.publish_path, "special_characters.html")).read()
 		self.assertEqual(result, "<p>This is a test markdown file without json part and many evil characters: öäüß¡““¢≠}{|][¢¶“∞…–∞œäö</p>")
 
+	def test_empty_title(self):
+		self.convert_file("empty_title.md")
+		result = open(os.path.join(self.publish_path, "empty_title.html")).read()
+		self.assertEqual(result, "<h1></h1>\n<p>This is a test markdown file without json part.</p>")
+
+	def test_photo(self):
+		self.convert_file("photo.jpg")
+		self.assertTrue(os.path.exists(os.path.join(self.publish_path, "photo.jpg")))
+		self.assertTrue(os.path.exists(os.path.join(self.publish_path, "photo@512.jpg")))
+		self.assertTrue(os.path.exists(os.path.join(self.publish_path, "photo@1024.jpg")))
+
+		itemfile = json.loads(codecs.open(os.path.join(self.publish_path, "photo.item"), "r", "utf-8").read())
+		expected_variants = ["1024", "512"]
+
+		self.assertEqual(len(itemfile["witica:contentfiles"]),2)
+		self.assertEqual(itemfile["witica:contentfiles"][1]["variants"], expected_variants)
+		self.assertEqual(itemfile["witica:contentfiles"][1]["filename"], "photo.jpg")
+
+		img = Image.open(os.path.join(self.publish_path, "photo@512.jpg"))
+		self.assertEqual(max(img.size), 512)
+		img.close()
+
+		img = Image.open(os.path.join(self.publish_path, "photo@1024.jpg"))
+		self.assertEqual(max(img.size), 1024)
+		img.close()
 
 class FolderSource(Source):
 	def __init__(self, source_id, config):
