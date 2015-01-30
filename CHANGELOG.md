@@ -4,15 +4,17 @@
 ******************
 
 - NEW: live mode in witica.js - when an item in cache was changed less than 60min ago, target is updated more frequently
+- NEW: added unit tests for WebTarget
 - CHANGE: more efficient fetching of updates in witica.js, item cache is only updated when target hash has changed
 - CHANGE: changed site.js template such that also png files are accepted as header image
 - CHANGE: unified css in template; removed mini.css
 - FIX: cleanup add better comments in site.js/style.css
 - FIX: `witica rebuild` did not process all meta files
 - FIX: creating directories on server using FTP upload failed in some cases
-- FIX: make sure unpublished files are removed in target cache
-- FIX: content files were not unpublished when deleted in source if the item still existed
+- FIX: unpublished files were not always removed from target cache
+- FIX: content files have not been unpublished when deleted in source if the item still existed
 - FIX: ImageRenderer in site.js template showed image twice after item was changed
+- FIX: target/publish threads could crash occasionally when a new event was enqueded
 
 
 0.9.1 (2015-01-15)
