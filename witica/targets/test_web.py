@@ -89,6 +89,14 @@ class TestWebTarget(unittest.TestCase):
 		self.assertEqual(max(img.size), 1024)
 		img.close()
 
+	def test_links(self):
+		self.convert_file("links.md")
+		result = open(os.path.join(self.publish_path, "links.html")).readlines()
+		self.assertTrue('<a href="#!simple">linktext</a>' in result[0])
+		#self.assertTrue('<a href="#!öäüß¡““¢≠}{|¢¶“∞…–∞œäö()">öäüß¡““¢≠}{|¢¶“∞…–∞œäö()</a>"' in result[1])
+		self.assertTrue('<a href="#!simple">relative</a>' in result[2])
+
+
 class FolderSource(Source):
 	def __init__(self, source_id, config):
 		super(FolderSource, self).__init__(source_id, config)
