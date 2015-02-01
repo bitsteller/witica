@@ -540,7 +540,7 @@ Witica.View.prototype = {
 
 		for (var i = Witica.registeredRenderers.length - 1; i >= 0; i--) {
 			try {
-				if (Witica.registeredRenderers[i].supports(this.item)) {
+				if (Witica.registeredRenderers[i].supports(this.item, this.params)) {
 					newRendererClass = Witica.registeredRenderers[i].renderer;
 					break;
 				}
