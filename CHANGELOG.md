@@ -7,6 +7,7 @@
 - NEW: added unit tests for WebTarget
 - CHANGE: more efficient fetching of updates in witica.js, item cache is only updated when target hash has changed
 - CHANGE: changed site.js template such that also png files are accepted as header image
+- CHANGE: renderer support function in witica.js gets render params passed in addition to item to allow style specific renderers
 - CHANGE: unified css in template; removed mini.css
 - FIX: cleanup add better comments in site.js/style.css
 - FIX: `witica rebuild` did not process all meta files
