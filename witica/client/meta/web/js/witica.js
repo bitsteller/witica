@@ -828,10 +828,10 @@ Witica._checkForUpdates = function () {
 	};
 	http_request.send(null);
 	if (Witica._liveMode) {
-		setTimeout("Witica._checkForUpdates()",5000); //check for updates every 5s
+		setTimeout(Witica._checkForUpdates,5000); //check for updates every 5s
 	}
 	else {
-		setTimeout("Witica._checkForUpdates()",15000); //check for updates every 15s
+		setTimeout(Witica._checkForUpdates,15000); //check for updates every 15s
 	}
 }
 
