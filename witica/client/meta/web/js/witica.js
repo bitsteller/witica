@@ -16,7 +16,7 @@ Witica.util = Witica.util || {};
 /*-----------------------------------------*/
 
 Witica.VERSION = "0.9.2"
-Witica.CACHESIZE = 100;
+Witica.CACHESIZE = 50;
 
 Witica.itemcache = new Array();
 Witica.currentItemId = null;
@@ -476,7 +476,16 @@ Witica.updateItemCache = function () {
 			}
 
 			//update item
-			var nextUpdate = item.lastUpdate.getTime() + 600000; //if no modification time available, update every 10min
+			item.update();
+			if (item.exists() && item.metadata.hasOwnProperty("last-modified")) { //update at most every 10 sec, items with older modification date less often
+				var interval = Math.round(150*Math.log(0.0001*((currentTime/1000)-item.metadata["last-modified"])+1)+10)*1000;
+				if (interval < 60 * 60 * 1000) {//there is a fresh item in cache, enter live mode
+					Witica._liveMode = true; //update target more often as usual
+				}
+			}
+
+			//old update mechanism, deprecated
+			/*var nextUpdate = item.lastUpdate.getTime() + 600000; //if no modification time available, update every 10min
 			if (item.exists() && item.metadata.hasOwnProperty("last-modified")) { //update at most every 10 sec, items with older modification date less often
 				var interval = Math.round(150*Math.log(0.0001*((currentTime/1000)-item.metadata["last-modified"])+1)+10)*1000;
 				if (interval < 1000) { //make sure interval is not negative (in case of wrong modification date)
@@ -489,7 +498,7 @@ Witica.updateItemCache = function () {
 			}
 			if (currentTime >= nextUpdate) {
 				item.update();
-			}
+			}*/
 		}	
 	}
 };
