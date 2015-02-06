@@ -97,6 +97,42 @@ Witica.util.getHumanReadableDate = function(date) {
 	return dateStr;
 };
 
+Witica.util.attachHumanReadableDate = function (renderer, date, element) {
+	var requestObj = {};
+	requestObj.abort = function () {
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+		}
+	};
+	requestObj.render = function () {
+		try {
+			element.innerHTML = Witica.util.getHumanReadableDate(date);
+		}
+		catch (exception) {
+			this.abort();
+			return;
+		}
+		var current = new Date().getTime(),
+		diff = (current - date.getTime()) / 1000;
+		if(diff > Witica.util.timeUnits.day) {
+			interval = Witica.util.timeUnits.day;
+		} 
+		else if(diff > Witica.util.timeUnits.hour) {
+			interval = Witica.util.timeUnits.hour;
+		} 
+		else if(diff > Witica.util.timeUnits.minute) {
+			interval = Witica.util.timeUnits.minute;
+		} 
+		else {
+			interval = Witica.util.timeUnits.second;
+		}
+		this.timeout = setTimeout(this.render.bind(this), 1000*interval);
+	};
+
+	renderer.renderRequests.push(requestObj);
+	requestObj.render();
+}
+
 Witica.util.shorten = function (html, maxLength) {
 	plaintext = html.replace(/(<([^>]+)>)/ig,"");
 
