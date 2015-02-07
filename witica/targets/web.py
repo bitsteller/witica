@@ -107,6 +107,9 @@ class WebTarget(Target):
 		itemfile = item_id + ".item"
 		if contentfiles.count(itemfile):
 			contentfiles.remove(itemfile)
+		itemhashfile = item_id + ".itemhash"
+		if contentfiles.count(itemhashfile):
+			contentfiles.remove(itemhashfile)
 		return contentfiles
 
 	def publish_metadata(self,item):
