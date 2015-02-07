@@ -186,9 +186,9 @@ def get_matching_items(source, args):
 	if len(args.item) > 0:
 		#return matching items
 		for idpattern in args.item:
-			items.extend(currentsite.source.items.get_items(idpattern))
+			items.extend(currentsite.source.items.get_items(source.prefix + idpattern))
 	elif len(args.item) == 0:
-		items = source.items
+		items = [item for item in source.items if item.item_id.startswith(source.prefix)]
 	return items
 
 def main():

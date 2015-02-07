@@ -23,8 +23,9 @@ class Source(Loggable):
 
 	__metaclass__ = ABCMeta
 
-	def __init__(self, source_id, config):
+	def __init__(self, source_id, config, prefix = ""):
 		self.source_id = source_id
+		self.prefix = prefix
 
 		self.items = SourceItemIterable(self)
 		self.log_id = source_id
@@ -118,9 +119,9 @@ class Source(Loggable):
 			raise ValueError("'" + absolutepath + "'' is no valid absolute path inside the source '" + self.source_id + "'.")
 
 	@staticmethod
-	def construct_from_json (source_id, config):
+	def construct_from_json (source_id, config, prefix = ""):
 		classes = Source.get_classes()
-		instance = classes[config["type"]](source_id, config)
+		instance = classes[config["type"]](source_id, config, prefix)
 		return instance
 
 	@staticmethod
@@ -135,21 +136,34 @@ class Source(Loggable):
 
 	@staticmethod
 	def construct_from_working_dir():
-		cwd = os.getcwd()
-		if cwd.find(os.sep + "Dropbox" + os.sep) > -1:
-			if os.path.exists(cwd + os.sep + "meta") and os.path.isdir(cwd + os.sep + "meta"):
-				folder = cwd.partition(os.sep + "Dropbox")[2]
+		source_dir = os.getcwd()
+		if source_dir.find(os.sep + "Dropbox" + os.sep) > -1:
+			prefix = ""
+			while not(Source.is_source_dir(source_dir)) and source_dir.find(os.sep) > -1:
+				prefix = prefix + source_dir.rpartition(os.sep)[2] + "/"
+				source_dir = source_dir.rpartition(os.sep)[0]
+			if Source.is_source_dir(source_dir):
+				folder = source_dir.partition(os.sep + "Dropbox")[2]
 				config = {}
 				config["version"] = 1
 				config["type"] = "DropboxFolder"
 				config["app_key"] = "fgpviq15t751f6n"
 				config["app_secret"] = "e4auyq6wzrz04p6"
 				config["folder"] = folder.decode("utf-8")
-				return Source.construct_from_json(folder.replace(os.sep, "__").decode("utf-8").encode("ascii", "ignore"), config)
+				return Source.construct_from_json(folder.replace(os.sep, "__").decode("utf-8").encode("ascii", "ignore"), config, prefix = prefix)
 			else:
 				raise IOError("Working directory is not a valid source. Must contain /meta directory.")
 		else:
 			raise IOError("Working directory is not a valid source. Must be a folder inside your Dropbox.")
+
+	@staticmethod
+	def is_source_dir(source_dir):
+		if source_dir.find(os.sep + "Dropbox" + os.sep) > -1 \
+				and os.path.exists(source_dir + os.sep + "meta") \
+				and os.path.isdir(source_dir + os.sep + "meta"):
+			return True
+		else:
+			return False
 
 	@staticmethod
 	def get_classes():
@@ -184,8 +198,8 @@ class Dropbox(Source):
 
 	__metaclass__ = ABCMeta
 
-	def __init__(self, source_id, config):
-		super(Dropbox, self).__init__(source_id, config)
+	def __init__(self, source_id, config, prefix = ""):
+		super(Dropbox, self).__init__(source_id, config, prefix)
 
 		self.source_dir = cache_folder + os.sep + self.source_id
 		self.state_filename = cache_folder + os.sep + self.source_id + ".source"
@@ -382,14 +396,14 @@ class Dropbox(Source):
 		return os.path.abspath(os.path.join(self.source_dir, localpath))
 
 class DropboxAppFolder(Dropbox): #TODO: remove (legacy)
-	def __init__(self,source_id,config):
-		super(DropboxAppFolder, self).__init__(source_id, config)
+	def __init__(self, source_id, config, prefix = ""):
+		super(DropboxAppFolder, self).__init__(source_id, config, prefix)
 		self.path_prefix = ""
 		self.start_session()
 
 class DropboxFolder(Dropbox):
-	def __init__(self,source_id,config):
-		super(DropboxFolder, self).__init__(source_id, config)
+	def __init__(self,source_id,config, prefix = ""):
+		super(DropboxFolder, self).__init__(source_id, config, prefix)
 		self.path_prefix = unicodedata.normalize("NFC",config["folder"].lower())
 		self.start_session()
 
@@ -441,6 +455,7 @@ class SourceItemIterable(object):
 	def get_items(self, itemidpattern):
 		"""Returns all items where the itemid expression matches. The expression can contain * as placeholder."""
 		full_pattern = unicodedata.normalize('NFD', suni(self.source.get_absolute_path("") + os.sep + itemidpattern + ".*"))
+
 		filenames = glob.glob(full_pattern)
 		itemids = set([self.source.get_item_id(self.source.get_local_path(filename)) for filename in filenames])
 		return [SourceItem(self.source, itemid) for itemid in itemids if self.source.item_exists(itemid)]

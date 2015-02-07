@@ -98,8 +98,8 @@ class TestWebTarget(unittest.TestCase):
 
 
 class FolderSource(Source):
-	def __init__(self, source_id, config):
-		super(FolderSource, self).__init__(source_id, config)
+	def __init__(self, source_id, config, prefix = ""):
+		super(FolderSource, self).__init__(source_id, config, prefix)
 
 		self.source_dir = config["path"]
 		self.state = {"cursor" : ""}
