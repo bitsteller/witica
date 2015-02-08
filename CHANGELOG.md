@@ -2,12 +2,11 @@
 
 0.9.2 (unreleased)
 ******************
-
-- NEW: live mode in witica.js - when an item in cache was changed less than 60min ago, target is updated more frequently
+- NEW: `witica upgrade` command to upgrade witica.js to the latest version for alle WebTargets
 - NEW: added unit tests for WebTarget
 - NEW: Witica.util.attachHumanReadableDate() function to make a DOM element display a self-updating human readable date string
 - CHANGE: witica publisher will find source even when in subfolder of the source folder; any passed item ids (for example to `rebuild`) are then treated as relative
-- CHANGE: more efficient fetching of updates in witica.js, item cache is only updated when target hash has changed
+- CHANGE: more efficient fetching of updates in witica.js: item cache is only updated when target hash has changed; changes are detected more quickly
 - CHANGE: changed site.js template such that also png files are accepted as header image
 - CHANGE: renderer support function in witica.js gets render params passed in addition to item to allow style specific renderers
 - CHANGE: unified css in template; removed mini.css
@@ -19,7 +18,8 @@
 - FIX: ImageRenderer in site.js template showed image twice after item was changed
 - FIX: target/publish threads could crash occasionally when a new event was enqueded
 - FIX: removed unnecessary invocation of eval() in witica.js
-
+- FIX: don't list internal itemhashfile as contentfile in item file
+- FIX: log messages issued before confirmation request were sometimes not displayed before confirmation was finished
 
 0.9.1 (2015-01-15)
 ******************
