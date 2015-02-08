@@ -33,7 +33,7 @@ def suni(obj):
 	except UnicodeDecodeError:
 		return unicode(str(obj).decode('utf-8'))
 
-def confirm(self, prompt_str, allow_empty=False, default=False):
+def confirm(prompt_str, allow_empty=False, default=False):
 	fmt = (prompt_str, 'y', 'n') if default else (prompt_str, 'n', 'y')
 	if allow_empty:
 		prompt = '%s [%s]|%s: ' % fmt
