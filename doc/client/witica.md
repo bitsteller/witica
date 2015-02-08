@@ -46,7 +46,7 @@ The function takes the following arguments:
 
 * `mainView`: the main view that should be used to load the item specified in the URL,
 * `defaultItemId`: the id of the item that should be loaded if no other item was specified in the URL (e.g. the home page),
-* `prefix`: an optional prefix to the WebTarget used to fetch items (for example “webtarget/“ if path in publishing section in .target file was set to “/webtarget/“)
+* `prefix`: an optional prefix to the WebTarget used to fetch items relative to the location of index.thml, usually the name of the target (for example “web“ if the target file was `web.target`)
 
 **Example:**
 
@@ -58,7 +58,7 @@ The typical initialisation that needs to be done on load of the page (call it fo
 
 	//init mainView and Witica
 	mainview = new Witica.View(document.getElementById("main"));
-	Witica.initWitica(mainview,"home");
+	Witica.initWitica(mainview,"home","web");
 
 ## Witica.getItem()
 
@@ -76,7 +76,7 @@ The function takes the following arguments:
 
 **Example:** Let’s say you need to access to the metadata of an item, then you write
 
-	var item = Witica.getItem(“itemId”)
+	var item = Witica.getItem("itemId")
 	var request = item.requestLoad(true, function() {
 			//code executed when item has been loaded or updated
 			//safe to access item.metadata here…

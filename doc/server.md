@@ -8,6 +8,7 @@ The subcommands are:
 
 * **init**: inits an empty folder in your Dropbox with a sample website setup
 * **update**: fetch changes and update targets (this is the command that you will use most of the time)
+* **upgrade**: upgrades WebTargets to the latest version of witica.js
 * **rebuild**: rebuild specified items and publish again (this can be used to fix a broken item)
 * **check**: checks the consistency of the specified items in the source
 * **list**: lists available items in a source
@@ -37,17 +38,32 @@ This is handy when Witica is running on a server directly, because it allows you
 The update command offers even more parameters that allow for example to update only some targets. To get information about the full syntax type in
 
 	witica update -h
+	
+## Upgrade
+Upgrades WebTargets to the latest version of *witica.js*.
 
+When you have updated the witica publisher to a newer version, you should also upgrade all your WebTargets to the matching version of *witica.js*. To do so you, run
+
+	witica upgrade
+	
+from your source folder and you will be asked if the necessary metafiles for *witica.js* should be overritten with the new version.
+
+When the upgrade was succesful you should also run `witica rebuild`once.
+
+**Note:** It is strongly recommend to make a backup of the /meta directory in the source that you are upgrading before running `witica upgrade`. It is also a good idea to create a seperate development target that you can try upgrading first. When the upgrade was succesful you can copy the files into the folder for your production target.
+
+**Note:** Some versions make breaking changes in the API, which means that you need adjust `site.js` or `index.html`. Check the release notes of all versions between your previous and the current version to get information about the necessary changes.
+	
 ## Rebuild
 Rebuilds the specified items and publishes them again.
 
-The command is a tool to fix problems, when for some reason an item was not correctly uploaded to the server or if parts were accidentally deleted on the server.
+The command is a tool to fix problems, when for some reason an item was not correctly uploaded to the server or if parts were accidentally deleted on the server. It is also recommended to execute `witica rebuild` once after updateting *Witica* to a newer version.
 
 The command
 
 	witica rebuild myitemid
 
-will for example convert all content for the item with the id *myitemid* again and upload the content and metadata again to the server. You can also specify multiple items at once, separated by comma. You can also use a placeholder in the item id like *myfolder/\** to process all items where the id is starting with *myfolder/*.
+will for example convert all content for the item with the id *myitemid* again and upload the content and metadata again to the server. You can also specify multiple items at once, separated by comma. You can also use a placeholder in the item id like *myfolder/\** to process all items where the id is starting with *myfolder/*. If you execute *Witica* from a subfolder of the source, the id pattern as relative to this folder (i.e. when you are in the subfolder *cities*, the pattern *berlin* will match an item with the id *cities/berlin*)
 
 **Note:** If your shell is autocompleting wrong filenames, make sure your current working directory is the root folder of the source you are working in or put the item id pattern in parentheses like "\*" to prevent filename autocompletion.
 
@@ -71,7 +87,7 @@ The command
 
 	witica check myitemid
 
-will for example check the integrity of the item with the id *myitemid*. You can also specify multiple items at once, separated by comma. You can also use a placeholder in the item id like *myfolder/\** to process all items where the id is starting with *myfolder/*.
+will for example check the integrity of the item with the id *myitemid*. You can also specify multiple items at once, separated by comma. You can also use a placeholder in the item id like *myfolder/\** to process all items where the id is starting with *myfolder/*. If you execute *Witica* from a subfolder of the source, the id pattern as relative to this folder (i.e. when you are in the subfolder *cities*, the pattern *berlin* will match an item with the id *cities/berlin*)
 
 **Note:** If your shell is autocompleting wrong filenames, make sure your current working directory is the root folder of the source you are working in or put the item id pattern in parentheses like "\*" to prevent filename autocompletion.
 
@@ -82,6 +98,6 @@ The command
 
 	witica list myidpattern
 
-prints the ids of all items in the source that matches *myidpattern*. If no item patterns are passed all items in the source are printed.
+prints the ids of all items in the source that matches *myidpattern*. If no item patterns are passed all items in the source are printed. If you execute *Witica* from a subfolder of the source, the id pattern as relative to this folder (i.e. when you are in the subfolder *cities*, the pattern *\** will match all items with an id as *cities/\**)
 
 This command is useful to test if an item pattern matches the intended items before using it in other commands like *rebuild* or *check*. It can also be used to check if a specific item exists in the source or to get the total number of items in the source.

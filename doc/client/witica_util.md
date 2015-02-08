@@ -17,6 +17,24 @@ The function takes the following arguments:
 
 * `date`: the date to be formatted.
 
+## attachHumanReadableDate()
+
+**Syntax:**
+
+	attachHumanReadableDate(renderer, date, element)
+
+Writes a human readable date string as given by `Witica.util.getHumanReadableDate()` into a DOM element and automatically keeps relative time values up to date.
+
+The function returns a `requestObj` that you can call `abort()` on to stop updating of the date. Updating the date is automatically stopped, when the passed `renderer` stops rendering the current item. 
+
+*Note:* Make sure that you don't modify the parent element of `element`'s innerHTML attribute, as this will remove the passed element from the DOM causing it to not update longer.
+
+The function takes the following arguments:
+
+* `renderer`: a `Witica.Renderer` object that the function is executed from
+*  `date`: the date that should be displayed in the element
+* `element`: the DOM element that will contain the date string as text content
+
 ## shorten()
 
 **Syntax:**
