@@ -33,6 +33,28 @@ def suni(obj):
 	except UnicodeDecodeError:
 		return unicode(str(obj).decode('utf-8'))
 
+def confirm(self, prompt_str, allow_empty=False, default=False):
+	fmt = (prompt_str, 'y', 'n') if default else (prompt_str, 'n', 'y')
+	if allow_empty:
+		prompt = '%s [%s]|%s: ' % fmt
+	else:
+		prompt = '%s %s|%s: ' % fmt
+
+	Logger.get_printlock().acquire()
+	while True:
+		ans = raw_input(prompt).lower()
+		if ans == '' and allow_empty:
+			Logger.get_printlock().release()
+			return default
+		elif ans == 'y':
+			Logger.get_printlock().release()
+			return True
+		elif ans == 'n':
+			Logger.get_printlock().release()
+			return False
+		else:
+			print("Please enter y or n.")
+
 def get_cache_folder(name):
 	if platform.system() == "Darwin":
 		return os.path.expanduser(os.path.join("~/Library/Caches/org.witica",name))

@@ -9,6 +9,7 @@ import keyring, getpass
 import ftplib
 
 from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile
+from witica import util
 from witica import *
 from witica.log import *
 
@@ -119,28 +120,6 @@ class FTPPublish(Publish):
 
 		Publish.__init__(self, source_id, target_id, config)
 
-	def confirm(self, prompt_str, allow_empty=False, default=False):
-		fmt = (prompt_str, 'y', 'n') if default else (prompt_str, 'n', 'y')
-		if allow_empty:
-			prompt = '%s [%s]|%s: ' % fmt
-		else:
-			prompt = '%s %s|%s: ' % fmt
-
-		Logger.get_printlock().acquire()
-		while True:
-			ans = raw_input(prompt).lower()
-			if ans == '' and allow_empty:
-				Logger.get_printlock().release()
-				return default
-			elif ans == 'y':
-				Logger.get_printlock().release()
-				return True
-			elif ans == 'n':
-				Logger.get_printlock().release()
-				return False
-			else:
-				print("Please enter y or n.")
-
 	def prepare_ftp(self, force_password=False):
 		if self.ftp_init == False:
 			domain = self.config["domain"]
@@ -161,7 +140,7 @@ class FTPPublish(Publish):
 					else:
 						print ("Authorization failed (no password entered).")
 				# store the password
-				if self.confirm("Do you want to securely store the password in the keyring of your operating system?",default=True):
+				if util.confirm("Do you want to securely store the password in the keyring of your operating system?",default=True):
 					keyring.set_password(domain, user, self._ftp_password)
 					print("Password has been stored. You will not have to enter it again the next time. If you need to edit the password use the keychain manager of your system.")
 			self.ftp_init = True
