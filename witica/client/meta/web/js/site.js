@@ -1,10 +1,15 @@
 /*------------------------------------------*/
 /* General rendering functions              */
 /*------------------------------------------*/
-function renderInfo (item, infoDiv) {
+function renderInfo (renderer, item, infoDiv) {
 	if (item.metadata.hasOwnProperty("last-modified")) {
-		var datestr = Witica.util.getHumanReadableDate(new Date(item.metadata["last-modified"]*1000));
-		infoDiv.innerHTML = "Published " + datestr + " ";
+		var dateDiv = document.createElement("div");
+		dateDiv.style.display = "inline";
+		Witica.util.attachHumanReadableDate(renderer, new Date(item.metadata["last-modified"]*1000), dateDiv);
+
+		infoDiv.appendChild(document.createTextNode("Published "));
+		infoDiv.appendChild(dateDiv);
+		infoDiv.appendChild(document.createTextNode(" "));
 	}
 	else {
 		infoDiv.innerHTML = "";
@@ -53,7 +58,7 @@ DefaultRenderer.prototype.render = function(item) {
 	}
 
 	this.heading.innerHTML = this.item.metadata.title;
-	renderInfo(this.item, this.infoDiv);
+	renderInfo(this, this.item, this.infoDiv);
 
 	this.requireContent("html", function (content) {
 		if (this.params.preview) {
@@ -152,7 +157,7 @@ ImageRenderer.prototype.render = function(item) {
 	else {
 		this.descriptionDiv.innerHTML = "";
 	}
-	renderInfo(this.item, this.infoDiv);
+	renderInfo(this, this.item, this.infoDiv);
 
 	this.bodyDiv.innerHTML = "";
 	var images = this.item.getContent(["png", "jpg", "gif"]);

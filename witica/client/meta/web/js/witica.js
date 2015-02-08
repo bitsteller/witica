@@ -27,7 +27,7 @@ Witica.targetChanged = null;
 Witica._virtualItemCount = 0;
 Witica._prefix = "";
 Witica._targetHash = "";
-Witica._liveMode = false;
+Witica._cacheUpdateInterval = 60 * 1000;
 
 /*-----------------------------------------*/
 /* Common extensions                       */
@@ -112,21 +112,25 @@ Witica.util.attachHumanReadableDate = function (renderer, date, element) {
 			this.abort();
 			return;
 		}
+
 		var current = new Date().getTime(),
 		diff = (current - date.getTime()) / 1000;
-		if(diff > Witica.util.timeUnits.day) {
-			interval = Witica.util.timeUnits.day;
+		if(diff > Witica.util.timeUnits.week) {
+			interval = -1;
+		}
+		else if(diff > Witica.util.timeUnits.day) {
+			interval = Witica.util.timeUnits.day - (diff % Witica.util.timeUnits.day);
 		} 
 		else if(diff > Witica.util.timeUnits.hour) {
-			interval = Witica.util.timeUnits.hour;
-		} 
-		else if(diff > Witica.util.timeUnits.minute) {
-			interval = Witica.util.timeUnits.minute;
+			interval = Witica.util.timeUnits.hour - (diff % Witica.util.timeUnits.hour);
 		} 
 		else {
-			interval = Witica.util.timeUnits.second;
+			interval = Witica.util.timeUnits.minute - (diff % Witica.util.timeUnits.minute);
 		}
-		this.timeout = setTimeout(this.render.bind(this), 1000*interval);
+
+		if (interval > 0) {
+			this.timeout = setTimeout(this.render.bind(this), 1000*(interval+1));
+		}
 	};
 
 	renderer.renderRequests.push(requestObj);
@@ -249,6 +253,7 @@ Witica.Item.prototype._loadMeta = function(hash) {
 			this.isLoaded = true;
 			this.hash = hash;
 			this.loadFinished.fire(this);
+			Witica._updateCacheUpdateInterval();
 		}
 	}.bind(this);
 	http_request.send(null);
@@ -458,8 +463,23 @@ Witica.createVirtualItem = function (metadata) {
 	return item;
 };
 
+Witica._updateCacheUpdateInterval = function () {
+	currentTime = (new Date()).getTime();
+	Witica._cacheUpdateInterval = 60 * 60 * 1000; //update at least every hour
+	for (var i = 0; i < Witica.itemcache.length; i++) {
+		var item = Witica.itemcache[i];
+		if (item.exists() && item.metadata.hasOwnProperty("last-modified")) { //update at most every 10 sec, items with older modification date less often
+			var interval = Math.round(150*Math.log(0.0001*((currentTime/1000)-item.metadata["last-modified"])+1)+10)*1000;
+			if (interval > 0 && interval < Witica._cacheUpdateInterval) {
+				Witica._cacheUpdateInterval = interval;
+			}
+		}
+	}
+	clearTimeout(Witica._checkForUpdatesTimeout);
+	Witica._checkForUpdatesTimeout = setInterval(Witica._checkForUpdates,Witica._cacheUpdateInterval); //check for updates every 5s
+}
+
 Witica.updateItemCache = function () {
-	Witica._liveMode = false;
 	currentTime = (new Date()).getTime();
 	len = Witica.itemcache.length;
 	//console.log("Cached:");
@@ -477,30 +497,9 @@ Witica.updateItemCache = function () {
 
 			//update item
 			item.update();
-			if (item.exists() && item.metadata.hasOwnProperty("last-modified")) { //update at most every 10 sec, items with older modification date less often
-				var interval = Math.round(150*Math.log(0.0001*((currentTime/1000)-item.metadata["last-modified"])+1)+10)*1000;
-				if (interval < 60 * 60 * 1000) {//there is a fresh item in cache, enter live mode
-					Witica._liveMode = true; //update target more often as usual
-				}
-			}
-
-			//old update mechanism, deprecated
-			/*var nextUpdate = item.lastUpdate.getTime() + 600000; //if no modification time available, update every 10min
-			if (item.exists() && item.metadata.hasOwnProperty("last-modified")) { //update at most every 10 sec, items with older modification date less often
-				var interval = Math.round(150*Math.log(0.0001*((currentTime/1000)-item.metadata["last-modified"])+1)+10)*1000;
-				if (interval < 1000) { //make sure interval is not negative (in case of wrong modification date)
-					interval = 5 * 60 * 1000; //default update interval: 5min
-				}
-				if (interval < 60 * 60 * 1000) {//there is a fresh item in cache, enter live mode
-					Witica._liveMode = true; //update target more often as usual
-				}
-				nextUpdate = item.lastUpdate.getTime() + interval;
-			}
-			if (currentTime >= nextUpdate) {
-				item.update();
-			}*/
 		}	
 	}
+	Witica._updateCacheUpdateInterval();
 };
 
 Witica.getItem = function (itemId) {
@@ -836,12 +835,6 @@ Witica._checkForUpdates = function () {
 		}
 	};
 	http_request.send(null);
-	if (Witica._liveMode) {
-		setTimeout(Witica._checkForUpdates,5000); //check for updates every 5s
-	}
-	else {
-		setTimeout(Witica._checkForUpdates,15000); //check for updates every 15s
-	}
 }
 
 Witica.registerRenderer = function (renderer, supports) {
