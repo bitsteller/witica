@@ -15,6 +15,7 @@ from witica.source import Source, MetaChanged, ItemChanged, ItemRemoved
 from witica.targets import target, web, statichtml
 from witica.check import IntegrityChecker
 from witica.util import sstr, suni, throw
+from witica import util
 
 VERSION = pkg_resources.get_distribution("witica").version
 
@@ -82,6 +83,58 @@ def init_command(args):
 			log("Init is only possible when the current folder is empty.", Logtype.ERROR)
 	else:
 		log("Working directory is not a valid source. Must be a folder inside your Dropbox.", Logtype.ERROR)
+
+def upgrade_command(args):
+	global currentsite
+	Logger.start(verbose=args.verbose)
+
+	source = None
+	try:
+		source = Source.construct_from_working_dir()
+		currentsite = Site(source, target_ids = args.targets)
+	except Exception, e:
+		log_exception("Site could not be initialized.", Logtype.ERROR)
+		shutdown()
+		return
+
+	cwd = os.getcwd()
+	if cwd.find(os.sep + "Dropbox" + os.sep) > -1 \
+		and os.path.exists(os.path.join(cwd, "meta")) \
+		and os.path.isdir(os.path.join(cwd, "meta")):
+
+		target_ids = []
+		if args.targets:
+			target_ids = args.targets
+		else:
+			target_ids = [target.target_id for target in currentsite.targets]
+
+		for target_id in target_ids:
+			errors = False
+			target = currentsite.get_target_by_id(target_id)
+			if target != None and isinstance(target, web.WebTarget):
+				log("Will now upgrade '" + target_id + "'. This will overwrite metafiles of the source and can break your website due to API changes (see release notes). It is recommended to make a backup of the target's metafiles before continuing.", Logtype.WARNING)
+				filename = "js" + os.sep + "witica.js"
+				if args.force or util.confirm("Overwrite " + filename + "?"):
+					try:
+						old_file = os.path.join(cwd, "meta", target_id, filename)
+						new_file = os.path.join(pkg_resources.resource_filename("witica","client"), "meta", "web", filename)
+						shutil.copy2(new_file, old_file)
+						log("Upgraded file '" + filename + "'.", Logtype.DEBUG)
+					except Exception, e:
+						errors = True
+						log_exception("Couldn't upgrade file '" + filename + "'.", Logtype.ERROR)
+				else:
+					errors = True
+				if errors == False:
+					log("Target '" + target_id + "' has been successfully upgraded.", Logtype.INFO)
+				else:
+					log("Target '" + target_id + "' has been upgraded partially or with erros. You should run upgrade again.", Logtype.WARNING)
+			else:
+				log("Target '" + target_id + "' is not a WebTarget. Currently only WebTargets can be upgraded.", Logtype.ERROR)
+	else:
+		log("Working directory is not a valid source. Must be a folder inside your Dropbox.", Logtype.ERROR)
+		shutdown()
+	currentsite.source.stoppedEvent(currentsite.source, None)
 
 def update_command(args):
 	global currentsite
@@ -213,6 +266,13 @@ def main():
 	parser_init = subparsers.add_parser('init', help='inits a source with an example web site (WARNING: modifies the current working dir)')
 	parser_init.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_init.set_defaults(func=init_command)
+
+	#upgrade command parser
+	parser_upgrade = subparsers.add_parser('upgrade', help='upgrades targets in the source to the newest version of witica.js (WARNING: modifies the current working dir)')
+	parser_upgrade.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
+	parser_upgrade.add_argument('-f', '--force', action='store_true', help="don't ask before overwriting files")
+	parser_upgrade.add_argument('-t', '--targets', nargs='+', help="list of ids of targets that should be upgraded")
+	parser_upgrade.set_defaults(func=upgrade_command)
 
 	#update command parser
 	parser_update = subparsers.add_parser('update', help='fetch changes and update targets')
