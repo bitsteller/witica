@@ -2,6 +2,7 @@
 /* General rendering functions              */
 /*------------------------------------------*/
 function renderInfo (renderer, item, infoDiv) {
+	infoDiv.innerHTML = "";
 	if (item.metadata.hasOwnProperty("last-modified")) {
 		var dateDiv = document.createElement("div");
 		dateDiv.style.display = "inline";
@@ -10,9 +11,6 @@ function renderInfo (renderer, item, infoDiv) {
 		infoDiv.appendChild(document.createTextNode("Published "));
 		infoDiv.appendChild(dateDiv);
 		infoDiv.appendChild(document.createTextNode(" "));
-	}
-	else {
-		infoDiv.innerHTML = "";
 	}
 }
 
