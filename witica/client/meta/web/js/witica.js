@@ -28,6 +28,7 @@ Witica._virtualItemCount = 0;
 Witica._prefix = "";
 Witica._targetHash = "";
 Witica._cacheUpdateInterval = 60 * 1000;
+Witica._lastCacheUpdate = 0;
 
 /*-----------------------------------------*/
 /* Common extensions                       */
@@ -476,7 +477,13 @@ Witica._updateCacheUpdateInterval = function () {
 		}
 	}
 	clearTimeout(Witica._checkForUpdatesTimeout);
-	Witica._checkForUpdatesTimeout = setInterval(Witica._checkForUpdates,Witica._cacheUpdateInterval); //check for updates every 5s
+	if ((currentTime - Witica._lastCacheUpdate) >= Witica._cacheUpdateInterval) {
+		Witica._checkForUpdates();
+		Witica._lastCacheUpdate = currentTime;
+	}
+
+	var timeToNextUpdate = Witica._cacheUpdateInterval - (currentTime - Witica._lastCacheUpdate);
+	Witica._checkForUpdatesTimeout = setTimeout(Witica._updateCacheUpdateInterval, Witica._cacheUpdateInterval); //check for updates every 5s
 }
 
 Witica.updateItemCache = function () {
