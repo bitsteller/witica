@@ -102,6 +102,10 @@ class Logger(object):
 	def get_printlock():
 		return _logger.printlock
 
+	@staticmethod
+	def get_pending_messages():
+		return _logger.pending_messages
+
 	def printmsg(self,senderid,msg,logtype=Logtype.NONE):
 		current_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -137,6 +141,7 @@ class Logger(object):
 				try:
 					senderid, msg, logtype = self.pending_messages.get(block=True, timeout = 1)
 					self.printmsg(senderid,msg,logtype)
+					self.pending_messages.task_done()
 				except Empty:
 					pass
 				finally:

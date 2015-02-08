@@ -39,7 +39,7 @@ def confirm(prompt_str, allow_empty=False, default=False):
 		prompt = '%s [%s]|%s: ' % fmt
 	else:
 		prompt = '%s %s|%s: ' % fmt
-
+	Logger.get_pending_messages().join()
 	Logger.get_printlock().acquire()
 	while True:
 		ans = raw_input(prompt).lower()
