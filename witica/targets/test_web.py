@@ -77,9 +77,9 @@ class TestWebTarget(unittest.TestCase):
 		itemfile = json.loads(codecs.open(os.path.join(self.publish_path, "photo.item"), "r", "utf-8").read())
 		expected_variants = ["1024", "512"]
 
-		self.assertEqual(len(itemfile["witica:contentfiles"]),2)
-		self.assertEqual(itemfile["witica:contentfiles"][1]["variants"], expected_variants)
-		self.assertEqual(itemfile["witica:contentfiles"][1]["filename"], "photo.jpg")
+		self.assertEqual(len(itemfile["witica:contentfiles"]),1)
+		self.assertEqual(itemfile["witica:contentfiles"][0]["variants"], expected_variants)
+		self.assertEqual(itemfile["witica:contentfiles"][0]["filename"], "photo.jpg")
 
 		img = Image.open(os.path.join(self.publish_path, "photo@512.jpg"))
 		self.assertEqual(max(img.size), 512)
