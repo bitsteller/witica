@@ -1,6 +1,6 @@
 # Changelog
 
-0.9.2 (unreleased)
+0.9.2 (2015-02-10)
 ******************
 - NEW: `witica upgrade` command to upgrade witica.js to the latest version for alle WebTargets
 - NEW: added unit tests for WebTarget
