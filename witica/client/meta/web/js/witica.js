@@ -727,11 +727,12 @@ Witica.View.prototype = {
 			else if (parts[2] == "false" || parts[2] == "false") {
 				params[parts[1]] = false;
 			}
-			else if (parts[2].startswith("!")) {
+			else if (parts[2].indexOf("!") == 0) {
 				params[parts[1]] = Witica.getItem(parts[2].substring(1));
 			}
 			else if (/'[\s\S]*'/.test(parts[2])) {
-				params[parts[1]] = parts[2].substring(1, parts[2].length - 2);
+				var str = /'([\s\S]*)'/.exec(parts[2])[1];
+				params[parts[1]] = str;
 			}
 			else if (/[0123456789]+/.test(parts[2])) {
 				params[parts[1]] = parseInt(parts[2]);
