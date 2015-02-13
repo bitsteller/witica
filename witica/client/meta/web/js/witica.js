@@ -15,7 +15,7 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "0.9.2"
+Witica.VERSION = "0.9.3"
 Witica.CACHESIZE = 50;
 
 Witica.itemcache = new Array();
@@ -524,11 +524,14 @@ Witica.getItem = function (itemId) {
 };
 
 Witica.loadItem = function () {
-	if (location.hash.indexOf("#!") == 0) { //location begins with #!
-		var itemId = location.hash.substring(2).toLowerCase();
+	var parts = /^#!([^?]+)(?:\?([\s\S]+))?$/.exec(location.hash);
+	if (parts != null) { //location begins with #!
+		var itemId = parts[1].toLowerCase();
+		var paramsStr = parts[2];
+		var params = Witica.mainView.stringToParams(paramsStr);
 		Witica.currentItemId = itemId;
 		var item = Witica.getItem(itemId);
-		Witica.mainView.showItem(item);
+		Witica.mainView.showItem(item, params);
 	}
 	else {
 		Witica.mainView.showItem(Witica.getItem(Witica.defaultItemId));
@@ -557,7 +560,13 @@ Witica.View.prototype = {
 		//update hash if main view and item not virtual
 		if (this == Witica.mainView && (!item.virtual)) {
 			window.onhashchange = null;
-			location.hash = "#!" + item.itemId;
+			var newHash = "#!" + item.itemId;
+			var paramStr = this.paramsToString(params);
+			if (paramStr != "") {
+				newHash += "?" + paramStr;
+			}
+			location.hash = newHash;
+
 			Witica.currentItemId = item.itemId;
 			window.onhashchange = Witica.loadItem;
 		}
@@ -702,6 +711,59 @@ Witica.View.prototype = {
 			str +=  "\n" + this.subviews[i].toString(depth+1);
 		}
 		return str;
+	},
+
+	stringToParams: function (str) {
+		if (str == undefined) {
+			return {};
+		}
+		var params = {};
+		var assignments = str.split("&");
+		for (var i = 0; i < assignments.length; i++) {
+			var parts = /([^=]+)=([\s\S]*)/.exec(assignments[i]);
+			if (parts[2] == "true" || parts[2] == "True") {
+				params[parts[1]] = true;
+			}
+			else if (parts[2] == "false" || parts[2] == "false") {
+				params[parts[1]] = false;
+			}
+			else if (parts[2].startswith("!")) {
+				params[parts[1]] = Witica.getItem(parts[2].substring(1));
+			}
+			else if (/'[\s\S]*'/.test(parts[2])) {
+				params[parts[1]] = parts[2].substring(1, parts[2].length - 2);
+			}
+			else if (/[0123456789]+/.test(parts[2])) {
+				params[parts[1]] = parseInt(parts[2]);
+			}
+			else {
+				params[parts[1]] = parseFloat(parts[2]);
+			}
+		};
+		return params;
+	},
+
+	paramsToString: function (params) {
+		if (params == undefined) {
+			return "";
+		}
+		var strings = [];
+		var keys = Object.keys(params);
+		for (var i = 0; i < keys.length; i++) {
+			if (typeof params[keys[i]] == "string") {
+				strings.push(keys[i].toString() + "='" + params[keys[i]] + "'");
+			}
+			else if (typeof params[keys[i]] == "number") {
+				strings.push(keys[i].toString() + "=" + params[keys[i]].toString() + "");
+			}
+			else if (typeof params[keys[i]] == "boolean") {
+				strings.push(keys[i].toString() + "=" + params[keys[i]].toString() + "");
+			}
+			else if (params[keys[i]] instanceof Witica.Item) {
+				strings.push(keys[i].toString() + "=!" + params[keys[i]].itemId + "");
+			}
+		};
+		return strings.join("&");
 	}
 };
 
