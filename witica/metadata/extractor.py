@@ -7,8 +7,8 @@ from witica.util import throw, sstr, suni
 
 #regular expressions regarding item ids
 RE_METAFILE = r'^meta\/[^\n]+$'
-RE_FIRST_ITEMID = r'(?!meta\/)[^\n@.]+'
-RE_ITEMFILE_EXTENSION = r'[^\n@\/]+'
+RE_FIRST_ITEMID = r'(?!meta\/)[^\n?@.]+'
+RE_ITEMFILE_EXTENSION = r'[^\n?@\/]+'
 RE_ITEMID = r'^' + RE_FIRST_ITEMID + '$'
 RE_ITEMFILE = r'^' + RE_FIRST_ITEMID + '\.' + RE_ITEMFILE_EXTENSION + '$'
 RE_ITEM_SPLIT_ITEMID_EXTENSION = r'^(' + RE_FIRST_ITEMID + ')\.(' + RE_ITEMFILE_EXTENSION + ')$'
