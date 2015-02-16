@@ -7,7 +7,7 @@ from inspect import isclass, getmembers
 
 from witica.util import Event, throw, AsyncWorker, sstr, get_cache_folder
 from witica.publish import Publish
-from witica.source import MetaChanged, ItemChanged, ItemRemoved
+from witica.source import IncrementalChange
 from witica import *
 from witica.log import *
 from witica.metadata import extractor
@@ -17,7 +17,7 @@ cache_folder = get_cache_folder("Target")
 
 registered_targets = {};
 
-def register(typestr, target):
+def register(typestr, target): #TODO: refactor, deprecated?
 	"""Register new target class for type string"""
 	if typestr in registered_targets:
 		raise ValueError("A target class for type '" + extension + "' is already registered.")
@@ -97,19 +97,12 @@ class Target(AsyncWorker):
 				
 				self.pending_events.clear()
 				for changeJSON in self.state["pendingChanges"]:
-					item_id = changeJSON["item_id"]
 					change = None
-					if changeJSON["type"] == "ItemChanged":
-						change = ItemChanged(self.site.source,item_id,changeJSON["filename"])
-					elif changeJSON["type"] == "ItemRemoved":
-						change = ItemRemoved(self.site.source,item_id)
-					elif changeJSON["type"] == "MetaChanged":
-						change = MetaChanged(self.site.source,item_id)
-					else:
-						self.log("Ignored unkown change type '" + changeJSON["type"] + "' in " + self.get_target_state_filename + ".", Logtype.WARNING)
-					
-					if change:
+					try:
+						change = IncrementalChange.from_JSON(self.site.source, changeJSON)
 						self.pending_events.append(change)
+					except Exception, e:
+						self.log_exception("Ignored corrupt pending change in '" + self.get_target_state_filename + "'.", Logtype.WARNING)
 			else:
 				self.init_cache()
 		 except Exception as e:
@@ -120,10 +113,9 @@ class Target(AsyncWorker):
 		self.state["version"] = 1
 		self.state["pendingChanges"] = []
 
-		toJSON = lambda change: dict({"type": change.__class__.__name__, "item_id": change.item_id}.items() + ({"filename": change.filename}.items() if change.__class__.__name__ == "ItemChanged" else []))
 		self.pending_events_lock.acquire()
 		try:
-			self.state["pendingChanges"] = map(toJSON, self.pending_events)
+			self.state["pendingChanges"] = [change.to_JSON() for change in self.pending_events]
 		except Exception, e:
 			raise
 		finally:

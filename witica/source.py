@@ -567,6 +567,29 @@ class IncrementalChange:
 		self.source = source
 		self.item_id = item_id
 
+	def to_JSON(self):
+		change_JSON = {}
+		change_JSON["type"] = self.__class__.__name__
+		change_JSON["item_id"] = self.item_id
+		if self.__class__.__name__ == "ItemChanged":
+			change_JSON["filename"] = self.filename
+
+		return change_JSON
+
+	@staticmethod
+	def from_JSON(source, change_JSON):
+		item_id = change_JSON["item_id"]
+		change = None
+		if change_JSON["type"] == "ItemChanged":
+			change = ItemChanged(source,item_id,change_JSON["filename"])
+		elif change_JSON["type"] == "ItemRemoved":
+			change = ItemRemoved(source,item_id)
+		elif change_JSON["type"] == "MetaChanged":
+			change = MetaChanged(source,item_id)
+		else:
+			raise ValueError("Unkown change type '" + change_JSON["type"] + "'.")
+		return change
+
 class MetaChanged(IncrementalChange):
 	def __init__(self, source, filename):
 		super(MetaChanged, self).__init__(source,filename)
