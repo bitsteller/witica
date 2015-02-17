@@ -15,15 +15,26 @@ class Index(AsyncWorker):
 
 	doc = "Abstract class that represents an item index"
 
-	def __init__(self, source_id, index_id, config):
-		self.source_id = source_id
+	def __init__(self, site, index_id, config):
+		self.site = site
 		self.index_id = index_id
 		self.config = config
-		self.state = {}
-		self.name = self.source_id + "#" + self.index_id
+		self.name = self.site.source_id + "#" + self.index_id
 		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged]
 
 		super(Index, self).__init__(self.name)
+
+		#check if in sync with source, otherwise request changes to get in sync again
+		if not self.state["source_cursor"] == self.site.source.state["cursor"]:
+			self.log("Index is out of sync. Will fetch changes to get in sync with source.", Logtype.WARNING)
+			change_event = Event()
+			change_event += self.enqueue_event
+			cursor = self.site.source.fetch_changes(change_event, self.state["source_cursor"])
+			self.save_source_cursor(self,cursor)
+
+		site.source.changeEvent += self.trigger
+		site.source.cursorEvent += self.save_source_cursor
+		site.source.stoppedEvent += lambda sender, args: self.close_queue()
 
 	def get_state_filename(self):
 		return cache_folder + os.sep + self.source_id + "#" + self.index_id + ".index"
@@ -42,16 +53,30 @@ class Index(AsyncWorker):
 	            classes[name] = obj
 	    return classes
 
+	def trigger(self, event):
+		if self.is_relevant(event):
+			self.enqueue_event(event)
+
 	@abstractmethod
-	def is_relevant(item):
+	def is_relevant(self, event):
 		pass
 
 	@abstractmethod
-	def update_item():
+	def update_item(self, item):
 		pass
 
 	@abstractmethod
-	def remove_item():
+	def remove_item(self, item):
 		pass
 
-	state_filename = property(get_state_filename)
+	@abstractmethod
+	def get_index_filename(self,page):
+		pass
+
+	@abstractmethod
+	def get_metadata(self):
+		pass
+
+	@abstractmethod
+	def get_page_count(self):
+		pass
