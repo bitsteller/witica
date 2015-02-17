@@ -1,6 +1,6 @@
 import os.path, json, glob, codecs
 
-from witica.util import throw, sstr
+from witica.util import Event, throw, sstr
 from witica.source import Source
 from witica.targets.target import Target
 
@@ -9,6 +9,8 @@ class Site:
 		self.source = source
 		self.source.update_cache()
 		self.targets = []
+		self.indexes = []
+		self.index_event = Event()
 
 		if target_ids == None:
 			target_files = glob.glob(self.source.get_abs_meta_filename("") + os.sep + "*.target")
