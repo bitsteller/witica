@@ -64,26 +64,26 @@ class WebTarget(Target):
 			#self.log("id: " + change.item_id + ", \nall files: " + sstr(change.item.files) + ", \nitem file: " + sstr(change.item.itemfile) + ", \nmain content: " + sstr(change.item.contentfile) + ", \ncontentfiles: " + sstr(change.item.contentfiles), Logtype.WARNING)
 			#check integrity of the item
 			ic = IntegrityChecker(self.site.source)
-			faults = ic.check(change.item)
+			faults = ic.check(change.get_item(self.site.source))
 
 			for fault in faults:
 				if fault.severity == Severity.FATAL:
-					raise ValueError("Integrity check of item '" + sstr(change.item.item_id) + "' detected fatal fault:\n" + sstr(fault))
+					raise ValueError("Integrity check of item '" + sstr(change.get_item(self.site.source).item_id) + "' detected fatal fault:\n" + sstr(fault))
 				else:
 					self.log(sstr(fault), Logtype.WARNING)
 
 			#make sure the target cache directory exists
-			filename = self.get_absolute_path(change.item.item_id + ".item")
+			filename = self.get_absolute_path(change.get_item(self.site.source).item_id + ".item")
 			if not os.path.exists(os.path.split(filename)[0]):
 				os.makedirs(os.path.split(filename)[0])
 
 			#convert and publish content and metadata
-			if change.filename in change.item.contentfiles:
-				self.publish_contentfile(change.item,change.filename)
+			if change.filename in change.get_item(self.site.source).contentfiles:
+				self.publish_contentfile(change.get_item(self.site.source),change.filename)
 			else:
-				self.unpublish_contentfile(change.item,change.filename)
+				self.unpublish_contentfile(change.get_item(self.site.source),change.filename)
 
-			self.publish_metadata(change.item)
+			self.publish_metadata(change.get_item(self.site.source))
 		elif change.__class__ == ItemRemoved:
 			#remove all files from server and target cache
 			files = self.get_content_files(change.item_id)

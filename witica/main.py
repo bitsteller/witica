@@ -11,7 +11,7 @@ import pkg_resources
 from witica.site import Site
 from witica.log import *
 from witica.metadata import extractor
-from witica.source import Source, MetaChanged, ItemChanged, ItemRemoved
+from witica.source import Source, MetaChanged, ItemChanged
 from witica.targets import target, web, statichtml
 from witica.check import IntegrityChecker
 from witica.util import sstr, suni, throw
@@ -154,7 +154,7 @@ def rebuild_meta(source, path = ""):
 			pth = os.path.join(abspath, fn).rpartition(source.get_abs_meta_filename(""))[2][1:]
 			rebuild_meta(source, pth)
 	else:
-		source.changeEvent(source, MetaChanged(source, path))
+		source.changeEvent(source, MetaChanged(path))
 
 def rebuild_command(args):
 	global currentsite
@@ -176,7 +176,7 @@ def rebuild_command(args):
 	for item in items:
 		try:
 			for path in item.files:
-				currentsite.source.changeEvent(currentsite.source, ItemChanged(currentsite.source, item.item_id, path))	
+				currentsite.source.changeEvent(currentsite.source, ItemChanged(item.item_id, path))	
 		except Exception, e:
 			log_exception("Item '" + item.item_id + "'' could not be enqued for rebuilding.", Logtype.ERROR)	
 	log(str(len(items)) + " item" + ("s" if len(items) != 1 else "") + " enqued for rebuilding.", Logtype.INFO)

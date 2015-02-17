@@ -49,7 +49,7 @@ class TestWebTarget(unittest.TestCase):
 
 	def convert_file(self, filename):
 		item_id, _d, ext = filename.rpartition(".")
-		self.site.source.changeEvent(self.site.source, ItemChanged(self.site.source, item_id, filename))	
+		self.site.source.changeEvent(self.site.source, ItemChanged(item_id, filename))	
 		while len(self.target.pending_events) > 0 or len(self.target.publishing[0].pending_events) > 0:
 			time.sleep(0.1)
 

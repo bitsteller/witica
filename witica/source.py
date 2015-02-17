@@ -563,8 +563,7 @@ class IncrementalChange:
 	__metaclass__ = ABCMeta
 
 	@abstractmethod
-	def __init__(self, source, item_id):
-		self.source = source
+	def __init__(self, item_id):
 		self.item_id = item_id
 
 	def to_JSON(self):
@@ -577,42 +576,40 @@ class IncrementalChange:
 		return change_JSON
 
 	@staticmethod
-	def from_JSON(source, change_JSON):
+	def from_JSON(change_JSON):
 		item_id = change_JSON["item_id"]
 		change = None
 		if change_JSON["type"] == "ItemChanged":
-			change = ItemChanged(source,item_id,change_JSON["filename"])
+			change = ItemChanged(item_id,change_JSON["filename"])
 		elif change_JSON["type"] == "ItemRemoved":
-			change = ItemRemoved(source,item_id)
+			change = ItemRemoved(item_id)
 		elif change_JSON["type"] == "MetaChanged":
-			change = MetaChanged(source,item_id)
+			change = MetaChanged(item_id)
 		else:
 			raise ValueError("Unkown change type '" + change_JSON["type"] + "'.")
 		return change
 
 class MetaChanged(IncrementalChange):
-	def __init__(self, source, filename):
-		super(MetaChanged, self).__init__(source,filename)
+	def __init__(self, filename):
+		super(MetaChanged, self).__init__(filename)
 
 	def __str__(self):
 		return "<MetaChanged " + sstr(self.item_id) + ">"
 
 class ItemChanged(IncrementalChange):
-	def __init__(self, source, item_id, filename):
-		super(ItemChanged, self).__init__(source,item_id)
+	def __init__(self, item_id, filename):
+		super(ItemChanged, self).__init__(item_id)
 		self.filename = filename
 	
-	def _getitem(self):
-		return self.source.items[self.item_id]
+	def get_item(self, source):
+		return source.items[self.item_id]
 
 	def __str__(self):
 		return "<ItemChanged " + sstr(self.item_id) + ">"
 
-	item = property(_getitem)
-
 class ItemRemoved(IncrementalChange):
-	def __init__(self, source, item_id):
-		super(ItemRemoved, self).__init__(source,item_id)
+	def __init__(self, item_id):
+		super(ItemRemoved, self).__init__(item_id)
 
 	def __str__(self):
 		return "<ItemRemoved " + sstr(self.item_id) + ">"

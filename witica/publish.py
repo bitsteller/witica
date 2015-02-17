@@ -27,48 +27,29 @@ class Publish(AsyncWorker):
 		self.state = {}
 		self.publish_id = self.config["publish_id"]
 		self.name = self.source_id + "->" + self.target_id + "@" + self.publish_id
+		self.accepted_event_classes = [UploadJob, DeleteJob]
 
 		super(Publish, self).__init__(self.name)
 
-	def load_state(self):
-		 try:
-			if os.path.isfile(self.state_filename):
-				self.state = json.load(open(self.state_filename),encoding="utf-8")
-				if self.state["version"] != 1:
-					raise IOException("Version of state file " + self.state_filename + " is not compatible. Must be 1.")
-				
-				self.pending_events.clear()
-				for eventJSON in self.state["pendingUploads"]:
-					local_path = eventJSON["local_path"]
-					server_path = eventJSON["server_path"]
-					self.pending_events.append((local_path,server_path))
-		 except Exception as e:
-		 	throw(IOError, "Loading state file '" + self.state_filename + "' failed.", e)
+	def init(): #called when no previous state found
+		pass
 
-	def write_state(self):
-		self.state["version"] = 1
-		self.state["pendingUploads"] = []
+	def get_current_statefile_version(self):
+		return 2
 
-		toJSON = lambda event: {"local_path": event[0], "server_path": event[1]}
-		self.pending_events_lock.acquire()
-		try:
-			self.state["pendingUploads"] = map(toJSON, self.pending_events)
-		except Exception, e:
-			raise
-		finally:
-			self.pending_events_lock.release()
-
-		s = json.dumps(self.state, encoding="utf-8", indent=3)
-				
-		f = open(self.state_filename, 'w')
-		f.write(s + "\n")
-		f.close()
+	def migrate_state(self, state, old_version, new_version):
+		if old_version == 1 and new_version == 2:
+			uploads_JSON = state["pendingUploads"]
+			state["pendingEvents"] = uploads_JSON
+			state.pop("pendingUploads", None)
+			state["version"] = 2
+		return state
 
 	def publish_file(self, local_path, server_path):
-		self.enqueue_event(self,(local_path,server_path))
+		self.enqueue_event(self,UploadJob(local_path,server_path))
 
 	def unpublish_file(self, server_path):
-		self.enqueue_event(self,(None,server_path))
+		self.enqueue_event(self,DeleteJob(server_path))
 
 	def get_state_filename(self):
 		return cache_folder + os.sep + self.source_id + "." + self.target_id + "@" + self.publish_id + ".publish"
@@ -89,23 +70,70 @@ class Publish(AsyncWorker):
 
 	state_filename = property(get_state_filename)
 
+
+class PublishJob(object):
+	"""Abstract metaclass for all publish events"""
+	__metaclass__ = ABCMeta
+
+	def __init__(self, server_path):
+		super(PublishJob, self).__init__()
+		self.server_path = server_path
+
+	@abstractmethod
+	def to_JSON(self):
+		pass
+
+	@staticmethod
+	def from_JSON(event_json):
+		pass
+
+class UploadJob(PublishJob):
+	"""Upload file to server job"""
+	def __init__(self, local_path, server_path):
+		super(UploadJob, self).__init__(server_path)
+		self.local_path = local_path
+
+	def __str__(self):
+		return "<" + self.__class__.__name__ + " " + sstr(self.server_path) + ">"
+
+	def to_JSON(self):
+		return {"type": self.__class__.__name__, \
+				"server_path": self.server_path, \
+				"local_path": self.local_path}
+
+	@staticmethod
+	def from_JSON(event_json):
+		return UploadJob(event_json["local_path"], event_json["server_path"])
+
+class DeleteJob(PublishJob):
+	"""Delte file from server job"""
+	def __init__(self, server_path):
+		super(DeleteJob, self).__init__(server_path)
+
+	def to_JSON(self):
+		return {"type": self.__class__.__name__, \
+				"server_path": self.server_path}
+
+	@staticmethod
+	def from_JSON(event_json):
+		return DeleteJob(event_json["server_path"])
+
+
 class FolderPublish(Publish):
 	def __init__(self, source_id, target_id, config):
 		Publish.__init__(self, source_id, target_id, config)
 		self.path = config["path"]
 
 	def process_event(self,event):
-		local_path, server_path = event
-
 		#check if root path exists
 		root = self.path.rpartition(os.sep)[0]
 		if not os.path.exists(root):
 			raise IOError("'" + root + "' does not exist. Directory must exist to publish to folder.")
 
-		server_file = self.path + os.sep + server_path
-		if not(local_path == None): #upload file
-			copyfile(local_path, server_file)
-		else: #delete file
+		server_file = self.path + os.sep + event.server_path
+		if isinstance(event, UploadJob): #upload file
+			copyfile(event.local_path, server_file)
+		elif isinstance(event, DeleteJob): #delete file
 			if os.path.exists(server_file):
 				if os.path.isdir(server_file):
 					shutil.rmtree(server_file)
@@ -149,10 +177,11 @@ class FTPPublish(Publish):
 			self.ftp_server = FTPServer(domain, user, path, self._ftp_password)
 
 	def process_event(self,event):
-		local_path, server_path = event
+		server_path = event.server_path
 
 		self.prepare_ftp()
-		if not(local_path == None): #upload file
+		if isinstance(event, UploadJob): #upload file
+			local_path = event.local_path
 			self.log("Uploading file " + sstr(server_path) + "...", Logtype.DEBUG)
 			while not self.ftp_server.idle_event.is_set() and not self._stop.is_set():
 				self.ftp_server.idle_event.wait(1)
@@ -170,7 +199,7 @@ class FTPPublish(Publish):
 			else:
 				self.log("Uploading " + sstr(server_path) + " failed: " + sstr(self.ftp_server.last_error), Logtype.ERROR)
 
-		else: #delete file on server
+		elif isinstance(event, DeleteJob): #delete file on server
 			self.log("Deleting file " + sstr(server_path) + " on server...", Logtype.DEBUG)
 			while not self.ftp_server.idle_event.is_set() and not self._stop.is_set():
 				self.ftp_server.idle_event.wait(1)
@@ -189,6 +218,7 @@ class FTPPublish(Publish):
 				self.log("Deleting " + sstr(server_path) + " failed: " + sstr(self.ftp_server.last_error), Logtype.ERROR)
 			if self._stop.is_set():
 				self.ftp_server.stop()
+
 class FTPServer(Loggable):
 	TIMEOUT = 10
 	BLOCKSIZE=4*16384

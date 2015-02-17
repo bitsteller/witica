@@ -1,5 +1,5 @@
 # coding=utf8
-import os, shutil, ctypes
+import os, shutil, ctypes, json
 from datetime import datetime
 from collections import deque
 from abc import ABCMeta, abstractmethod
@@ -103,6 +103,7 @@ class AsyncWorker(Loggable):
 			self._stop = TEvent()
 			self.stoppedEvent = Event()
 			self.accept_events = True
+			self.write_state_lock = Lock()
 			self.load_state()
 			self.worker_thread = Thread(target=self.work, name = name)
 
@@ -112,14 +113,66 @@ class AsyncWorker(Loggable):
 			self.log("Initializing " + name + " failed.", Logtype.ERROR)
 			raise e
 
-	@abstractmethod
+	def set_initial_state(self):
+		self.state = {"version" : self.get_current_statefile_version(), "pendingEvents" : []}
+
 	def load_state(self):
-		doc = "Loads events that were previously enqueued, i.e. from a file"
+		try:
+			if os.path.isfile(self.get_state_filename()):
+				self.state = json.loads(open(self.get_state_filename()).read())
+				if self.state["version"] > self.get_current_statefile_version():
+					raise IOException("Version of state file " + sstr(self.get_state_filename()) + " is not compatible.")
+				else:
+					self.state = self.migrate_state(self.state, self.state["version"], self.get_current_statefile_version())
+
+				self.pending_events.clear()
+				for event_JSON in self.state["pendingEvents"]:
+					try:
+						event_class = filter(lambda x: x.__name__ == event_JSON["type"], self.accepted_event_classes)[0]
+						event = event_class.from_JSON(event_JSON)
+						self.pending_events.append(event)
+					except Exception, e:
+						self.log_exception("Ignored corrupt pending event in '" + self.get_state_filename() + "'.", Logtype.WARNING)
+				if len(self.pending_events) > 0:
+					self.log("Recovered " + str(len(self.pending_events)) + " pending events.", Logtype.DEBUG)
+			else:
+				self.set_initial_state()
+				self.init()
+		except Exception as e:
+			throw(IOError, "Loading state file '" + sstr(self.get_state_filename()) + "' failed", e)
+
+	def write_state(self):
+		self.write_state_lock.acquire()
+		self.state["version"] = self.get_current_statefile_version()
+		self.state["pendingEvents"] = []
+
+		self.pending_events_lock.acquire()
+		try:
+			self.state["pendingEvents"] = [event.to_JSON() for event in self.pending_events]
+		except Exception, e:
+			raise
+		finally:
+			self.pending_events_lock.release()
+
+		s = json.dumps(self.state, indent=3)
+		
+		f = open(self.get_state_filename(), 'w')
+		f.write(s + "\n")
+		f.close()
+		self.write_state_lock.release()
+
+	def get_current_statefile_version(self):
+		return 1
+
+	def migrate_state(self, state, old_version, new_version):
+		return state
+
+	@abstractmethod
+	def get_state_filename(self):
 		pass
 
 	@abstractmethod
-	def write_state(self):
-		doc = "Saves the events that are currently enqueued, i.e. to a file"
+	def init(self):
 		pass
 
 	@abstractmethod

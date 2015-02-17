@@ -7,7 +7,6 @@ from inspect import isclass, getmembers
 
 from witica.util import Event, throw, AsyncWorker, sstr, get_cache_folder
 from witica.publish import Publish
-from witica.source import IncrementalChange
 from witica import *
 from witica.log import *
 from witica.metadata import extractor
@@ -17,7 +16,7 @@ cache_folder = get_cache_folder("Target")
 
 registered_targets = {};
 
-def register(typestr, target): #TODO: refactor, deprecated?
+def register(typestr, target):
 	"""Register new target class for type string"""
 	if typestr in registered_targets:
 		raise ValueError("A target class for type '" + extension + "' is already registered.")
@@ -51,11 +50,11 @@ class Target(AsyncWorker):
 	def __init__(self, site, target_id, config):
 		self.site = site
 		self.target_id = target_id
+		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged]
 		super(Target, self).__init__(site.source.source_id + "->" + target_id)
 
 		self.config = config
 		self.publishing = []
-		self.writeStateLock = Lock()
 
 		#check if in sync with source, otherwise request changes to get in sync again
 		if not self.state["source_cursor"] == self.site.source.state["cursor"]:
@@ -80,53 +79,6 @@ class Target(AsyncWorker):
 		site.source.cursorEvent += self.save_source_cursor
 		site.source.stoppedEvent += lambda sender, args: self.close_queue()
 		self.stoppedEvent += lambda sender, args: [p.close_queue() for p in self.publishing]
-
-	def init_cache(self):
-		self.state = {"version" : 1, "pendingChanges" : [], "source_cursor" : ""}
-		if os.path.isdir(self.get_target_dir()):
-			shutil.rmtree(self.get_target_dir())
-		os.makedirs(self.get_target_dir())
-		#TODO: create target file and cache folder
-
-	def load_state(self):
-		 try:
-			if os.path.isfile(self.target_state_filename):
-				self.state = json.loads(open(self.target_state_filename).read())
-				if self.state["version"] != 1:
-					raise IOException("Version of state file " + self.target_state_filename + " is not compatible. Must be 1.")
-				
-				self.pending_events.clear()
-				for changeJSON in self.state["pendingChanges"]:
-					change = None
-					try:
-						change = IncrementalChange.from_JSON(self.site.source, changeJSON)
-						self.pending_events.append(change)
-					except Exception, e:
-						self.log_exception("Ignored corrupt pending change in '" + self.get_target_state_filename + "'.", Logtype.WARNING)
-			else:
-				self.init_cache()
-		 except Exception as e:
-			throw(IOError, "Loading state file '" + self.target_state_filename + "' failed", e)
-
-	def write_state(self):
-		self.writeStateLock.acquire()
-		self.state["version"] = 1
-		self.state["pendingChanges"] = []
-
-		self.pending_events_lock.acquire()
-		try:
-			self.state["pendingChanges"] = [change.to_JSON() for change in self.pending_events]
-		except Exception, e:
-			raise
-		finally:
-			self.pending_events_lock.release()
-
-		s = json.dumps(self.state, indent=3)
-		
-		f = open(self.target_state_filename, 'w')
-		f.write(s + "\n")
-		f.close()
-		self.writeStateLock.release()
 
 	def save_source_cursor(self, sender, cursor):
 		self.state["source_cursor"] = cursor
@@ -162,7 +114,24 @@ class Target(AsyncWorker):
 		except Exception, e:
 			self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
-	def get_target_state_filename(self):
+	def init(self): #no state file found, create clean cache folder
+		self.state["source_cursor"] = ""
+		if os.path.isdir(self.get_target_dir()):
+			shutil.rmtree(self.get_target_dir())
+		os.makedirs(self.get_target_dir())
+
+	def get_current_statefile_version(self):
+		return 2
+
+	def migrate_state(self, state, old_version, new_version):
+		if old_version == 1 and new_version == 2:
+			changes_JSON = state["pendingChanges"]
+			state["pendingEvents"] = changes_JSON
+			state.pop("pendingChanges", None)
+			state["version"] = 2
+		return state
+
+	def get_state_filename(self):
 		return cache_folder + os.sep + self.site.source.source_id + "." + self.target_id + ".target"
 
 	def get_target_dir(self):
@@ -184,5 +153,4 @@ class Target(AsyncWorker):
 	def resolve_reference(self, reference, item, allow_patterns = False):
 		return self.site.source.resolve_reference(reference,item,allow_patterns)
 
-	target_state_filename = property(get_target_state_filename)
 	target_dir = property(get_target_dir)

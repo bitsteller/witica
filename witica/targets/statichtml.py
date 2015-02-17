@@ -27,12 +27,12 @@ class StaticHtmlTarget(Target):
 		elif change.__class__ == ItemChanged:
 			#self.log("id: " + change.item_id + ", \nall files: " + sstr(change.item.files) + ", \nitem file: " + sstr(change.item.itemfile) + ", \nmain content: " + sstr(change.item.contentfile) + ", \ncontentfiles: " + sstr(change.item.contentfiles), Logtype.WARNING)
 			#make sure the target cache directory exists
-			filename = self.get_absolute_path(change.item.item_id + ".item")
+			filename = self.get_absolute_path(change.get_item(self.site.source).item_id + ".item")
 			if not os.path.exists(os.path.split(filename)[0]):
 				os.makedirs(os.path.split(filename)[0])
 			#convert and publish only main content file
-			if change.filename == change.item.contentfile:
-				self.publish_contentfile(change.item,change.filename)
+			if change.filename == change.get_item(self.site.source).contentfile:
+				self.publish_contentfile(change.get_item(self.site.source),change.filename)
 		elif change.__class__ == ItemRemoved:
 			#remove all files from server and target cache
 			files = self.get_content_files(change.item_id)
