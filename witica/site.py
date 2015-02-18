@@ -57,7 +57,6 @@ class Site(Loggable):
 	def remove_index(self, index):
 		self.log("Removing index '" + index.name + "'...", Logtype.DEBUG)
 		try:
-			index.stop()
 			index.destroy()
 		except Exception, e:
 			self.log_exception("Removing index '" + index.name + "' failed.", Logtype.WARNING)
