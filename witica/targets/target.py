@@ -80,64 +80,6 @@ class Target(AsyncWorker):
 		site.source.stoppedEvent += lambda sender, args: self.close_queue()
 		self.stoppedEvent += lambda sender, args: [p.close_queue() for p in self.publishing]
 
-<<<<<<< HEAD
-=======
-	def init_cache(self):
-		self.state = {"version" : 1, "pendingChanges" : [], "source_cursor" : ""}
-		if os.path.isdir(self.get_target_dir()):
-			shutil.rmtree(self.get_target_dir())
-		os.makedirs(self.get_target_dir())
-		#TODO: create target file and cache folder
-
-	def load_state(self):
-		 try:
-			if os.path.isfile(self.target_state_filename):
-				self.state = json.loads(open(self.target_state_filename).read())
-				if self.state["version"] != 1:
-					raise IOError("Version of state file " + self.target_state_filename + " is not compatible. Must be 1.")
-				
-				self.pending_events.clear()
-				for changeJSON in self.state["pendingChanges"]:
-					item_id = changeJSON["item_id"]
-					change = None
-					if changeJSON["type"] == "ItemChanged":
-						change = ItemChanged(self.site.source,item_id,changeJSON["filename"])
-					elif changeJSON["type"] == "ItemRemoved":
-						change = ItemRemoved(self.site.source,item_id)
-					elif changeJSON["type"] == "MetaChanged":
-						change = MetaChanged(self.site.source,item_id)
-					else:
-						self.log("Ignored unkown change type '" + changeJSON["type"] + "' in " + self.get_target_state_filename + ".", Logtype.WARNING)
-					
-					if change:
-						self.pending_events.append(change)
-			else:
-				self.init_cache()
-		 except Exception as e:
-			throw(IOError, "Loading state file '" + self.target_state_filename + "' failed", e)
-
-	def write_state(self):
-		self.writeStateLock.acquire()
-		self.state["version"] = 1
-		self.state["pendingChanges"] = []
-
-		toJSON = lambda change: dict({"type": change.__class__.__name__, "item_id": change.item_id}.items() + ({"filename": change.filename}.items() if change.__class__.__name__ == "ItemChanged" else []))
-		self.pending_events_lock.acquire()
-		try:
-			self.state["pendingChanges"] = map(toJSON, self.pending_events)
-		except Exception, e:
-			raise
-		finally:
-			self.pending_events_lock.release()
-
-		s = json.dumps(self.state, indent=3)
-		
-		f = open(self.target_state_filename, 'w')
-		f.write(s + "\n")
-		f.close()
-		self.writeStateLock.release()
-
->>>>>>> master
 	def save_source_cursor(self, sender, cursor):
 		self.state["source_cursor"] = cursor
 		self.write_state()
