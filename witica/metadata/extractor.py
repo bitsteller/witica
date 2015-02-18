@@ -113,7 +113,7 @@ class MDExtractor(MetadataExtractor):
 
 			#split into json and markdown part
 			f = codecs.open(filename, mode="r", encoding="utf-8")
-			jsonstr, mdstr = re.match(RE_MD_SPLIT_JSON_MD,f.read()).groups() 
+			jsonstr, mdstr = re.match(RE_MD_SPLIT_JSON_MD,f.read()).groups()
 			f.close()
 
 			#get title string (first heading in markdown string) if available
