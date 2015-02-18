@@ -35,7 +35,7 @@ class Publish(AsyncWorker):
 			if os.path.isfile(self.state_filename):
 				self.state = json.load(open(self.state_filename),encoding="utf-8")
 				if self.state["version"] != 1:
-					raise IOException("Version of state file " + self.state_filename + " is not compatible. Must be 1.")
+					raise IOError("Version of state file " + self.state_filename + " is not compatible. Must be 1.")
 				
 				self.pending_events.clear()
 				for eventJSON in self.state["pendingUploads"]:

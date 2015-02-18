@@ -34,7 +34,7 @@ class Target(AsyncWorker):
 		 try:
 			config = json.loads(open(site.source.get_abs_meta_filename(target_id + ".target")).read())
 			if config["version"] != 1:
-				raise IOException("Version of target config file is not compatible. Must be 1.")
+				raise IOError("Version of target config file is not compatible. Must be 1.")
 		 	return config
 		 except Exception as e:
 			throw(IOError, "Loading target config file '" + target_id + ".target' failed", e)
@@ -93,7 +93,7 @@ class Target(AsyncWorker):
 			if os.path.isfile(self.target_state_filename):
 				self.state = json.loads(open(self.target_state_filename).read())
 				if self.state["version"] != 1:
-					raise IOException("Version of state file " + self.target_state_filename + " is not compatible. Must be 1.")
+					raise IOError("Version of state file " + self.target_state_filename + " is not compatible. Must be 1.")
 				
 				self.pending_events.clear()
 				for changeJSON in self.state["pendingChanges"]:

@@ -38,7 +38,7 @@ class Source(Loggable):
 		self.worker_thread = Thread(target=self.work, name=self.source_id)
 
 		if config["version"] != 1:
-			raise IOException("Version of source config file is not compatible. Must be 1.")
+			raise IOError("Version of source config file is not compatible. Must be 1.")
 
 	def start_update(self, continuous=True):
 		self.continuous = continuous
