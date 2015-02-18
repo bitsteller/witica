@@ -1,12 +1,13 @@
+import os, json, time, shutil
 from abc import ABCMeta, abstractmethod
 from inspect import isclass, getmembers
 from sys import modules
-import os, json, time
 from threading import Thread, Lock
 from threading import Event as TEvent
 
-from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile
+from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile, Event
 from witica import *
+from witica.log import Logtype
 
 cache_folder = get_cache_folder("Index")
 
@@ -19,7 +20,7 @@ class Index(AsyncWorker):
 		self.site = site
 		self.index_id = index_id
 		self.config = config
-		self.name = self.site.source_id + "#" + self.index_id
+		self.name = self.site.source.source_id + "#" + self.index_id
 		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged]
 
 		super(Index, self).__init__(self.name)
@@ -49,10 +50,21 @@ class Index(AsyncWorker):
 		os.makedirs(self.get_cache_dir())
 
 	def destroy(self):
-		self.save_state()
 		if os.path.isdir(self.get_cache_dir()):
 			shutil.rmtree(self.get_cache_dir())
 		os.remove(self.get_state_filename())
+
+	def process_event(self, event):
+		if isinstance(event, source.ItemChanged):
+			item = event.get_item(self.site.source)
+			self.update_item(item)
+		elif isinstance(event, source.ItemRemoved):
+			item = event.get_item(self.site.source)
+			self.remove_item(item)
+
+	def save_source_cursor(self, sender, cursor):
+		self.state["source_cursor"] = cursor
+		self.write_state()
 
 	@staticmethod
 	def construct_from_json (site, index_id, config):
@@ -71,9 +83,9 @@ class Index(AsyncWorker):
 	            classes[name] = obj
 	    return classes
 
-	def trigger(self, event):
+	def trigger(self, sender, event):
 		if self.is_relevant(event):
-			self.enqueue_event(event)
+			self.enqueue_event(sender, event)
 
 	@abstractmethod
 	def is_relevant(self, event):
