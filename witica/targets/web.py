@@ -48,7 +48,7 @@ class WebTarget(Target):
 
 		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
 		if len(sizes) > len(set(sizes)):
-			raise IOException("Configuration of target '" + target_id + "' is invalid. All image variants must have unique sizes.")
+			raise IOError("Configuration of target '" + target_id + "' is invalid. All image variants must have unique sizes.")
 
 	def process_event(self, change):
 		if change.__class__ == MetaChanged:

@@ -39,6 +39,12 @@ class TestMDExtractor(unittest.TestCase):
 	def test_broken_json(self):
 		self.assertRaisesRegexp(IOError, "Expecting ',' delimiter", self.extractor.extract_metadata, self.resource_path + os.sep + "broken_json.md")
 
+	def test_nested_json(self):
+		metadata = self.extractor.extract_metadata(self.resource_path + os.sep + "nested_json.md")
+		self.assertIsInstance(metadata, dict)
+		self.assertIsInstance(metadata[u"items"], dict)
+		self.assertEqual(metadata[u"items"][u"keys"][0], u">last-modified")
+
 class TestImageExtractor(unittest.TestCase):
 	def setUp(self):
 		self.resource_path = pkg_resources.resource_filename("witica","test/files")

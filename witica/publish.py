@@ -31,11 +31,41 @@ class Publish(AsyncWorker):
 
 		super(Publish, self).__init__(self.name)
 
+<<<<<<< HEAD
 	def init(): #called when no previous state found
 		pass
 
 	def get_current_statefile_version(self):
 		return 2
+=======
+	def load_state(self):
+		 try:
+			if os.path.isfile(self.state_filename):
+				self.state = json.load(open(self.state_filename),encoding="utf-8")
+				if self.state["version"] != 1:
+					raise IOError("Version of state file " + self.state_filename + " is not compatible. Must be 1.")
+				
+				self.pending_events.clear()
+				for eventJSON in self.state["pendingUploads"]:
+					local_path = eventJSON["local_path"]
+					server_path = eventJSON["server_path"]
+					self.pending_events.append((local_path,server_path))
+		 except Exception as e:
+		 	throw(IOError, "Loading state file '" + self.state_filename + "' failed.", e)
+
+	def write_state(self):
+		self.state["version"] = 1
+		self.state["pendingUploads"] = []
+
+		toJSON = lambda event: {"local_path": event[0], "server_path": event[1]}
+		self.pending_events_lock.acquire()
+		try:
+			self.state["pendingUploads"] = map(toJSON, self.pending_events)
+		except Exception, e:
+			raise
+		finally:
+			self.pending_events_lock.release()
+>>>>>>> master
 
 	def migrate_state(self, state, old_version, new_version):
 		if old_version == 1 and new_version == 2:
