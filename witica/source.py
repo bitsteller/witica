@@ -550,6 +550,15 @@ class SourceItem(Loggable):
 		else:
 			return metadata
 
+	def is_index(self):
+		try:
+			if "items" in self.metadata:
+				return isinstance(self.metadata["items"], dict)
+			else:
+				return False
+		except Exception, e:
+			return False
+
 	files = property(_get_all_filenames)
 	itemfile = property(_get_itemfile)
 	exists = property(_exists)
