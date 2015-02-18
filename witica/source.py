@@ -369,15 +369,15 @@ class Dropbox(Source):
 			if metadata == None or metadata["is_dir"] == False:
 				if re.match(extractor.RE_METAFILE, path): #site metadata change
 					self.log("Metafile changed: " + sstr(path), Logtype.INFO)
-					change_event(self,MetaChanged(self,path.partition("meta/")[2]))
+					change_event(self,MetaChanged(path.partition("meta/")[2]))
 				elif re.match(extractor.RE_ITEMFILE, path):
 					item = SourceItem(self, self.get_item_id(path))
 					if item.exists:
 						self.log("Item changed: " + sstr(path), Logtype.INFO)
-						change_event(self,ItemChanged(self, self.get_item_id(path), path))
+						change_event(self,ItemChanged(self.get_item_id(path), path))
 					else:
 						self.log("Item removed: " + sstr(path), Logtype.INFO)
-						change_event(self,ItemRemoved(self, self.get_item_id(path)))
+						change_event(self,ItemRemoved(self.get_item_id(path)))
 				elif not(metadata == None) and metadata["is_dir"] == False:
 					self.log("File '" + path + "' is not supported and will be ignored. Filenames containing '@' are currently not supported.", Logtype.WARNING)
 

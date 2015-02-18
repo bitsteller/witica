@@ -79,6 +79,9 @@ class PublishJob(object):
 		super(PublishJob, self).__init__()
 		self.server_path = server_path
 
+	def __str__(self):
+		return "<" + self.__class__.__name__ + " " + sstr(self.server_path) + ">"
+
 	@abstractmethod
 	def to_JSON(self):
 		pass
@@ -92,9 +95,6 @@ class UploadJob(PublishJob):
 	def __init__(self, local_path, server_path):
 		super(UploadJob, self).__init__(server_path)
 		self.local_path = local_path
-
-	def __str__(self):
-		return "<" + self.__class__.__name__ + " " + sstr(self.server_path) + ">"
 
 	def to_JSON(self):
 		return {"type": self.__class__.__name__, \
