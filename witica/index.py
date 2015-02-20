@@ -139,3 +139,233 @@ class ItemIndex(Index):
 	def get_page_count(self):
 		pass
 		
+
+class Key(object):
+	def __init__(self, key):
+		self.key = key
+
+	def __cmp__(self, other):
+		return self > other
+
+
+class BTreeNode(object):
+	__metaclass__ = ABCMeta
+
+	def __init__(self, parent):
+		self.parent = parent
+
+	def _get_page_size(self):
+		return self.parent._get_page_size()
+
+	def _get_leaffactory(self):
+		return self.parent._get_leaffactory()
+
+	@abstractmethod
+	def insert(self, key, value):
+		pass
+
+	@abstractmethod
+	def delete(self, key):
+		pass
+
+	@abstractmethod
+	def split(self):
+		pass
+
+	@abstractmethod
+	def merge(self, leaf):
+		pass
+
+	def search(self, key):
+		if isinstance(self, BTreeLeafNode):
+			return self
+		elif len(self.keys) > 0:
+			if key < self.keys[0]:
+				return self.before(0).search(key)
+			elif key >= self.keys[-1]:
+				return self.after(len(self.keys)-1).search(key)
+			else:
+				i = 0
+				while not(self.keys[i] <= key < self.keys[i+1]):
+					i += 1
+				return self.after(i).search(key)
+		else:
+			return self.childs[0]
+
+	page_size = property(_get_page_size)
+	leaffactory = property(_get_leaffactory)
+
+
+class BTreeLeafNode(BTreeNode):
+	def __init__(self, parent):
+		super(BTreeLeafNode, self).__init__(parent)
+
+
+
+class BTreeLeafFactory(object):
+	"""abstract class for btree leaf allocation"""
+	def __init__(self):
+		super(BTreeLeafFactory, self).__init__()
+
+	@abstractmethod
+	def allocate_leaf(self, parent):
+		pass
+
+	@abstractmethod
+	def deallocate_leaf(self, leaf):
+		pass
+		
+class BTreeMemoryLeafNode(BTreeLeafNode):
+	"""docstring for BTreeMemoryLeaf"""
+	def __init__(self, parent):
+		super(BTreeMemoryLeafNode, self).__init__(parent)
+		self.keys = []
+		self.values = []
+
+	def __len__(self):
+		return len(self.keys)
+
+	def __str__(self):
+		return str(self.keys)
+
+	def insert(self, key, value):
+		index = 0
+		while index < len(self) and self.keys[index] <= key:
+			index += 1
+		self.keys.insert(index, key)
+		self.values.insert(index, value)
+
+		if len(self) > self.page_size:
+			key, newnode = self.split()
+			self.parent.insert(key, newnode)
+
+	def delete(self, key):
+		for index in range(0,len(self)):
+			if self.keys[index] == key:
+				del self.keys[index]
+				del self.values[index]
+				return
+
+	def split(self):
+		center = len(self)//2
+		key = self.keys[center]
+
+		newnode = self.leaffactory.allocate_leaf(None)
+		newnode.keys = self.keys[center:]
+		newnode.values = self.values[center:]
+		self.keys = self.keys[:center]
+		self.values = self.values[:center]
+
+		return key, newnode
+
+	def merge(self, leaf):
+		pass
+
+class BTreeMemoryLeafFactory(BTreeLeafFactory):
+	"""docstring for BTreeMemoryLeafFactory"""
+	def __init__(self):
+		super(BTreeMemoryLeafFactory, self).__init__()
+
+	def allocate_leaf(self, parent):
+		return BTreeMemoryLeafNode(parent)
+
+	def deallocate_leaf(self, leaf):
+		pass
+
+
+class BTree(object):
+	def __init__(self, page_size, leaffactory = BTreeMemoryLeafFactory()):
+		super(BTree, self).__init__()
+		self._page_size = page_size
+		self._leaffactory = leaffactory
+
+		self.root = BTreeInteriorNode(None)
+		self.root.isroot = True
+		self.root.childs.append(leaffactory.allocate_leaf(self.root))
+		self.root.parent = self
+
+	def __str__(self):
+		return str(self.root)
+
+	def _get_page_size(self):
+		return self._page_size
+
+	def _get_leaffactory(self):
+		return self._leaffactory
+
+	def insert(self, key, value):
+		leaf = self.root.search(key)
+		leaf.insert(key, value)
+
+	@abstractmethod
+	def delete(self, key):
+		pass
+
+	page_size = property(_get_page_size)
+	leaffactory = property(_get_leaffactory)
+
+
+
+class BTreeInteriorNode(BTreeNode):
+	def __init__(self, parent):
+		super(BTreeInteriorNode, self).__init__(parent)
+		self.keys = []
+		self.childs = []
+		self.isroot = False
+
+	def __len__(self):
+		return len(self.keys)
+
+	def __str__(self):
+		return "[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
+
+	def before(self, key_index):
+		return self.childs[key_index]
+
+	def after(self, key_index):
+		return self.childs[key_index+1]
+
+	def insert(self, key, node):
+		index = 0
+		while index < len(self) and self.keys[index] <= key:
+			index += 1
+		self.keys.insert(index, key)
+		self.childs.insert(index+1, node)
+		node.parent = self
+
+		if len(self) > self.page_size:
+			key, newnode = self.split()
+
+			if self.isroot: #root was split, create new root
+				newroot = BTreeInteriorNode(self.parent)
+				newroot.isroot = True
+				newroot.childs.append(self)
+				newroot.insert(key, newnode)
+				self.parent.root = newroot
+				self.parent = newroot
+				self.isroot = False
+			else:
+				self.parent.insert(key, newnode)
+
+	def split(self):
+		center = len(self) // 2
+		key = self.keys[center]
+
+		newnode = BTreeInteriorNode(None)
+		newnode.keys = self.keys[center+1:]
+		newnode.childs = self.childs[center+1:]
+
+		for child in newnode.childs:
+			child.parent = newnode
+
+		self.keys = self.keys[:center]
+		self.childs = self.childs[:center+1]
+
+		return key, newnode
+
+	def merge(self, node):
+		pass
+
+	def delete(self, key):
+		pass
+
