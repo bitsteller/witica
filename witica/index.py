@@ -190,7 +190,7 @@ class BTreeNode(object):
 					i += 1
 				return self.after(i).search(key)
 		else:
-			return self.childs[0]
+			return self.childs[0].search(key)
 
 	page_size = property(_get_page_size)
 	leaffactory = property(_get_leaffactory)
@@ -240,11 +240,86 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 			self.parent.insert(key, newnode)
 
 	def delete(self, key):
-		for index in range(0,len(self)):
-			if self.keys[index] == key:
-				del self.keys[index]
-				del self.values[index]
+		index = 0
+		while index < len(self) and self.keys[index] != key:
+			index += 1
+
+		if index == len(self):
+			raise ValueError("Key not found")
+
+		if index == 0 and len(self) > 1:
+			oldkey = self.keys[0]
+			newkey = self.keys[1]
+			parent = self.parent
+			while not(isinstance(parent, BTree)):
+				if oldkey in parent.keys:
+					keyindex = parent.keys.index(oldkey)
+					del parent.keys[keyindex]
+					parent.keys.insert(keyindex, newkey)
+				parent = parent.parent
+
+		del self.keys[index]
+		del self.values[index]	
+
+		#balance
+		if len(self) < self.page_size//2:
+			index = self.parent.childs.index(self)
+			node = None
+			#borrow key from neighbor, try right first
+			index = self.parent.childs.index(self)
+			if index+1 < len(self.parent.childs) and len(self.parent.childs[index+1]) > self.page_size // 2:
+				print("leaf borrow right")
+				node = self.parent.childs[index+1]
+				key = self.parent.keys[index]
+				self.borrowRight(key,node)
 				return
+
+			if index-1 >= 0 and len(self.parent.childs[index-1]) > self.page_size // 2:
+				print("leaf borrow left")
+				node = self.parent.childs[index-1]
+				key = self.parent.keys[index-1]
+				self.borrowLeft(key,node)
+				return
+
+			#merge with neighbor, try right first
+			if index+1 < len(self.parent.childs):
+				print("leaf merge right")
+				node = self.parent.childs[index+1] #try right first
+				self.merge(node)
+				self.parent.delete(node)
+			elif index-1 >= 0:
+				print("leaf merge left")
+				node = self.parent.childs[index-1] #merge with left instead
+				node.merge(self)
+				self.parent.delete(self)
+
+	def borrowLeft(self, key, leaf):
+		pairs = zip(leaf.keys, leaf.values)
+		oldseperator = key
+		newseperator = key
+		while not(len(self) >= self.page_size // 2) or len(self) < len(leaf)-1:
+			key, value = pairs.pop()
+			self.keys.insert(0,key)
+			self.values.insert(0,value)
+			del leaf.values[-1]
+			del leaf.keys[-1]
+			newseperator = self.keys[0]
+		leaf.parent.replaceKey(oldseperator,newseperator)
+
+	def borrowRight(self, key, leaf):
+		pairs = zip(leaf.keys, leaf.values)
+		pairs.reverse() #to pop left first
+		oldseperator = key
+		newseperator = key
+		while not(len(self) >= self.page_size // 2) or len(self) < len(leaf)-1:
+			key, value = pairs.pop()
+			print(str(key) + "  " + str(value))
+			self.keys.append(key)
+			self.values.append(value)
+			del leaf.values[0]
+			del leaf.keys[0]
+			newseperator = leaf.keys[0]
+		leaf.parent.replaceKey(oldseperator,newseperator)
 
 	def split(self):
 		center = len(self)//2
@@ -259,7 +334,10 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		return key, newnode
 
 	def merge(self, leaf):
-		pass
+		for (key, value) in zip(leaf.keys, leaf.values):
+			self.insert(key, value)
+		self.leaffactory.deallocate_leaf(leaf)	
+
 
 class BTreeMemoryLeafFactory(BTreeLeafFactory):
 	"""docstring for BTreeMemoryLeafFactory"""
@@ -299,7 +377,8 @@ class BTree(object):
 
 	@abstractmethod
 	def delete(self, key):
-		pass
+		leaf = self.root.search(key)
+		leaf.delete(key)
 
 	page_size = property(_get_page_size)
 	leaffactory = property(_get_leaffactory)
@@ -317,7 +396,10 @@ class BTreeInteriorNode(BTreeNode):
 		return len(self.keys)
 
 	def __str__(self):
-		return "[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
+		if self.isroot:
+			return "r[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
+		else:
+			return "[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
 
 	def before(self, key_index):
 		return self.childs[key_index]
@@ -326,6 +408,7 @@ class BTreeInteriorNode(BTreeNode):
 		return self.childs[key_index+1]
 
 	def insert(self, key, node):
+		#insert
 		index = 0
 		while index < len(self) and self.keys[index] <= key:
 			index += 1
@@ -333,10 +416,12 @@ class BTreeInteriorNode(BTreeNode):
 		self.childs.insert(index+1, node)
 		node.parent = self
 
+		#balance
 		if len(self) > self.page_size:
 			key, newnode = self.split()
 
 			if self.isroot: #root was split, create new root
+				print("newroot")
 				newroot = BTreeInteriorNode(self.parent)
 				newroot.isroot = True
 				newroot.childs.append(self)
@@ -363,9 +448,134 @@ class BTreeInteriorNode(BTreeNode):
 
 		return key, newnode
 
-	def merge(self, node):
-		pass
+	def merge(self, key, node):
+		keys = []
+		keys.append(key)
+		keys.extend(node.keys)
 
-	def delete(self, key):
-		pass
+		print(str(keys) + str(node.childs) + "..." + str(zip(keys, node.childs)))
+		for (key, node) in zip(keys, node.childs):
+			self.insert(key, node)
+			print("ins " + str(key) + " = " + str(self))
+
+	def borrowLeft(self, key, node):
+		keys = []
+		keys.extend(node.keys)
+		keys.append(key)
+		pairs = zip(keys, node.childs)
+		pairs.reverse()
+		oldseperator = key
+		while not(len(self) >= self.page_size // 2) or len(self) < len(node)-1:
+			key, child = pairs.pop(0)
+			self.keys.insert(0,key)
+			self.childs.insert(0,child)
+			child.parent = self
+			del node.childs[-1]
+			newseperator = node.keys[-1]
+			del node.keys[-1]
+		node.parent.replaceKey(oldseperator,newseperator)
+
+	def borrowRight(self, key, node):
+		keys = []
+		keys.append(key)
+		keys.extend(node.keys)
+		pairs = zip(keys, node.childs)
+		oldseperator = key
+		newseperator = key
+		while not(len(self) >= self.page_size // 2) or len(self) < len(node)-1:
+			key, child = pairs.pop(0)
+			self.keys.append(key)
+			self.childs.append(child)
+			child.parent = self
+			del node.childs[0]
+			newseperator = node.keys[0]
+			del node.keys[0]
+		node.parent.replaceKey(oldseperator,newseperator)
+
+	def replaceKey(self, oldkey, newkey):
+		node = self
+		while not(isinstance(node, BTree)):
+			if oldkey in node.keys:
+				keyindex = node.keys.index(oldkey)
+				del node.keys[keyindex]
+				node.keys.insert(keyindex, newkey)
+			node = node.parent
+
+	def delete(self, node):
+		print(str(self) + "---" + str(node))
+
+		#delete
+		index = self.childs.index(node)
+
+		if index > 0:
+			if index == 1 and len(self) > 1:
+				oldkey = self.keys[0]
+				newkey = self.keys[1]
+				parent = self.parent
+				while not(isinstance(parent, BTree)):
+					if oldkey in parent.keys:
+						keyindex = parent.keys.index(oldkey)
+						del parent.keys[keyindex]
+						parent.keys.insert(keyindex, newkey)
+					parent = parent.parent
+
+			del self.keys[index-1]
+
+		del self.childs[index]
+
+		if (isinstance(node, BTreeLeafNode)):
+			self.leaffactory.deallocate_leaf(node)
+		print("===" + str(self))
+
+		#balance
+		if len(self) < self.page_size//2:
+			print("underflow")
+			if self.isroot:
+				#collapse root
+				no_keys = len(self) + sum([len(child) for child in self.childs])
+				if no_keys < self.page_size and (isinstance(self.childs[0], BTreeInteriorNode)):
+						print("collapse")
+						print(self.childs[0])
+						self.childs[0].parent = self.parent
+						for (key,node) in zip(self.keys, self.childs[1:]):
+							self.childs[0].merge(key,node)
+						self.parent.root = self.childs[0]
+						self.parent.root.isroot = True
+						print(self.childs[0])
+			else:
+				#borrow key from neighbor, try right first
+				index = self.parent.childs.index(self)
+				if index+1 < len(self.parent.childs) and len(self.parent.childs[index+1]) > self.page_size // 2:
+					print("borrow right")
+					node = self.parent.childs[index+1]
+					key = self.parent.keys[index]
+					self.borrowRight(key,node)
+					return
+
+				if index-1 >= 0 and len(self.parent.childs[index-1]) > self.page_size // 2:
+					print("borrow left")
+					node = self.parent.childs[index-1]
+					key = self.parent.keys[index-1]
+					self.borrowLeft(key,node)
+					return
+
+				#merge with neighbor, try right first
+				if index+1 < len(self.parent.childs):
+					node = self.parent.childs[index+1] #try right first
+					key = self.parent.keys[index]
+					print(str(self) + "++++" + str(node))
+					self.merge(key, node)
+					print("===" + str(self))
+					self.parent.delete(node)
+					return
+
+				if index-1 >= 0:
+					node = self.parent.childs[index-1] #merge with left instead
+					key = self.parent.keys[index-1]
+					print(str(node) + "+++" + str(self))
+					node.merge(key, self)
+					print("===" + str(node))
+					self.parent.delete(self)
+					return				
+
 

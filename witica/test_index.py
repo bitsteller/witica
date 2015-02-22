@@ -47,21 +47,29 @@ class TestBTree(unittest.TestCase):
 
 	def test_delete(self):
 		#insert
-		numbers = [x for x in range(1,100)]
+		numbers = [x for x in range(1,1000)]
+		#numbers = [4, 13, 2, 12, 9, 10, 8, 1, 6, 5, 3, 7, 11, 14] 
 		random.shuffle(numbers)
+		print("ins:" + str(numbers))
 
 		for number in numbers:
 			self.btree.insert(number, 100+number)
 
 		#test delete
 		random.shuffle(numbers)
+
+		#numbers = [10,6,14,12,9,4,5,3,1,13,8,11,2,7]
 		for number in numbers:
+			print(self.btree)
 			self.assertIn(number, self.btree.root.search(number).keys)
 			self.assertIn(100+number, self.btree.root.search(number).values)
+			print(number)
 			self.btree.delete(number)
+			print(self.btree)
 			self.assertNotIn(number, self.btree.root.search(number).keys)
 			self.assertNotIn(100+number, self.btree.root.search(number).values)
 
 		self.assertEqual(0, len(self.btree.root))
-		self.assertEqual([], len(self.btree.root.child[0]))
+		self.assertEqual([], self.btree.root.childs[0].keys)
+		self.assertEqual([], self.btree.root.childs[0].values)
 
