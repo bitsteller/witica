@@ -216,7 +216,7 @@ class BTreeLeafFactory(object):
 		pass
 		
 class BTreeMemoryLeafNode(BTreeLeafNode):
-	"""docstring for BTreeMemoryLeaf"""
+	"""a B+Tree leaf that stores the contents in memory"""
 	def __init__(self, parent):
 		super(BTreeMemoryLeafNode, self).__init__(parent)
 		self.keys = []
@@ -226,7 +226,7 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		return len(self.keys)
 
 	def __str__(self):
-		return str(self.keys)
+		return str([str(key) for key in self.keys])
 
 	def insert(self, key, value):
 		index = 0
@@ -272,7 +272,6 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 				key = self.parent.keys[index]
 				self.borrowRight(key,node)
 				return
-
 			if index-1 >= 0 and len(self.parent.childs[index-1]) > self.page_size // 2:
 				node = self.parent.childs[index-1]
 				key = self.parent.keys[index-1]
@@ -291,10 +290,11 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 
 	def borrowLeft(self, key, leaf):
 		pairs = zip(leaf.keys, leaf.values)
+		pairs.reverse() #to pop left first
 		oldseperator = key
 		newseperator = key
 		while not(len(self) >= self.page_size // 2) or len(self) < len(leaf)-1:
-			key, value = pairs.pop()
+			key, value = pairs.pop(0)
 			self.keys.insert(0,key)
 			self.values.insert(0,value)
 			del leaf.values[-1]
@@ -304,11 +304,10 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 
 	def borrowRight(self, key, leaf):
 		pairs = zip(leaf.keys, leaf.values)
-		pairs.reverse() #to pop left first
 		oldseperator = key
 		newseperator = key
 		while not(len(self) >= self.page_size // 2) or len(self) < len(leaf)-1:
-			key, value = pairs.pop()
+			key, value = pairs.pop(0)
 			self.keys.append(key)
 			self.values.append(value)
 			del leaf.values[0]
@@ -331,8 +330,135 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 	def merge(self, leaf):
 		for (key, value) in zip(leaf.keys, leaf.values):
 			self.insert(key, value)
-		self.leaffactory.deallocate_leaf(leaf)	
 
+class BTreeFileLeafFactory(BTreeLeafFactory):
+	"""Constructs and destructs file B+ tree file leaves"""
+	def __init__(self, path, extension, key_class, value_class):
+		super(BTreeFileLeafFactory, self).__init__()
+		self.path = path
+		self.extension = extension
+		self.key_class = key_class
+		self.value_class = value_class
+		self.allocated_leaves = []
+		self.allocated_pages = []
+
+	def allocate_leaf(self, parent):
+		#get a free page number
+		page = 0
+		while page in self.allocated_pages:
+			page += 1
+
+		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension, self.key_class, self.value_class)
+		self.allocated_leaves.append(leaf)
+		self.allocated_pages.append(page)
+		return leaf
+
+	def deallocate_leaf(self, leaf):
+		index = self.allocated_leaves.index(leaf)
+		print(self.allocated_pages[index])
+		os.remove(self.path + str(self.allocated_pages[index]) + self.extension)
+		del self.allocated_leaves[index]
+		del self.allocated_pages[index]
+
+	def cleanup(self):
+		[leaf.unload() for leaf in self.allocated_leaves]
+
+class BTreeFileLeafNode(BTreeMemoryLeafNode):
+	"""a B+Tree leaf that stores the contents in a file on disk"""
+	def __init__(self, parent, filename, key_class, value_class):
+		super(BTreeFileLeafNode, self).__init__(parent)
+		self.keys = []
+		self.values = []
+		self.filename = filename
+		self.key_class = key_class
+		self.value_class = value_class
+		self.isloaded  = False
+
+	def ensureLoad(self):
+		if not(self.isloaded):
+			if os.path.isfile(self.filename):
+				leafjson = json.loads(open(self.filename).read())
+				if leafjson["version"] != 1:
+					raise IOException("Version of B+ tree page file " + sstr(self.filename) + " is not compatible.")
+				self.keys = [self.key_class.from_JSON(key_json) for key_json in leafjson["keys"]]
+				self.values = [self.value_class.from_JSON(value_json) for value_json in leafjson["values"]]
+				self.isloaded  = True
+			else:
+				self.isloaded  = True
+
+	def writeToFile(self):
+		allocated = False
+		try:
+			allocated = self in self.leaffactory.allocated_leaves
+		except Exception, e:
+			pass
+
+		if allocated:
+			leafjson = {}
+			leafjson["version"] = 1
+			leafjson["keys"] = [key.to_JSON() for key in self.keys]
+			leafjson["values"] = [value.to_JSON() for value in self.values]
+
+			s = json.dumps(leafjson, indent=3)
+			f = open(self.filename, 'w')
+			f.write(s + "\n")
+			f.close()
+
+	def unload(self):
+		self.isloaded  = False
+		self.keys = []
+		self.values = []
+
+	def __len__(self):
+		self.ensureLoad()
+		return len(self.keys)
+
+	def __str__(self):
+		self.ensureLoad()
+		return str([str(key) for key in self.keys])
+
+	def insert(self, key, value):
+		self.ensureLoad()
+		super(BTreeFileLeafNode, self).insert(key, value)
+		self.writeToFile()
+
+	def delete(self, key):
+		self.ensureLoad()
+		super(BTreeFileLeafNode, self).delete(key)
+		self.writeToFile()
+
+	def borrowLeft(self, key, leaf):
+		self.ensureLoad()
+		leaf.ensureLoad()
+		super(BTreeFileLeafNode, self).borrowLeft(key, leaf)
+		self.writeToFile()
+		leaf.writeToFile()
+
+	def borrowRight(self, key, leaf):
+		self.ensureLoad()
+		leaf.ensureLoad()
+		super(BTreeFileLeafNode, self).borrowRight(key, leaf)
+		self.writeToFile()
+		leaf.writeToFile()
+
+	def split(self):
+		self.ensureLoad()
+		center = len(self)//2
+		key = self.keys[center]
+
+		newnode = self.leaffactory.allocate_leaf(None)
+		newnode.keys = self.keys[center:]
+		newnode.values = self.values[center:]
+		self.keys = self.keys[:center]
+		self.values = self.values[:center]
+
+		self.writeToFile()
+		newnode.writeToFile()
+		return key, newnode
+
+	def merge(self, leaf):
+		leaf.ensureLoad()
+		super(BTreeFileLeafNode, self).merge(leaf)
 
 class BTreeMemoryLeafFactory(BTreeLeafFactory):
 	"""docstring for BTreeMemoryLeafFactory"""
@@ -391,9 +517,6 @@ class BTreeInteriorNode(BTreeNode):
 		return len(self.keys)
 
 	def __str__(self):
-		if self.isroot:
-			return "r[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
-		else:
 			return "[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
 
 	def before(self, key_index):
