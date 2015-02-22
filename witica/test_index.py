@@ -35,7 +35,7 @@ class TestBTree(unittest.TestCase):
 		self.assertEqual([103,104], self.btree.root.childs[1].values)
 		self.assertEqual([3], self.btree.root.keys)
 
-		numbers = [x for x in range(5,100)]
+		numbers = [x for x in range(5,1000)]
 		random.shuffle(numbers)
 
 		for number in numbers:
@@ -50,7 +50,6 @@ class TestBTree(unittest.TestCase):
 		numbers = [x for x in range(1,1000)]
 		#numbers = [4, 13, 2, 12, 9, 10, 8, 1, 6, 5, 3, 7, 11, 14] 
 		random.shuffle(numbers)
-		print("ins:" + str(numbers))
 
 		for number in numbers:
 			self.btree.insert(number, 100+number)
@@ -60,12 +59,9 @@ class TestBTree(unittest.TestCase):
 
 		#numbers = [10,6,14,12,9,4,5,3,1,13,8,11,2,7]
 		for number in numbers:
-			print(self.btree)
 			self.assertIn(number, self.btree.root.search(number).keys)
 			self.assertIn(100+number, self.btree.root.search(number).values)
-			print(number)
 			self.btree.delete(number)
-			print(self.btree)
 			self.assertNotIn(number, self.btree.root.search(number).keys)
 			self.assertNotIn(100+number, self.btree.root.search(number).values)
 

@@ -268,14 +268,12 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 			#borrow key from neighbor, try right first
 			index = self.parent.childs.index(self)
 			if index+1 < len(self.parent.childs) and len(self.parent.childs[index+1]) > self.page_size // 2:
-				print("leaf borrow right")
 				node = self.parent.childs[index+1]
 				key = self.parent.keys[index]
 				self.borrowRight(key,node)
 				return
 
 			if index-1 >= 0 and len(self.parent.childs[index-1]) > self.page_size // 2:
-				print("leaf borrow left")
 				node = self.parent.childs[index-1]
 				key = self.parent.keys[index-1]
 				self.borrowLeft(key,node)
@@ -283,12 +281,10 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 
 			#merge with neighbor, try right first
 			if index+1 < len(self.parent.childs):
-				print("leaf merge right")
 				node = self.parent.childs[index+1] #try right first
 				self.merge(node)
 				self.parent.delete(node)
 			elif index-1 >= 0:
-				print("leaf merge left")
 				node = self.parent.childs[index-1] #merge with left instead
 				node.merge(self)
 				self.parent.delete(self)
@@ -313,7 +309,6 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		newseperator = key
 		while not(len(self) >= self.page_size // 2) or len(self) < len(leaf)-1:
 			key, value = pairs.pop()
-			print(str(key) + "  " + str(value))
 			self.keys.append(key)
 			self.values.append(value)
 			del leaf.values[0]
@@ -421,7 +416,6 @@ class BTreeInteriorNode(BTreeNode):
 			key, newnode = self.split()
 
 			if self.isroot: #root was split, create new root
-				print("newroot")
 				newroot = BTreeInteriorNode(self.parent)
 				newroot.isroot = True
 				newroot.childs.append(self)
@@ -453,10 +447,8 @@ class BTreeInteriorNode(BTreeNode):
 		keys.append(key)
 		keys.extend(node.keys)
 
-		print(str(keys) + str(node.childs) + "..." + str(zip(keys, node.childs)))
 		for (key, node) in zip(keys, node.childs):
 			self.insert(key, node)
-			print("ins " + str(key) + " = " + str(self))
 
 	def borrowLeft(self, key, node):
 		keys = []
@@ -502,8 +494,6 @@ class BTreeInteriorNode(BTreeNode):
 			node = node.parent
 
 	def delete(self, node):
-		print(str(self) + "---" + str(node))
-
 		#delete
 		index = self.childs.index(node)
 
@@ -525,35 +515,28 @@ class BTreeInteriorNode(BTreeNode):
 
 		if (isinstance(node, BTreeLeafNode)):
 			self.leaffactory.deallocate_leaf(node)
-		print("===" + str(self))
 
 		#balance
 		if len(self) < self.page_size//2:
-			print("underflow")
 			if self.isroot:
 				#collapse root
 				no_keys = len(self) + sum([len(child) for child in self.childs])
-				if no_keys < self.page_size and (isinstance(self.childs[0], BTreeInteriorNode)):
-						print("collapse")
-						print(self.childs[0])
+				if no_keys <= self.page_size and (isinstance(self.childs[0], BTreeInteriorNode)):
 						self.childs[0].parent = self.parent
 						for (key,node) in zip(self.keys, self.childs[1:]):
 							self.childs[0].merge(key,node)
 						self.parent.root = self.childs[0]
 						self.parent.root.isroot = True
-						print(self.childs[0])
 			else:
 				#borrow key from neighbor, try right first
 				index = self.parent.childs.index(self)
 				if index+1 < len(self.parent.childs) and len(self.parent.childs[index+1]) > self.page_size // 2:
-					print("borrow right")
 					node = self.parent.childs[index+1]
 					key = self.parent.keys[index]
 					self.borrowRight(key,node)
 					return
 
 				if index-1 >= 0 and len(self.parent.childs[index-1]) > self.page_size // 2:
-					print("borrow left")
 					node = self.parent.childs[index-1]
 					key = self.parent.keys[index-1]
 					self.borrowLeft(key,node)
@@ -563,18 +546,14 @@ class BTreeInteriorNode(BTreeNode):
 				if index+1 < len(self.parent.childs):
 					node = self.parent.childs[index+1] #try right first
 					key = self.parent.keys[index]
-					print(str(self) + "++++" + str(node))
 					self.merge(key, node)
-					print("===" + str(self))
 					self.parent.delete(node)
 					return
 
 				if index-1 >= 0:
 					node = self.parent.childs[index-1] #merge with left instead
 					key = self.parent.keys[index-1]
-					print(str(node) + "+++" + str(self))
 					node.merge(key, self)
-					print("===" + str(node))
 					self.parent.delete(self)
 					return				
 
