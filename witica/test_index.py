@@ -110,41 +110,35 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		random.shuffle(numbers)
 
 		for number in numbers:
-			key = IntClass(number)
-			value = IntClass(100+number)
-			self.btree.insert(key, value)
-			self.assertIn(key, self.btree.root.search(key).keys)
-			self.assertIn(value, self.btree.root.search(key).values)
+			self.btree.insert(IntClass(number), IntClass(100+number))
+			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 			self.leaffactory.cleanup()
 		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
-
 
 	def test_delete(self):
 		numbers = [x for x in range(1,1000)]
 		random.shuffle(numbers)
 		#insert
 		for number in numbers:
-			key = IntClass(number)
-			value = IntClass(100+number)
-			self.btree.insert(key, value)
-			self.assertIn(key, self.btree.root.search(key).keys)
-			self.assertIn(value, self.btree.root.search(key).values)
+			self.btree.insert(IntClass(number), IntClass(100+number))
+			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
 		#test delete
 		random.shuffle(numbers)
 		for number in numbers:
-			key = IntClass(number)
-			value = IntClass(100+number)
-
-			leaf = self.btree.root.search(key)
+			leaf = self.btree.root.search(IntClass(number))
 			leaf.ensureLoad()
-			self.assertIn(key, leaf.keys)
+			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
-			self.btree.delete(key)
+			self.btree.delete(IntClass(number))
 
-			leaf = self.btree.root.search(key)
+			leaf = self.btree.root.search(IntClass(number))
 			leaf.ensureLoad()
-			self.assertNotIn(key, leaf.keys)
+			self.assertNotIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertNotIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 			self.leaffactory.cleanup()
 
 		self.assertEqual(0, len(self.btree.root))
@@ -153,26 +147,44 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		self.assertEqual(1, len(self.leaffactory.allocated_leaves))
 
 	def test_persistent(self):
+		#load with numbers
 		numbers = [x for x in range(1,1000)]
 		random.shuffle(numbers)
 
 		for number in numbers:
-			key = IntClass(number)
-			value = IntClass(100+number)
-			self.btree.insert(key, value)
+			self.btree.insert(IntClass(number), IntClass(100+number))
 
+		#serialize and deserialize again
 		treejson = self.btree.to_JSON()
-		print(treejson)
 		self.leaffactory = BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index")
 		self.btree = BTree.from_JSON(treejson, IntClass, IntClass, self.leaffactory)
 
+		#check for numbers
 		for number in numbers:
-			key = IntClass(number)
-			value = IntClass(100+number)
-
-			leaf = self.btree.root.search(key)
+			leaf = self.btree.root.search(IntClass(number))
 			leaf.ensureLoad()
-			self.assertIn(key, leaf.keys)
+			self.assertIn(number, [key.integer for key in leaf.keys])
 
 		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
+
+		#test delete to check if parent correctly set on all nodes and tree works
+		random.shuffle(numbers)
+		for number in numbers:
+			leaf = self.btree.root.search(IntClass(number))
+			leaf.ensureLoad()
+			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
+
+			self.btree.delete(IntClass(number))
+
+			leaf = self.btree.root.search(IntClass(number))
+			leaf.ensureLoad()
+			self.assertNotIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
+			self.assertNotIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
+			self.leaffactory.cleanup()
+
+		self.assertEqual(0, len(self.btree.root))
+		self.assertEqual([], self.btree.root.childs[0].keys)
+		self.assertEqual([], self.btree.root.childs[0].values)
+		self.assertEqual(1, len(self.leaffactory.allocated_leaves))
 
