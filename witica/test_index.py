@@ -9,7 +9,7 @@ from witica.publish import DeleteJob
 
 class TestBTree(unittest.TestCase):
 	def setUp(self):
-		self.btree = BTree(3)
+		self.btree = BTree(3, int, int)
 
 	def tearDown(self):
 		pass
@@ -98,8 +98,8 @@ class IntClass(object):
 class TestBTreeFileLeaves(unittest.TestCase):
 	def setUp(self):
 		self.tempdir = tempfile.mkdtemp()
-		self.leaffactory = BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index", IntClass, IntClass)
-		self.btree = BTree(50, self.leaffactory)
+		self.leaffactory = BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index")
+		self.btree = BTree(50, IntClass, IntClass, self.leaffactory)
 	
 	def tearDown(self):
 		shutil.rmtree(self.tempdir)
@@ -151,4 +151,28 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		self.assertEqual([], self.btree.root.childs[0].keys)
 		self.assertEqual([], self.btree.root.childs[0].values)
 		self.assertEqual(1, len(self.leaffactory.allocated_leaves))
+
+	def test_persistent(self):
+		numbers = [x for x in range(1,1000)]
+		random.shuffle(numbers)
+
+		for number in numbers:
+			key = IntClass(number)
+			value = IntClass(100+number)
+			self.btree.insert(key, value)
+
+		treejson = self.btree.to_JSON()
+		print(treejson)
+		self.leaffactory = BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index")
+		self.btree = BTree.from_JSON(treejson, IntClass, IntClass, self.leaffactory)
+
+		for number in numbers:
+			key = IntClass(number)
+			value = IntClass(100+number)
+
+			leaf = self.btree.root.search(key)
+			leaf.ensureLoad()
+			self.assertIn(key, leaf.keys)
+
+		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
 
