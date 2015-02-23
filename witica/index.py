@@ -375,10 +375,12 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		page = 0
 		while page in self.allocated_pages:
 			page += 1
-
 		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension)
+		leaf.isloaded = True
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
+		leaf.writeToFile()
+
 		return leaf
 
 	def deallocate_leaf(self, leaf):
@@ -393,7 +395,6 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 	def construct_leaf_from_JSON(self, parent, leafjson):
 		page = leafjson["page"]
 		if page in self.allocated_pages:
-			print(page)
 			raise ValueError("Page already allocated")
 		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension)
 		self.allocated_leaves.append(leaf)
@@ -423,13 +424,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 				self.isloaded  = True
 
 	def writeToFile(self):
-		allocated = False
-		try:
-			allocated = self in self.leaffactory.allocated_leaves
-		except Exception, e:
-			pass
-
-		if allocated:
+		if self.isloaded:
 			leafjson = {}
 			leafjson["version"] = 1
 			leafjson["keys"] = [key.to_JSON() for key in self.keys]
@@ -512,17 +507,19 @@ class BTreeMemoryLeafFactory(BTreeLeafFactory):
 
 
 class BTree(object):
-	def __init__(self, page_size, key_class, value_class, leaffactory = BTreeMemoryLeafFactory()):
+	def __init__(self, page_size, key_class, value_class, leaffactory = BTreeMemoryLeafFactory(), init = True):
 		super(BTree, self).__init__()
 		self._page_size = page_size
 		self._leaffactory = leaffactory
 		self._key_class = key_class
 		self._value_class = value_class
+		self.root = None
 
-		self.root = BTreeInteriorNode(None)
-		self.root.isroot = True
-		self.root.childs.append(leaffactory.allocate_leaf(self.root))
-		self.root.parent = self
+		if init:
+			self.root = BTreeInteriorNode(None)
+			self.root.isroot = True
+			self.root.childs.append(leaffactory.allocate_leaf(self.root))
+			self.root.parent = self
 
 	def to_JSON(self):
 		return {"version": 1,\
@@ -533,9 +530,7 @@ class BTree(object):
 	def from_JSON(btreejson, key_class, value_class, leaffactory =  BTreeMemoryLeafFactory()):
 		if btreejson["version"] != 1:
 			raise IOException("Version of B+ tree JSON is not compatible.")
-		btree = BTree(btreejson["page_size"], key_class, value_class, leaffactory)
-		leaffactory.deallocate_leaf(btree.root.childs[0])
-		btree.root.childs = []
+		btree = BTree(btreejson["page_size"], key_class, value_class, leaffactory, init = False)
 		btree.root = BTreeInteriorNode.from_JSON(btree, btreejson["root"])
 		btree.root.isroot = True
 		return btree
@@ -591,7 +586,7 @@ class BTreeInteriorNode(BTreeNode):
 	def from_JSON(parent, nodejson):
 		node = BTreeInteriorNode(parent)
 		node.keys = [parent.key_class.from_JSON(keyjson) for keyjson in nodejson["keys"]]
-		node.childs = [BTreeNode.from_JSON(parent, childjson) for childjson in nodejson["childs"]]
+		node.childs = [BTreeNode.from_JSON(node, childjson) for childjson in nodejson["childs"]]
 		return node
 
 	def before(self, key_index):
