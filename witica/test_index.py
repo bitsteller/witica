@@ -88,17 +88,25 @@ class IntClass(object):
 	def __cmp__(self, other):
 		return cmp(self.integer,other.integer)
 
+	def __eq__(self, other):
+		return (isinstance(other, self.__class__)
+			and self.__cmp__(other) == 0)
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
 class TestBTreeFileLeaves(unittest.TestCase):
 	def setUp(self):
 		self.tempdir = tempfile.mkdtemp()
-		self.btree = BTree(50, BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index", IntClass, IntClass))
+		self.leaffactory = BTreeFileLeafFactory(os.path.join(self.tempdir, "page"), ".index", IntClass, IntClass)
+		self.btree = BTree(50, self.leaffactory)
 	
 	def tearDown(self):
-		#shutil.rmtree(self.tempdir)
+		shutil.rmtree(self.tempdir)
 		pass
 
 	def test_insert(self):
-		numbers = [x for x in range(1,100)]
+		numbers = [x for x in range(1,1000)]
 		random.shuffle(numbers)
 
 		for number in numbers:
@@ -107,11 +115,13 @@ class TestBTreeFileLeaves(unittest.TestCase):
 			self.btree.insert(key, value)
 			self.assertIn(key, self.btree.root.search(key).keys)
 			self.assertIn(value, self.btree.root.search(key).values)
+			self.leaffactory.cleanup()
+		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
+
 
 	def test_delete(self):
-		numbers = [x for x in range(1,100)]
+		numbers = [x for x in range(1,1000)]
 		random.shuffle(numbers)
-		keys = []
 		#insert
 		for number in numbers:
 			key = IntClass(number)
@@ -119,16 +129,26 @@ class TestBTreeFileLeaves(unittest.TestCase):
 			self.btree.insert(key, value)
 			self.assertIn(key, self.btree.root.search(key).keys)
 			self.assertIn(value, self.btree.root.search(key).values)
-			keys.append(key)
 
 		#test delete
-		random.shuffle(keys)
-		for key in keys:
-			self.assertIn(key, self.btree.root.search(key).keys)
+		random.shuffle(numbers)
+		for number in numbers:
+			key = IntClass(number)
+			value = IntClass(100+number)
+
+			leaf = self.btree.root.search(key)
+			leaf.ensureLoad()
+			self.assertIn(key, leaf.keys)
+
 			self.btree.delete(key)
-			self.assertNotIn(key, self.btree.root.search(key).keys)
+
+			leaf = self.btree.root.search(key)
+			leaf.ensureLoad()
+			self.assertNotIn(key, leaf.keys)
+			self.leaffactory.cleanup()
 
 		self.assertEqual(0, len(self.btree.root))
 		self.assertEqual([], self.btree.root.childs[0].keys)
 		self.assertEqual([], self.btree.root.childs[0].values)
+		self.assertEqual(1, len(self.leaffactory.allocated_leaves))
 

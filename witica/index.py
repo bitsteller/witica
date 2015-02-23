@@ -355,10 +355,10 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 
 	def deallocate_leaf(self, leaf):
 		index = self.allocated_leaves.index(leaf)
-		print(self.allocated_pages[index])
 		os.remove(self.path + str(self.allocated_pages[index]) + self.extension)
 		del self.allocated_leaves[index]
 		del self.allocated_pages[index]
+
 
 	def cleanup(self):
 		[leaf.unload() for leaf in self.allocated_leaves]
