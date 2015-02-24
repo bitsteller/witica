@@ -4,6 +4,7 @@ from inspect import isclass, getmembers
 from sys import modules
 from threading import Thread, Lock
 from threading import Event as TEvent
+from functools import total_ordering
 
 from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile, Event
 from witica import *
@@ -21,7 +22,7 @@ class Index(AsyncWorker):
 		self.index_id = index_id
 		self.config = config
 		self.name = self.site.source.source_id + "#" + self.index_id
-		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged]
+		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved]
 
 		super(Index, self).__init__(self.name)
 
@@ -29,7 +30,7 @@ class Index(AsyncWorker):
 		if not self.state["source_cursor"] == self.site.source.state["cursor"]:
 			self.log("Index is out of sync. Will fetch changes to get in sync with source.", Logtype.WARNING)
 			change_event = Event()
-			change_event += self.enqueue_event
+			change_event += self.trigger
 			cursor = self.site.source.fetch_changes(change_event, self.state["source_cursor"])
 			self.save_source_cursor(self,cursor)
 
@@ -119,13 +120,53 @@ class Index(AsyncWorker):
 class ItemIndex(Index):
 	"""docstring for ItemIndex"""
 	def __init__(self, site, index_id, config):
+		if isinstance(config["from"], list):
+			self.from_list = config["from"]
+		else:
+			self.from_list = [config["from"]]
+
 		super(ItemIndex, self).__init__(site, index_id, config)
 
+		self.keyspecs = [KeySpec.from_JSON(keyspec) for keyspec in config["keys"]]
+		self.keyfactory = KeyFactory(self.keyspecs)
+
+		index_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "index"), ".index")
+		keylookup_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "keylookup"), ".index")
+
+		if "index" in self.state:
+			self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
+			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, self.keyfactory, keylookup_leaffactory)
+		else:
+			self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
+			self.keylookup = BTree(50, unicode, self.keyfactory, keylookup_leaffactory)
+
 	def is_relevant(self, event):
-		return True
+		if not event.__class__ in self.accepted_event_classes:
+			return False
+		
+		item = event.get_item(self.site.source)
+		for fromspec in self.from_list:
+			item_ids = self.site.source.resolve_reference("!" + fromspec,item,allow_patterns=True)
+			if item.item_id == item_ids or item.item_id in item_ids:
+				print("relevant")
+				return True
+		return False
 
 	def update_item(self, item):
-		pass
+		components = []
+		for keyspec in self.keyspecs:
+			if keyspec.key in item.metadata:
+				components.append(item.metadata[keyspec.key])
+			else:
+				components.append(None)
+		key_list = [Key(self.keyspecs, components)]
+		for key in key_list:
+			self.index.insert(key, item.item_id)
+			#self.keylookup.insert(item.item_id, key_list)
+
+		self.state["index"] = self.index.to_JSON()
+		self.state["keylookup"] = self.index.to_JSON()
+		self.write_state()
 
 	def remove_item(self, item):
 		pass
@@ -139,14 +180,57 @@ class ItemIndex(Index):
 	def get_page_count(self):
 		pass
 		
-
-class Key(object):
-	def __init__(self, key):
+class KeySpec(object):
+	"""stores a index key specification"""
+	def __init__(self, key, order):
+		super(KeySpec, self).__init__()
 		self.key = key
+		self.order = order
 
-	def __cmp__(self, other):
-		return self > other
+	@staticmethod
+	def from_JSON(keyjson):
+		key = keyjson
+		order = KeyOrder.ASCENDING
+		return KeySpec(key, order)
 
+class KeyOrder(object):
+	DESCENDING = -1,
+	ASCENDING = 1
+
+@total_ordering
+class Key(object):
+	def __init__(self, keyspecs, components):
+		self.keyspecs = keyspecs
+		self.components = components
+
+	def __eq__(self, other):
+		for (self_component, other_component) in zip(self.components, other.components):
+			if not self_component.__eq__(other_component):
+				return False
+		return True
+
+	def __lt__(self, other):
+		for (self_component, other_component) in zip(self.components, other.components):
+			if not self_component.__lt__(other_component):
+				return False
+		return True
+
+	def to_JSON(self):
+		return self.components
+
+	@staticmethod
+	def from_JSON(keyspecs, keyjson):
+		return Key(keyspecs, keyjson)
+
+class KeyFactory(object):
+	"""creates key object with a key specification"""
+	def __init__(self, keyspecs):
+		super(KeyFactory, self).__init__()
+		self.keyspecs = keyspecs
+
+	def from_JSON(self, keyjson):
+		return Key.from_JSON(self.keyspecs, keyjson)
+		
 
 class BTreeNode(object):
 	__metaclass__ = ABCMeta
@@ -248,14 +332,32 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		return str([str(key) for key in self.keys])
 
 	def to_JSON(self):
-		return {"keys": [key.to_JSON() for key in self.keys],\
-				"values": [value.to_JSON() for value in self.values]}
+		leafjson = {}
+		if parent.key_class in [int, dict, list, str, unicode]:
+			leafjson["keys"] = self.keys
+		else:
+			leafjson["keys"] = [key.to_JSON() for key in self.keys]
+
+		if parent.value_class in [int, dict, list, str, unicode]:
+			leafjson["values"] = self.values
+		else:
+			leafjson["values"] = [value.to_JSON() for value in self.values]
+
+		return leafjson
 
 	@staticmethod
 	def from_JSON(parent, nodejson):
 		node = BTreeMemoryLeafNode(parent)
-		node.keys = [parent.key_class.from_JSON(keyjson) for keyjson in nodejson["keys"]]
-		node.values = [parent.value_class.from_JSON(childjson) for childjson in nodejson["values"]]
+		if parent.key_class in [int, dict, list, str, unicode]:
+			node.keys = nodejson["keys"]
+		else:
+			node.keys = [parent.key_class.from_JSON(keyjson) for keyjson in nodejson["keys"]]
+
+		if parent.value_class in [int, dict, list, str, unicode]:
+			node.values = nodejson["values"]
+		else:
+			node.values = [parent.value_class.from_JSON(childjson) for childjson in nodejson["values"]]
+		
 		return node
 
 	def insert(self, key, value):
@@ -379,7 +481,7 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		leaf.isloaded = True
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
-		leaf.writeToFile()
+		#leaf.writeToFile()
 
 		return leaf
 
@@ -417,7 +519,12 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 				leafjson = json.loads(open(self.filename).read())
 				if leafjson["version"] != 1:
 					raise IOException("Version of B+ tree page file " + sstr(self.filename) + " is not compatible.")
-				self.keys = [self.key_class.from_JSON(key_json) for key_json in leafjson["keys"]]
+
+				if self.key_class in [int, dict, list, str, unicode]:
+					self.keys = leafjson["keys"]
+				else:
+					self.keys = [self.key_class.from_JSON(keyjson) for keyjson in leafjson["keys"]]
+
 				self.values = [self.value_class.from_JSON(value_json) for value_json in leafjson["values"]]
 				self.isloaded  = True
 			else:
@@ -427,8 +534,15 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		if self.isloaded:
 			leafjson = {}
 			leafjson["version"] = 1
-			leafjson["keys"] = [key.to_JSON() for key in self.keys]
-			leafjson["values"] = [value.to_JSON() for value in self.values]
+			if self.key_class in [int, dict, list, str, unicode]:
+				leafjson["keys"] = self.keys
+			else:
+				leafjson["keys"] = [key.to_JSON() for key in self.keys]
+
+			if self.value_class in [int, dict, list, str, unicode]:
+				leafjson["values"] = self.values
+			else:
+				leafjson["values"] = [value.to_JSON() for value in self.values]
 
 			s = json.dumps(leafjson, indent=3)
 			f = open(self.filename, 'w')
@@ -579,8 +693,14 @@ class BTreeInteriorNode(BTreeNode):
 			return "[" + str(self.childs[0]) + "".join([str(self.keys[i]) + str(self.childs[i+1]) for i in range(0,len(self))]) + "]"
 
 	def to_JSON(self):
-		return {"keys": [key.to_JSON() for key in self.keys],\
-				"childs": [child.to_JSON() for child in self.childs]}
+		nodejson = {}
+		if self.key_class in [int, dict, list, str, unicode]:
+			nodejson["keys"] = self.keys
+		else:
+			nodejson["keys"] = [key.to_JSON() for key in self.keys]
+
+		nodejson["childs"] = [child.to_JSON() for child in self.childs]
+		return nodejson
 
 	@staticmethod
 	def from_JSON(parent, nodejson):
