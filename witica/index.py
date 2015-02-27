@@ -135,10 +135,10 @@ class ItemIndex(Index):
 
 		if "index" in self.state:
 			self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, self.keyfactory, keylookup_leaffactory)
+			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, PersistenList(self.keyfactory), keylookup_leaffactory)
 		else:
 			self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree(50, unicode, self.keyfactory, keylookup_leaffactory)
+			self.keylookup = BTree(50, unicode, PersistentList(self.keyfactory), keylookup_leaffactory)
 
 	def is_relevant(self, event):
 		if not event.__class__ in self.accepted_event_classes:
@@ -148,7 +148,6 @@ class ItemIndex(Index):
 		for fromspec in self.from_list:
 			item_ids = self.site.source.resolve_reference("!" + fromspec,item,allow_patterns=True)
 			if item.item_id == item_ids or item.item_id in item_ids:
-				print("relevant")
 				return True
 		return False
 
@@ -162,6 +161,8 @@ class ItemIndex(Index):
 		key_list = [Key(self.keyspecs, components)]
 		for key in key_list:
 			self.index.insert(key, item.item_id)
+			#keylist = self.keylookup[key]
+			#keylist
 			#self.keylookup.insert(item.item_id, key_list)
 
 		self.state["index"] = self.index.to_JSON()
@@ -231,6 +232,18 @@ class KeyFactory(object):
 	def from_JSON(self, keyjson):
 		return Key.from_JSON(self.keyspecs, keyjson)
 		
+class PersistentList(list):
+	"""a json serializable list"""
+	def __init__(self, element_class):
+		super(PersistentList, self).__init__()
+		self.element_class = element_class
+
+	def to_JSON(self):
+		for element in self:
+			yield element.to_JSON()
+
+	def from_JSON(self, listjson):
+		return [self.element_class.from_JSON(elementjson) for elementjson in listjson]
 		
 #--------------------
 #B+ Tree implemention
