@@ -64,8 +64,7 @@ class Index(AsyncWorker):
 			item = event.get_item(self.site.source)
 			self.update_item(item)
 		elif isinstance(event, source.ItemRemoved):
-			item = event.get_item(self.site.source)
-			self.remove_item(item)
+			self.remove_item(event.item_id)
 
 	def save_source_cursor(self, sender, cursor):
 		self.state["source_cursor"] = cursor
@@ -101,7 +100,7 @@ class Index(AsyncWorker):
 		pass
 
 	@abstractmethod
-	def remove_item(self, item):
+	def remove_item(self, item_id):
 		pass
 
 	@abstractmethod
@@ -135,7 +134,7 @@ class ItemIndex(Index):
 
 		if "index" in self.state:
 			self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, PersistenList(self.keyfactory), keylookup_leaffactory)
+			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, PersistentList(self.keyfactory), keylookup_leaffactory)
 		else:
 			self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
 			self.keylookup = BTree(50, unicode, PersistentList(self.keyfactory), keylookup_leaffactory)
@@ -152,25 +151,42 @@ class ItemIndex(Index):
 		return False
 
 	def update_item(self, item):
-		components = []
-		for keyspec in self.keyspecs:
-			if keyspec.key in item.metadata:
-				components.append(item.metadata[keyspec.key])
-			else:
-				components.append(None)
-		key_list = [Key(self.keyspecs, components)]
+		self.remove_item(item.item_id)
+		key_list = self.compute_keys(item, self.keyspecs)
 		for key in key_list:
-			self.index.insert(key, item.item_id)
-			#keylist = self.keylookup[key]
-			#keylist
-			#self.keylookup.insert(item.item_id, key_list)
+			self.index[key] = item.item_id
+
+		keylookup_list = PersistentList(self.keyfactory)
+		keylookup_list.extend(key_list)
+		self.keylookup[item.item_id] = keylookup_list
 
 		self.state["index"] = self.index.to_JSON()
 		self.state["keylookup"] = self.index.to_JSON()
 		self.write_state()
 
-	def remove_item(self, item):
-		pass
+	def remove_item(self, item_id):
+		keylookup_list = PersistentList(self.keyfactory)
+		if item_id in self.keylookup:
+			keylookup_list = self.keylookup[item_id]
+
+		for key in keylookup_list:
+			self.index.remove(key)
+		if item_id in self.keylookup:
+			self.keylookup.remove(item_id)
+
+		self.state["index"] = self.index.to_JSON()
+		self.state["keylookup"] = self.index.to_JSON()
+		self.write_state()
+
+	def compute_keys(self, item, keyspecs):
+		components = []
+		for keyspec in keyspecs:
+			if keyspec.key in item.metadata:
+				components.append(item.metadata[keyspec.key])
+			else:
+				components.append(None)
+		components.append(item.item_id)
+		return [Key(keyspecs, components)]
 
 	def get_index_filename(self,page):
 		pass
@@ -239,8 +255,7 @@ class PersistentList(list):
 		self.element_class = element_class
 
 	def to_JSON(self):
-		for element in self:
-			yield element.to_JSON()
+		return [element.to_JSON() for element in self]
 
 	def from_JSON(self, listjson):
 		return [self.element_class.from_JSON(elementjson) for elementjson in listjson]
