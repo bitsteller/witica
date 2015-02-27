@@ -272,7 +272,7 @@ class BTreeNode(object):
 		pass
 
 	@abstractmethod
-	def delete(self, key):
+	def remove(self, key):
 		pass
 
 	@abstractmethod
@@ -343,8 +343,18 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		self.values = []
 
 	def __getitem__(self, key):
-		self.ensureLoad()
 		return self.values[self.keys.index(key)]
+
+	def __setitem__(self, key, value):
+		try:
+			self.remove(key)
+		except Exception, e:
+			pass
+		self.insert(key, value)
+
+	def __contains__(self, key):
+		self.ensureLoad()
+		return (key in self.keys)
 
 	def __len__(self):
 		return len(self.keys)
@@ -392,7 +402,7 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 			key, newnode = self.split()
 			self.parent.insert(key, newnode)
 
-	def delete(self, key):
+	def remove(self, key):
 		index = 0
 		while index < len(self) and self.keys[index] != key:
 			index += 1
@@ -435,11 +445,11 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 			if index+1 < len(self.parent.childs):
 				node = self.parent.childs[index+1] #try right first
 				self.merge(node)
-				self.parent.delete(node)
+				self.parent.remove(node)
 			elif index-1 >= 0:
 				node = self.parent.childs[index-1] #merge with left instead
 				node.merge(self)
-				self.parent.delete(self)
+				self.parent.remove(self)
 
 	def borrowLeft(self, key, leaf):
 		pairs = zip(leaf.keys, leaf.values)
@@ -538,6 +548,17 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.ensureLoad()
 		return self.values[self.keys.index(key)]
 
+	def __setitem__(self, key, value):
+		try:
+			self.remove(key)
+		except Exception, e:
+			pass
+		self.insert(key, value)
+
+	def __contains__(self, key):
+		self.ensureLoad()
+		return (key in self.keys)
+
 	def ensureLoad(self):
 		if not(self.isloaded):
 			if os.path.isfile(self.filename):
@@ -599,9 +620,9 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		super(BTreeFileLeafNode, self).insert(key, value)
 		self.writeToFile()
 
-	def delete(self, key):
+	def remove(self, key):
 		self.ensureLoad()
-		super(BTreeFileLeafNode, self).delete(key)
+		super(BTreeFileLeafNode, self).remove(key)
 		self.writeToFile()
 
 	def borrowLeft(self, key, leaf):
@@ -685,6 +706,14 @@ class BTree(object):
 		leaf = self.root.search(key)
 		return leaf[key]
 
+	def __setitem__(self, key, value):
+		leaf = self.root.search(key)
+		leaf[key] = value
+
+	def __contains__(self, key):
+		leaf = self.root.search(key)
+		return (key in leaf)
+
 	def _get_page_size(self):
 		return self._page_size
 
@@ -702,9 +731,9 @@ class BTree(object):
 		leaf.insert(key, value)
 
 	@abstractmethod
-	def delete(self, key):
+	def remove(self, key):
 		leaf = self.root.search(key)
-		leaf.delete(key)
+		leaf.remove(key)
 
 	page_size = property(_get_page_size)
 	leaffactory = property(_get_leaffactory)
@@ -839,7 +868,7 @@ class BTreeInteriorNode(BTreeNode):
 				node.keys.insert(keyindex, newkey)
 			node = node.parent
 
-	def delete(self, node):
+	def remove(self, node):
 		#delete
 		index = self.childs.index(node)
 
@@ -893,14 +922,14 @@ class BTreeInteriorNode(BTreeNode):
 					node = self.parent.childs[index+1] #try right first
 					key = self.parent.keys[index]
 					self.merge(key, node)
-					self.parent.delete(node)
+					self.parent.remove(node)
 					return
 
 				if index-1 >= 0:
 					node = self.parent.childs[index-1] #merge with left instead
 					key = self.parent.keys[index-1]
 					node.merge(key, self)
-					self.parent.delete(self)
+					self.parent.remove(self)
 					return				
 
 
