@@ -231,6 +231,10 @@ class KeyFactory(object):
 	def from_JSON(self, keyjson):
 		return Key.from_JSON(self.keyspecs, keyjson)
 		
+		
+#--------------------
+#B+ Tree implemention
+#--------------------
 
 class BTreeNode(object):
 	__metaclass__ = ABCMeta
@@ -324,6 +328,10 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		super(BTreeMemoryLeafNode, self).__init__(parent)
 		self.keys = []
 		self.values = []
+
+	def __getitem__(self, key):
+		self.ensureLoad()
+		return self.values[self.keys.index(key)]
 
 	def __len__(self):
 		return len(self.keys)
@@ -513,6 +521,10 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.filename = filename
 		self.isloaded  = False
 
+	def __getitem__(self, key):
+		self.ensureLoad()
+		return self.values[self.keys.index(key)]
+
 	def ensureLoad(self):
 		if not(self.isloaded):
 			if os.path.isfile(self.filename):
@@ -534,15 +546,19 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		if self.isloaded:
 			leafjson = {}
 			leafjson["version"] = 1
-			if self.key_class in [int, dict, list, str, unicode]:
-				leafjson["keys"] = self.keys
-			else:
-				leafjson["keys"] = [key.to_JSON() for key in self.keys]
+			if len(self) > 0:
+				if self.key_class in [int, dict, list, str, unicode]:
+					leafjson["keys"] = self.keys
+				else:
+					leafjson["keys"] = [key.to_JSON() for key in self.keys]
 
-			if self.value_class in [int, dict, list, str, unicode]:
-				leafjson["values"] = self.values
+				if self.value_class in [int, dict, list, str, unicode]:
+					leafjson["values"] = self.values
+				else:
+					leafjson["values"] = [value.to_JSON() for value in self.values]
 			else:
-				leafjson["values"] = [value.to_JSON() for value in self.values]
+				leafjson["keys"] = []
+				leafjson["values"] = []
 
 			s = json.dumps(leafjson, indent=3)
 			f = open(self.filename, 'w')
@@ -594,7 +610,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		center = len(self)//2
 		key = self.keys[center]
 
-		newnode = self.leaffactory.allocate_leaf(None)
+		newnode = self.leaffactory.allocate_leaf(self.parent)
 		newnode.keys = self.keys[center:]
 		newnode.values = self.values[center:]
 		self.keys = self.keys[:center]
@@ -651,6 +667,10 @@ class BTree(object):
 
 	def __str__(self):
 		return str(self.root)
+
+	def __getitem__(self, key):
+		leaf = self.root.search(key)
+		return leaf[key]
 
 	def _get_page_size(self):
 		return self._page_size
