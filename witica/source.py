@@ -27,7 +27,7 @@ class Source(Loggable):
 		self.source_id = source_id
 		self.prefix = prefix
 
-		self.items = SourceItemIterable(self)
+		self.items = SourceItemList(self)
 		self.log_id = source_id
 		self.changeEvent = Event()
 		self.cursorEvent = Event()
@@ -407,7 +407,7 @@ class DropboxFolder(Dropbox):
 		self.path_prefix = unicodedata.normalize("NFC",config["folder"].lower())
 		self.start_session()
 
-class SourceItemIterable(object):
+class SourceItemList(object):
 	"""An iteratable that allows to access all items in a source"""
 
 	def __init__(self, source):
@@ -452,13 +452,41 @@ class SourceItemIterable(object):
 						last_item_id = item_id
 		return count
 
+	@staticmethod
+	def match(pattern, itemid):
+		"""checks if an itemid matches a specific itemid pattern (that can contain *, ** or ? as placeholders"""
+		tokenized = re.split(r"(\*\*|\*|\?)", pattern)
+		regex = ""
+		for token in tokenized:
+			if token == "**": #matches all character sequences
+				regex += "[\s\S]*"
+			elif token == "*": #matches all character sequences that don't contain /
+				regex += "[^\/]*"
+			elif token == "?": #matches any single character
+				regex += "[\s\S]"
+			else: #escape the remaining strings
+				regex += re.escape(token)
+		if re.match("^" + regex + "$", itemid):
+			return True
+		else:
+			return False
+
+	@staticmethod
+	def absolute_itemid(relative_itemid, current_item):
+		relative_itemid = relative_itemid.lower()
+		if re.match(extractor.RE_ITEM_REFERENCE, relative_itemid):
+			if relative_itemid.startswith("./"): #expand relative item id
+				prefix = currentitem.item_id.rpartition("/")[0]
+				if prefix != "":
+					return prefix + "/" + relative_itemid[2:]
+				else:
+					return reference[2:]
+			else:
+				return relative_item_id
+
 	def get_items(self, itemidpattern):
 		"""Returns all items where the itemid expression matches. The expression can contain * as placeholder."""
-		full_pattern = unicodedata.normalize('NFD', suni(self.source.get_absolute_path("") + os.sep + itemidpattern + ".*"))
-
-		filenames = glob.glob(full_pattern)
-		itemids = set([self.source.get_item_id(self.source.get_local_path(filename)) for filename in filenames])
-		return [SourceItem(self.source, itemid) for itemid in itemids if self.source.item_exists(itemid)]
+		return [item for item in self if SourceItemList.match(itemidpattern, item.item_id)]
 
 class SourceItem(Loggable):
 	"""Represents an item in a source"""
