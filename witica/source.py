@@ -86,15 +86,7 @@ class Source(Loggable):
 	def resolve_reference(self, reference, item, allow_patterns = False):
 		reference = reference.lower()
 		if re.match(extractor.RE_ITEM_REFERENCE, reference):
-			itempattern = ""
-			if reference.startswith("!./"): #expand relative item id
-				prefix = item.item_id.rpartition("/")[0]
-				if prefix != "":
-					itempattern = prefix + "/" + reference[3:]
-				else:
-					itempattern = reference[3:]
-			else:
-				itempattern =  reference[1:]
+			itempattern = SourceItemList.absolute_itemid(reference[1:], item)
 
 			if allow_patterns:
 				matching_items = self.items.get_items(itempattern)
