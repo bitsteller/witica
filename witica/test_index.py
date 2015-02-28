@@ -46,7 +46,7 @@ class TestBTree(unittest.TestCase):
 			self.assertIn(number, self.btree.root.search(number).keys)
 			self.assertIn(100+number, self.btree.root.search(number).values)
 
-	def test_delete(self):
+	def test_remove(self):
 		#insert
 		numbers = [x for x in range(1,1000)]
 		#numbers = [4, 13, 2, 12, 9, 10, 8, 1, 6, 5, 3, 7, 11, 14] 
@@ -62,7 +62,7 @@ class TestBTree(unittest.TestCase):
 		for number in numbers:
 			self.assertIn(number, self.btree.root.search(number).keys)
 			self.assertIn(100+number, self.btree.root.search(number).values)
-			self.btree.delete(number)
+			self.btree.remove(number)
 			self.assertNotIn(number, self.btree.root.search(number).keys)
 			self.assertNotIn(100+number, self.btree.root.search(number).values)
 
@@ -116,7 +116,7 @@ class TestBTreeFileLeaves(unittest.TestCase):
 			self.leaffactory.cleanup()
 		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
 
-	def test_delete(self):
+	def test_remove(self):
 		numbers = [x for x in range(1,1000)]
 		random.shuffle(numbers)
 		#insert
@@ -133,7 +133,7 @@ class TestBTreeFileLeaves(unittest.TestCase):
 			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
-			self.btree.delete(IntClass(number))
+			self.btree.remove(IntClass(number))
 
 			leaf = self.btree.root.search(IntClass(number))
 			leaf.ensureLoad()
@@ -175,7 +175,7 @@ class TestBTreeFileLeaves(unittest.TestCase):
 			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
-			self.btree.delete(IntClass(number))
+			self.btree.remove(IntClass(number))
 
 			leaf = self.btree.root.search(IntClass(number))
 			leaf.ensureLoad()
