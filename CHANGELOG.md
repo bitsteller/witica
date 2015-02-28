@@ -3,7 +3,10 @@
 0.9.3 (unreleased)
 ******************
 
-- Nothing changed yet.
+- NEW: support for passing render parameters via URL
+- CHANGE: don’t allow ? character in item ids
+- FIX: json and markdown parts were not correctly split, when using nested json
+- FIX: some IO errors where not raised correctly
 
 
 0.9.2 (2015-02-10)
