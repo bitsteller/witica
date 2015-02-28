@@ -474,15 +474,14 @@ class SourceItemList(object):
 	@staticmethod
 	def absolute_itemid(relative_itemid, current_item):
 		relative_itemid = relative_itemid.lower()
-		if re.match(extractor.RE_ITEM_REFERENCE, relative_itemid):
-			if relative_itemid.startswith("./"): #expand relative item id
-				prefix = currentitem.item_id.rpartition("/")[0]
-				if prefix != "":
-					return prefix + "/" + relative_itemid[2:]
-				else:
-					return reference[2:]
+		if relative_itemid.startswith("./"): #expand relative item id
+			prefix = current_item.item_id.rpartition("/")[0]
+			if prefix != "":
+				return prefix + "/" + relative_itemid[2:]
 			else:
-				return relative_item_id
+				return relative_itemid[2:]
+		else:
+			return relative_itemid
 
 	def get_items(self, itemidpattern):
 		"""Returns all items where the itemid expression matches. The expression can contain * as placeholder."""
