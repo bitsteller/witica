@@ -590,7 +590,11 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 				else:
 					self.keys = [self.key_class.from_JSON(keyjson) for keyjson in leafjson["keys"]]
 
-				self.values = [self.value_class.from_JSON(value_json) for value_json in leafjson["values"]]
+				if self.value_class in [int, dict, list, str, unicode]:
+					self.values = leafjson["values"]
+				else:
+					self.values = [self.value_class.from_JSON(value_json) for value_json in leafjson["values"]]
+				
 				self.isloaded  = True
 			else:
 				self.isloaded  = True
