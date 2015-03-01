@@ -20,3 +20,4 @@ class TestSourceItemList(unittest.TestCase):
 		self.assertTrue(SourceItemList.match("test/*/def", "test/abc/def"))
 		self.assertTrue(SourceItemList.match("test/**/de?", "test/abc/def"))
 		self.assertFalse(SourceItemList.match("test/**/def", "test/abc/ghi"))
+		self.assertFalse(SourceItemList.match("[\s\S]*]", "test/abc/ghi"))
