@@ -86,7 +86,6 @@ class Target(AsyncWorker):
 		if os.path.isdir(self.get_target_dir()):
 			shutil.rmtree(self.get_target_dir())
 		os.makedirs(self.get_target_dir())
-		#TODO: create target file and cache folder
 
 	def load_state(self):
 		 try:
