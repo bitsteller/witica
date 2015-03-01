@@ -165,7 +165,7 @@ class ItemIndex(Index):
 		self.keylookup[item.item_id] = keylookup_list
 
 		self.state["index"] = self.index.to_JSON()
-		self.state["keylookup"] = self.index.to_JSON()
+		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
 
 	def remove_item(self, item_id):
@@ -174,12 +174,13 @@ class ItemIndex(Index):
 			keylookup_list = self.keylookup[item_id]
 
 		for key in keylookup_list:
-			self.index.remove(key)
+			if key in self.index:
+				self.index.remove(key)
 		if item_id in self.keylookup:
 			self.keylookup.remove(item_id)
 
 		self.state["index"] = self.index.to_JSON()
-		self.state["keylookup"] = self.index.to_JSON()
+		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
 
 	def compute_keys(self, item, keyspecs):
