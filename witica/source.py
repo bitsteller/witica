@@ -1,4 +1,4 @@
-import os, json, shutil, time, glob, calendar, codecs, fnmatch, re, unicodedata
+import os, json, shutil, time, glob, calendar, codecs, fnmatch, re, unicodedata, errno
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from threading import Thread
@@ -274,12 +274,23 @@ class Dropbox(Source):
 			if metadata == None: #removed file/directory
 				if os.path.exists(self.source_dir + path):
 					if os.path.isdir(self.source_dir + path):
-						shutil.rmtree(self.source_dir + path)
+						try:
+							shutil.rmtree(self.source_dir + path)
+						except Exception, e:
+							if not(e.errno == errno.ENOENT): #don't treat as error, if file didn't exist
+								self.log_exception("Directory '" + self.source_dir + path + "' in source cache could not be removed.", Logtype.WARNING)
 					else:
-						os.remove(self.source_dir + path)
+						try:
+							os.remove(self.source_dir + path)
+						except Exception, e:
+							if not(e.errno == errno.ENOENT): #don't treat as error, if file didn't exist
+								self.log_exception("File '" + self.source_dir + path + "' in source cache could not be removed.", Logtype.WARNING)
 			elif metadata["is_dir"]: #directory
 				if not(os.path.exists(self.source_dir + path)):
-					os.makedirs(self.source_dir + path)
+					try:
+						os.makedirs(self.source_dir + path)
+					except Exception, e:
+						self.log_exception("Directory '" + self.source_dir + path + "' in source cache could not be created.", Logtype.ERROR)
 			else: #new/changed file
 				self.log("Downloading '" + path + "'...", Logtype.DEBUG)
 				try:
