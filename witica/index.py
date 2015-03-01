@@ -9,6 +9,7 @@ from functools import total_ordering
 from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile, Event
 from witica import *
 from witica.log import Logtype
+from witica.source import SourceItemList
 
 cache_folder = get_cache_folder("Index")
 
@@ -124,6 +125,11 @@ class ItemIndex(Index):
 		else:
 			self.from_list = [config["from"]]
 
+		#make from specs absolute
+		index_item = site.source.items[index_id]
+		if index_item.exists:
+			self.from_list = [SourceItemList.absolute_itemid(fromspec, index_item) for fromspec in self.from_list]
+
 		super(ItemIndex, self).__init__(site, index_id, config)
 
 		self.keyspecs = [KeySpec.from_JSON(keyspec) for keyspec in config["keys"]]
@@ -143,10 +149,8 @@ class ItemIndex(Index):
 		if not event.__class__ in self.accepted_event_classes:
 			return False
 		
-		item = event.get_item(self.site.source)
 		for fromspec in self.from_list:
-			item_ids = self.site.source.resolve_reference("!" + fromspec,item,allow_patterns=True)
-			if item.item_id == item_ids or item.item_id in item_ids:
+			if SourceItemList.match(fromspec, event.item_id):
 				return True
 		return False
 
