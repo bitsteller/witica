@@ -1,6 +1,6 @@
 # Changelog
 
-0.9.3 (unreleased)
+1.0.0 (2015-03-02)
 ******************
 
 - NEW: support for passing render parameters via URL
