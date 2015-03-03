@@ -1,13 +1,24 @@
 # Changelog
 
-0.9.3 (unreleased)
+1.1 (unreleased)
+****************
+
+- Nothing changed yet.
+
+
+1.0.0 (2015-03-02)
 ******************
 
 - NEW: support for passing render parameters via URL
 - CHANGE: don’t allow ? character in item ids
 - CHANGE: improved handling of placeholders in item patterns passed to *witica* publisher (now supports *, ** and ?)
+- CHANGE: improved error messages in MarkdownExtractor
 - FIX: json and markdown parts were not correctly split, when using nested json
 - FIX: some IO errors where not raised correctly
+- FIX: improved error handling in Source
+- FIX: don’t treat attempt to delete non-existing file in target cache as error
+- FIX: don’t process event in target, when item was already deleted in meantime
+- FIX: skip file upload in publish if local file was deleted in meantime
 
 
 0.9.2 (2015-02-10)

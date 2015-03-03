@@ -1,4 +1,4 @@
-import os, json, shutil, time, codecs, hashlib, glob, re
+import os, json, shutil, time, codecs, hashlib, glob, re, errno
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from datetime import datetime
@@ -99,7 +99,8 @@ class Target(AsyncWorker):
 		try:
 			os.remove(self.get_absolute_path(filename))
 		except Exception, e:
-			self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
+			if not(e.errno == errno.ENOENT): #don't treat as error, if file didn't exist
+				self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
 	def publish_meta(self,filename):	
 		for p in self.publishing:
@@ -112,7 +113,8 @@ class Target(AsyncWorker):
 		try:
 			os.remove(self.get_abs_meta_filename(filename))
 		except Exception, e:
-			self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
+			if not(e.errno == errno.ENOENT): #don't treat as error, if file didn't exist
+				self.log_exception("File '" + filename + "' in target cache could not be removed.", Logtype.WARNING)
 
 	def init(self): #no state file found, create clean cache folder
 		self.state["source_cursor"] = ""

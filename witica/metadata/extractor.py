@@ -110,11 +110,16 @@ class MDExtractor(MetadataExtractor):
 	def extract_metadata(self, filename):
 		try:
 			meta = {}
-
+			
 			#split into json and markdown part
 			f = codecs.open(filename, mode="r", encoding="utf-8")
-			jsonstr, mdstr = re.match(RE_MD_SPLIT_JSON_MD,f.read()).groups()
+			match = re.match(RE_MD_SPLIT_JSON_MD,f.read())
 			f.close()
+
+			if not match:
+				raise IOError("Extracting metadata from file '" + sstr(filename) + "' failed. Could not split JSON and markdown parts.")
+			
+			jsonstr, mdstr = match.groups() 
 
 			#get title string (first heading in markdown string) if available
 			title = re.match(RE_MD_SPLIT_TITLE_BODY,mdstr).group(1)

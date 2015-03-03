@@ -61,6 +61,8 @@ class WebTarget(Target):
 				else:
 					self.unpublish_meta(filename)
 		elif change.__class__ == ItemChanged:
+			if not(change.item.exists):
+				return
 			#self.log("id: " + change.item_id + ", \nall files: " + sstr(change.item.files) + ", \nitem file: " + sstr(change.item.itemfile) + ", \nmain content: " + sstr(change.item.contentfile) + ", \ncontentfiles: " + sstr(change.item.contentfiles), Logtype.WARNING)
 			#check integrity of the item
 			ic = IntegrityChecker(self.site.source)

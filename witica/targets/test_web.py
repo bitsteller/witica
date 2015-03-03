@@ -16,7 +16,6 @@ from witica.metadata import extractor
 class TestWebTarget(unittest.TestCase):
 	def setUp(self):
 		Logger.start(verbose=False)
-		extractor.register_default_extractors()
 
 		self.resource_path = pkg_resources.resource_filename("witica","test/files")
 		source_config = {}
@@ -38,13 +37,18 @@ class TestWebTarget(unittest.TestCase):
 		        }
 		    ]
 		}
-		self.target = WebTarget(self.site, "TestWebTarget", target_config)
+		try:
+			self.target = WebTarget(self.site, "TestWebTarget", target_config)
+		except Exception, e:
+			print(e)
+		extractor.register_default_extractors()
 
 	def tearDown(self):
-		self.site.source.stoppedEvent(self.site.source, None)
 		extractor.registered_extractors = []
 		pkg_resources.cleanup_resources()
 		shutil.rmtree(self.target_path)
+		if self.site.source:
+			self.site.source.stoppedEvent(self.site.source, None)
 		Logger.stop()
 
 	def convert_file(self, filename):

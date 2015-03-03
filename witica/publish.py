@@ -305,23 +305,25 @@ class FTPServer(Loggable):
 			self._ftp.cwd(directory)
 
 			#transfer file
-			_file = open(local_path, "rb")
-			self._ftp.voidcmd('TYPE I')
-			conn = self._ftp.transfercmd('STOR ' + sstr(filename))
+			if os.path.exists(local_path):
+				_file = open(local_path, "rb")
+				self._ftp.voidcmd('TYPE I')
+				conn = self._ftp.transfercmd('STOR ' + sstr(filename))
+				while 1:
+					if self._stop.is_set(): 
+						self.last_error = IOError("Uploading '" + server_path + "' failed. Upload was aborted.")
+						break
+					buf = _file.read(1024)
+					if not buf: break
+					conn.send(buf)
+				#close connection
+				try:
+					conn.close()
+					_file.close()
+				except Exception, e:
+					pass
+				self._ftp.voidresp()
 
-			while 1:
-				if self._stop.is_set(): 
-					self.last_error = IOError("Uploading '" + server_path + "' failed. Upload was aborted.")
-					break
-				buf = _file.read(1024)
-				if not buf: break
-				conn.send(buf)
-			try:
-				conn.close()
-				_file.close()
-			except Exception, e:
-				pass
-			self._ftp.voidresp()
 			self._ftp_lock.release()
 			self.idle_event.set()
 		except ftplib.error_perm as e:
