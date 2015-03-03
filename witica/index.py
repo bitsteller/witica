@@ -550,8 +550,15 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		if page in self.allocated_pages:
 			raise ValueError("Page already allocated")
 		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension)
+
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
+
+		if "count" in leafjson:
+			leaf.count = leafjson["count"]
+		else:
+			leaf.ensureLoad() #ensureLoad() updates leaf.count
+
 		return leaf
 
 
@@ -563,6 +570,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.values = []
 		self.filename = filename
 		self.isloaded  = False
+		self.count = 0
 
 	def __getitem__(self, key):
 		self.ensureLoad()
@@ -597,11 +605,14 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 					self.values = [self.value_class.from_JSON(value_json) for value_json in leafjson["values"]]
 				
 				self.isloaded  = True
+				self.count = len(self.keys)
 			else:
 				self.isloaded  = True
+				self.count = 0
 
 	def writeToFile(self):
 		if self.isloaded:
+			self.count = len(self.keys)
 			leafjson = {}
 			leafjson["version"] = 1
 			if len(self) > 0:
@@ -624,7 +635,8 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 			f.close()
 
 	def to_JSON(self):
-		return {"page": self.leaffactory.allocated_pages[self.leaffactory.allocated_leaves.index(self)]}
+		return {"page": self.leaffactory.allocated_pages[self.leaffactory.allocated_leaves.index(self)],
+				"count": self.count}
 
 	def unload(self):
 		self.isloaded  = False
@@ -632,8 +644,9 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.values = []
 
 	def __len__(self):
-		self.ensureLoad()
-		return len(self.keys)
+		if self.isloaded:
+			self.count = len(self.keys)
+		return self.count
 
 	def __str__(self):
 		self.ensureLoad()
