@@ -25,7 +25,7 @@ class StaticHtmlTarget(Target):
 		if change.__class__ == MetaChanged:
 			pass #ignore
 		elif change.__class__ == ItemChanged:
-			if not(change.item.exists):
+			if not(change.get_item(self.site.source).exists):
 				return
 			#self.log("id: " + change.item_id + ", \nall files: " + sstr(change.item.files) + ", \nitem file: " + sstr(change.item.itemfile) + ", \nmain content: " + sstr(change.item.contentfile) + ", \ncontentfiles: " + sstr(change.item.contentfiles), Logtype.WARNING)
 			#make sure the target cache directory exists
