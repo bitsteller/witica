@@ -552,6 +552,7 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 	def track_changes(self):
 		tracking_object = BTreeFileLeafNodeChanges(self)
 		self.tracking_objects.append(tracking_object)
+		return tracking_object
 
 	def handle_page_changed(self, sender, event):
 		if sender in self.allocated_leaves:
