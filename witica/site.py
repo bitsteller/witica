@@ -12,7 +12,7 @@ class Site(Loggable):
 		self.source = source
 		self.targets = []
 		self.indexes = []
-		self.index_event = Event()
+		self.index_changed = Event()
 		self.source.update_cache()
 
 		#load indexes

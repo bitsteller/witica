@@ -155,6 +155,8 @@ class ItemIndex(Index):
 		return False
 
 	def update_item(self, item):
+		tracking = self.index.leaffactory.track_changes()
+
 		self.remove_item(item.item_id)
 		key_list = self.compute_keys(item, self.keyspecs)
 		for key in key_list:
@@ -168,7 +170,13 @@ class ItemIndex(Index):
 		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
 
+		tracking.stop_tracking()
+		changed_event = IndexChanged(tracking.changed_pages, tracking.removed_pages)
+		self.site.index_changed(self, changed_event)
+
 	def remove_item(self, item_id):
+		tracking = self.index.leaffactory.track_changes()
+
 		keylookup_list = PersistentList(self.keyfactory)
 		if item_id in self.keylookup:
 			keylookup_list = self.keylookup[item_id]
@@ -182,6 +190,10 @@ class ItemIndex(Index):
 		self.state["index"] = self.index.to_JSON()
 		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
+
+		tracking.stop_tracking()
+		changed_event = IndexChanged(tracking.changed_pages, tracking.removed_pages)
+		self.site.index_changed(self, changed_event)
 
 	def compute_keys(self, item, keyspecs):
 		components = []
@@ -265,6 +277,24 @@ class PersistentList(list):
 	def from_JSON(self, listjson):
 		return [self.element_class.from_JSON(elementjson) for elementjson in listjson]
 		
+
+class IndexChanged(object):
+	"""fired when the json that would be returned by index.get_metadata() has changed"""
+	def __init__(self, changed_pages, removed_pages):
+		super(IndexChanged, self).__init__()
+		self.changed_pages = changed_pages
+		self.removed_pages = removed_pages
+		
+	def to_JSON(self):
+		return {"type": self.__class__.__name__,
+				"changed_pages": self.changed_pages,
+				"removed_pages": self.removed_pages}
+
+	@staticmethod
+	def from_JSON(eventjson):
+		return IndexChanged(eventjson["changed_pages"], eventjson["removed_pages"])
+
+
 #--------------------
 #B+ Tree implemention
 #--------------------
