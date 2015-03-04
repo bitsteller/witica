@@ -522,6 +522,9 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		self.extension = extension
 		self.allocated_leaves = []
 		self.allocated_pages = []
+		self.page_changed = Event()
+		self.page_changed += self.handle_page_changed
+		self.tracking_objects = []
 
 	def allocate_leaf(self, parent):
 		#get a free page number
@@ -532,18 +535,28 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		leaf.isloaded = True
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
-		#leaf.writeToFile()
 
 		return leaf
 
 	def deallocate_leaf(self, leaf):
 		index = self.allocated_leaves.index(leaf)
+		page = self.allocated_pages[index]
 		os.remove(self.path + str(self.allocated_pages[index]) + self.extension)
 		del self.allocated_leaves[index]
 		del self.allocated_pages[index]
+		[tracking.removed_pages.append(page) for tracking in self.tracking_objects]
 
 	def cleanup(self):
 		[leaf.unload() for leaf in self.allocated_leaves]
+
+	def track_changes(self):
+		tracking_object = BTreeFileLeafNodeChanges(self)
+		self.tracking_objects.append(tracking_object)
+
+	def handle_page_changed(self, sender, event):
+		if sender in self.allocated_leaves:
+			page = self.allocated_pages[self.allocated_leaves.index(sender)]
+			[tracking.changed_pages.append(page) for tracking in self.tracking_objects]
 
 	def construct_leaf_from_JSON(self, parent, leafjson):
 		page = leafjson["page"]
@@ -560,6 +573,18 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 			leaf.ensureLoad() #ensureLoad() updates leaf.count
 
 		return leaf
+
+class BTreeFileLeafNodeChanges(object):
+	"""documents changes to file leafs of a file leaf factory"""
+	def __init__(self, leaffactory):
+		super(BTreeFileLeafNodeChanges, self).__init__()
+		self.leaffactory = leaffactory
+		self.changed_pages = []
+		self.removed_pages = []
+
+	def stop_tracking(self):
+		self.leaffactory.tracking_objects.remove(self)
+		
 
 
 class BTreeFileLeafNode(BTreeMemoryLeafNode):
@@ -633,6 +658,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 			f = open(self.filename, 'w')
 			f.write(s + "\n")
 			f.close()
+			self.leaffactory.page_changed(self, None)
 
 	def to_JSON(self):
 		return {"page": self.leaffactory.allocated_pages[self.leaffactory.allocated_leaves.index(self)],
