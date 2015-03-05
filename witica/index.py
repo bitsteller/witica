@@ -171,7 +171,7 @@ class ItemIndex(Index):
 		self.write_state()
 
 		tracking.stop_tracking()
-		changed_event = IndexChanged(tracking.changed_pages, tracking.removed_pages)
+		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
 		self.site.index_changed(self, changed_event)
 
 	def remove_item(self, item_id):
@@ -192,7 +192,7 @@ class ItemIndex(Index):
 		self.write_state()
 
 		tracking.stop_tracking()
-		changed_event = IndexChanged(tracking.changed_pages, tracking.removed_pages)
+		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
 		self.site.index_changed(self, changed_event)
 
 	def compute_keys(self, item, keyspecs):
@@ -280,19 +280,24 @@ class PersistentList(list):
 
 class IndexChanged(object):
 	"""fired when the json that would be returned by index.get_metadata() has changed"""
-	def __init__(self, changed_pages, removed_pages):
+	def __init__(self, index_id, changed_pages, removed_pages):
 		super(IndexChanged, self).__init__()
 		self.changed_pages = changed_pages
 		self.removed_pages = removed_pages
+		self.index_id = index_id
+
+	def get_index(self, site):
+		return site.get_index_by_id(self.index_id)
 		
 	def to_JSON(self):
 		return {"type": self.__class__.__name__,
 				"changed_pages": self.changed_pages,
-				"removed_pages": self.removed_pages}
+				"removed_pages": self.removed_pages,
+				"index_id": self.index_id}
 
 	@staticmethod
 	def from_JSON(eventjson):
-		return IndexChanged(eventjson["changed_pages"], eventjson["removed_pages"])
+		return IndexChanged(eventjson["index_id"], eventjson["changed_pages"], eventjson["removed_pages"])
 
 
 #--------------------
