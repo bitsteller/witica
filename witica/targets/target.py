@@ -10,7 +10,7 @@ from witica.publish import Publish
 from witica import *
 from witica.log import *
 from witica.metadata import extractor
-
+from witica.index import IndexChanged
 
 cache_folder = get_cache_folder("Target")
 
@@ -50,7 +50,7 @@ class Target(AsyncWorker):
 	def __init__(self, site, target_id, config):
 		self.site = site
 		self.target_id = target_id
-		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged]
+		self.accepted_event_classes = [source.ItemChanged, source.ItemRemoved, source.MetaChanged, index.IndexChanged]
 		super(Target, self).__init__(site.source.source_id + "->" + target_id)
 
 		self.config = config
@@ -76,6 +76,7 @@ class Target(AsyncWorker):
 				self.log_exception("Error: Publishing module could not be instanciated.\n" + "JSON: " + sstr(pubconfig) + "\n", Logtype.ERROR)
 
 		site.source.changeEvent += self.enqueue_event
+		site.index_changed += self.enqueue_event
 		site.source.cursorEvent += self.save_source_cursor
 		site.source.stoppedEvent += lambda sender, args: self.close_queue()
 		self.stoppedEvent += lambda sender, args: [p.close_queue() for p in self.publishing]
