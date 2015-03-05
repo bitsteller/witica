@@ -370,7 +370,8 @@ class BTreeLeafNode(BTreeNode):
 	def __init__(self, parent):
 		super(BTreeLeafNode, self).__init__(parent)
 
-
+	def get_leafs(self, key = None):
+		return (key, self)
 
 class BTreeLeafFactory(object):
 	"""abstract class for btree leaf allocation"""
@@ -403,8 +404,7 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 		self.insert(key, value)
 
 	def __contains__(self, key):
-		self.ensureLoad()
-		return (key in self.keys)
+		return key in self.keys
 
 	def __len__(self):
 		return len(self.keys)
@@ -458,7 +458,7 @@ class BTreeMemoryLeafNode(BTreeLeafNode):
 			index += 1
 
 		if index == len(self):
-			raise ValueError("Key not found")
+			raise KeyError("Key not found")
 
 		if index == 0 and len(self) > 1:
 			oldkey = self.keys[0]
@@ -641,7 +641,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 
 	def __contains__(self, key):
 		self.ensureLoad()
-		return (key in self.keys)
+		return key in self.keys
 
 	def ensureLoad(self):
 		if not(self.isloaded):
@@ -806,7 +806,7 @@ class BTree(object):
 
 	def __contains__(self, key):
 		leaf = self.root.search(key)
-		return (key in leaf)
+		return key in leaf
 
 	def _get_page_size(self):
 		return self._page_size
@@ -823,6 +823,9 @@ class BTree(object):
 	def insert(self, key, value):
 		leaf = self.root.search(key)
 		leaf.insert(key, value)
+
+	def get_leafs(self):
+		return self.root.get_leafs()
 
 	@abstractmethod
 	def remove(self, key):
@@ -1024,6 +1027,10 @@ class BTreeInteriorNode(BTreeNode):
 					key = self.parent.keys[index-1]
 					node.merge(key, self)
 					self.parent.remove(self)
-					return				
+					return
 
+	def get_leafs(self, key = None):
+		yield self.childs[0].get_leafs(None)
+		for i in range(1,len(self.childs)):
+			yield self.childs[i].get_leafs(self.keys[i-1])
 
