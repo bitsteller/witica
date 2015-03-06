@@ -140,10 +140,10 @@ class ItemIndex(Index):
 
 		if "index" in self.state:
 			self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, PersistentList(self.keyfactory), keylookup_leaffactory)
+			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, KeyList(self.keyfactory), keylookup_leaffactory)
 		else:
 			self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree(50, unicode, PersistentList(self.keyfactory), keylookup_leaffactory)
+			self.keylookup = BTree(50, unicode, KeyList(self.keyfactory), keylookup_leaffactory)
 
 	def is_relevant(self, event):
 		if not event.__class__ in self.accepted_event_classes:
@@ -162,7 +162,7 @@ class ItemIndex(Index):
 		for key in key_list:
 			self.index[key] = item.item_id
 
-		keylookup_list = PersistentList(self.keyfactory)
+		keylookup_list = KeyList(self.keyfactory)
 		keylookup_list.extend(key_list)
 		self.keylookup[item.item_id] = keylookup_list
 
@@ -177,7 +177,7 @@ class ItemIndex(Index):
 	def remove_item(self, item_id):
 		tracking = self.index.leaffactory.track_changes()
 
-		keylookup_list = PersistentList(self.keyfactory)
+		keylookup_list = KeyList(self.keyfactory)
 		if item_id in self.keylookup:
 			keylookup_list = self.keylookup[item_id]
 
@@ -265,17 +265,19 @@ class KeyFactory(object):
 	def from_JSON(self, keyjson):
 		return Key.from_JSON(self.keyspecs, keyjson)
 		
-class PersistentList(list):
-	"""a json serializable list"""
-	def __init__(self, element_class):
-		super(PersistentList, self).__init__()
-		self.element_class = element_class
+class KeyList(list):
+	"""a json serializable key list"""
+	def __init__(self, keyfactory):
+		super(KeyList, self).__init__()
+		self.keyfactory = keyfactory
 
 	def to_JSON(self):
 		return [element.to_JSON() for element in self]
 
 	def from_JSON(self, listjson):
-		return [self.element_class.from_JSON(elementjson) for elementjson in listjson]
+		plist = KeyList(self.keyfactory)
+		plist.extend([self.keyfactory.from_JSON(keyjson) for keyjson in listjson])
+		return plist
 		
 
 class IndexChanged(object):
@@ -605,8 +607,6 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 
 		if "count" in leafjson:
 			leaf.count = leafjson["count"]
-		else:
-			leaf.ensureLoad() #ensureLoad() updates leaf.count
 
 		return leaf
 
