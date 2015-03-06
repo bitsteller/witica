@@ -877,7 +877,11 @@ class BTreeInteriorNode(BTreeNode):
 	@staticmethod
 	def from_JSON(parent, nodejson):
 		node = BTreeInteriorNode(parent)
-		node.keys = [parent.key_class.from_JSON(keyjson) for keyjson in nodejson["keys"]]
+		if parent.key_class in [int, dict, list, str, unicode]:
+			node.keys = nodejson["keys"]
+		else:
+			node.keys = [parent.key_class.from_JSON(keyjson) for keyjson in nodejson["keys"]]
+
 		node.childs = [BTreeNode.from_JSON(node, childjson) for childjson in nodejson["childs"]]
 		return node
 
