@@ -239,15 +239,23 @@ class Key(object):
 
 	def __eq__(self, other):
 		for (self_component, other_component) in zip(self.components, other.components):
-			if not self_component.__eq__(other_component):
+			if self_component.__ne__(other_component):
 				return False
 		return True
 
 	def __lt__(self, other):
 		for (self_component, other_component) in zip(self.components, other.components):
-			if not self_component.__lt__(other_component):
+			if self_component.__lt__(other_component):
+				return True
+			elif self_component.__gt__(other_component):
 				return False
-		return True
+		return False
+
+	def __str__(self):
+		return str(self.components)
+
+	def __unicode__(self):
+		return unicode(self.components)
 
 	def to_JSON(self):
 		return self.components
