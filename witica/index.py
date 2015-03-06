@@ -243,6 +243,9 @@ class Key(object):
 				return False
 		return True
 
+	def __ne__(self,other):
+		return not(self == other)
+
 	def __lt__(self, other):
 		for (self_component, other_component) in zip(self.components, other.components):
 			if self_component.__lt__(other_component):
