@@ -7,7 +7,6 @@ from markdown.inlinepatterns import LinkPattern, ImagePattern
 from markdown.extensions import Extension
 from PIL import Image, ImageFile
 
-
 from witica import *
 from witica.util import throw, sstr, get_cache_folder
 from witica.source import MetaChanged, ItemChanged, ItemRemoved
@@ -15,6 +14,7 @@ from witica.log import *
 from witica.metadata import extractor
 from witica.targets.target import Target
 from witica.check import IntegrityChecker, Severity
+from witica.index import IndexChanged, ItemIndex
 
 
 cache_folder = get_cache_folder("Target")
@@ -93,6 +93,10 @@ class WebTarget(Target):
 			for filename in files:
 				self.unpublish(filename)
 			#TODO: check if dir is empty and delete if so
+		elif change.__class__ == IndexChanged:
+			self.update_index(change.get_index(self.site), change)
+		elif change.__class__ == IndexRemoved:
+			self.remove_index(change.get_index(self.site))
 
 		#update HASH file
 		self.update_target_hash()
@@ -114,10 +118,38 @@ class WebTarget(Target):
 			contentfiles.remove(itemhashfile)
 		return contentfiles
 
+	def update_index(self, index, changes):
+		#publish index page files
+		for page in changes.changed_pages:
+			dstfile = index.index_id + "@" + str(page) + ".index"
+			util.copyfile(index.get_index_filename(page), self.get_absolute_path(dstfile))
+			self.publish(dstfile)
+
+		for page in changes.removed_pages:
+			dstfile = index.index_id + "@" + str(page) + ".index"
+			self.unpublish(dstfile)
+
+		#update index metadata
+		self.publish_metadata(self.site.source.items[index.index_id])
+
+	def remove_index(self, index):
+		#remove all index page files
+		re_index_files = re.compile('^' + index.item_id + '@[\s\S]*.index$')
+		old_index_files = [filename for filename in self.get_content_files(index.item_id) if re_index_files.match(filename)]
+		for filename in old_image_files:
+			self.unpublish(filename)
+
+		#update metadata to remove index metadata
+		self.publish_metadata(self.site.source.items[index.index_id])
+
 	def publish_metadata(self,item):
 		metadata = item.metadata
 
-		#internal metadata
+		#internal metadata: witica:index
+		if item.is_index():
+			metadata["witica:index"] = self.site.get_index_by_id(item.item_id).get_metadata()
+
+		#internal metadata: witica:contentfiles
 		files_json = []
 		contentfiles = self.get_content_files(item.item_id)
 		extensions = set([filename.rpartition(".")[2] for filename in contentfiles])

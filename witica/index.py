@@ -209,6 +209,21 @@ class ItemIndex(Index):
 		return self.index.leaffactory.get_filename(page)
 
 	def get_metadata(self):
+		metadata = {}
+		metadata["type"] = self.__class__.__name__
+
+		keys, leafs = zip(*self.index.get_leafs())
+		metadata["keys"] = list(keys)[1:]
+		metadata["counts"] = []
+		metadata["pages"] = []
+		count = 0
+		for leaf in leafs:
+			count += len(leaf)
+			metadata["counts"].append(count)
+			metadata["pages"].append({"page": self.index.leaffactory.get_page_no(leaf),
+									  "hash": leaf.hash})
+
+		return metadata
 		
 class KeySpec(object):
 	"""stores a index key specification"""
@@ -590,6 +605,10 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 
 	def get_filename(self, page):
 		return self.path + str(page) + self.extension
+
+	def get_page_no(self, leaf):
+		index = self.allocated_leaves.index(leaf)
+		return self.allocated_pages[index]
 
 	def allocate_leaf(self, parent):
 		#get a free page number
