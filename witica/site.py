@@ -2,7 +2,7 @@ import os.path, json, glob, codecs
 
 from witica.util import Event, throw, sstr
 from witica import source
-from witica.index import Index
+from witica.index import Index, IndexRemoved
 from witica.targets.target import Target
 from witica.log import Loggable, Logtype
 
@@ -12,7 +12,7 @@ class Site(Loggable):
 		self.source = source
 		self.targets = []
 		self.indexes = []
-		self.index_changed = Event()
+		self.index_event = Event()
 		self.source.update_cache()
 
 		#load indexes
@@ -62,6 +62,7 @@ class Site(Loggable):
 			self.log_exception("Removing index '" + index.name + "' failed.", Logtype.WARNING)
 		finally:
 			self.indexes.remove(index)
+			self.index_event(IndexRemoved(index.item_id))
 			self.write_state()
 
 	def get_target_by_id(self, target_id):

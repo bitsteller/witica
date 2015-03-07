@@ -157,7 +157,8 @@ class ItemIndex(Index):
 	def update_item(self, item):
 		tracking = self.index.leaffactory.track_changes()
 
-		self.remove_item(item.item_id)
+		self._remove_item(item.item_id)
+
 		key_list = self.compute_keys(item, self.keyspecs)
 		for key in key_list:
 			self.index[key] = item.item_id
@@ -166,17 +167,25 @@ class ItemIndex(Index):
 		keylookup_list.extend(key_list)
 		self.keylookup[item.item_id] = keylookup_list
 
+
+		tracking.stop_tracking()
+		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
+		self.site.index_event(self, changed_event)
+
 		self.state["index"] = self.index.to_JSON()
 		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
 
-		tracking.stop_tracking()
-		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
-		self.site.index_changed(self, changed_event)
-
 	def remove_item(self, item_id):
 		tracking = self.index.leaffactory.track_changes()
 
+		self._remove_item(item_id)
+
+		tracking.stop_tracking()
+		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
+		self.site.index_event(self, changed_event)
+
+	def _remove_item(self, item_id):
 		keylookup_list = KeyList(self.keyfactory)
 		if item_id in self.keylookup:
 			keylookup_list = self.keylookup[item_id]
@@ -191,10 +200,6 @@ class ItemIndex(Index):
 		self.state["keylookup"] = self.keylookup.to_JSON()
 		self.write_state()
 
-		tracking.stop_tracking()
-		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
-		self.site.index_changed(self, changed_event)
-
 	def compute_keys(self, item, keyspecs):
 		components = []
 		for keyspec in keyspecs:
@@ -206,7 +211,7 @@ class ItemIndex(Index):
 		return [Key(keyspecs, components)]
 
 	def get_index_filename(self,page):
-		pass
+		return self.index.leaffactory.get_filename(page)
 
 	def get_metadata(self):
 		pass
@@ -311,6 +316,24 @@ class IndexChanged(object):
 	@staticmethod
 	def from_JSON(eventjson):
 		return IndexChanged(eventjson["index_id"], eventjson["changed_pages"], eventjson["removed_pages"])
+
+
+class IndexRemoved(object):
+	"""fired when an index has been removed"""
+	def __init__(self, index_id):
+		super(IndexRemoved, self).__init__()
+		self.index_id = index_id
+
+	def get_index(self, site):
+		return site.get_index_by_id(self.index_id)
+		
+	def to_JSON(self):
+		return {"type": self.__class__.__name__,
+				"index_id": self.index_id}
+
+	@staticmethod
+	def from_JSON(eventjson):
+		return IndexChanged(eventjson["index_id"])
 
 
 #--------------------
