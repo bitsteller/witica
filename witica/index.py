@@ -112,11 +112,6 @@ class Index(AsyncWorker):
 	def get_metadata(self):
 		pass
 
-	@abstractmethod
-	def get_page_count(self):
-		pass
-
-
 class ItemIndex(Index):
 	"""docstring for ItemIndex"""
 	def __init__(self, site, index_id, config):
@@ -214,10 +209,6 @@ class ItemIndex(Index):
 		return self.index.leaffactory.get_filename(page)
 
 	def get_metadata(self):
-		pass
-
-	def get_page_count(self):
-		pass
 		
 class KeySpec(object):
 	"""stores a index key specification"""
