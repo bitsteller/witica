@@ -1,4 +1,4 @@
-import os, json, time, shutil
+import os, json, time, shutil, hashlib
 from abc import ABCMeta, abstractmethod
 from inspect import isclass, getmembers
 from sys import modules
@@ -645,6 +645,9 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		if "count" in leafjson:
 			leaf.count = leafjson["count"]
 
+		if "hash" in leafjson:
+			leaf.hash = leafjson["hash"]	
+
 		return leaf
 
 class BTreeFileLeafNodeChanges(object):
@@ -669,6 +672,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.filename = filename
 		self.isloaded  = False
 		self.count = 0
+		self.hash = ""
 
 	def __getitem__(self, key):
 		self.ensure_load()
@@ -728,6 +732,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 				leafjson["values"] = []
 
 			s = json.dumps(leafjson, indent=3)
+			self.hash = sstr(hashlib.md5(s).hexdigest())
 			f = open(self.filename, 'w')
 			f.write(s + "\n")
 			f.close()
@@ -735,7 +740,8 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 
 	def to_JSON(self):
 		return {"page": self.leaffactory.allocated_pages[self.leaffactory.allocated_leaves.index(self)],
-				"count": self.count}
+				"count": self.count,
+				"hash": self.hash}
 
 	def unload(self):
 		self.isloaded  = False
