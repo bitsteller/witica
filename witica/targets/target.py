@@ -1,4 +1,4 @@
-import os, json, shutil, time, codecs, hashlib, glob, re, errno
+import os, json, shutil, time, codecs, glob, re, errno
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from datetime import datetime
