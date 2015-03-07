@@ -574,12 +574,15 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		self.page_changed += self.handle_page_changed
 		self.tracking_objects = []
 
+	def get_filename(self, page):
+		return self.path + str(page) + self.extension
+
 	def allocate_leaf(self, parent):
 		#get a free page number
 		page = 0
 		while page in self.allocated_pages:
 			page += 1
-		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension)
+		leaf = BTreeFileLeafNode(parent, self.get_filename(page))
 		leaf.isloaded = True
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
@@ -589,7 +592,7 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 	def deallocate_leaf(self, leaf):
 		index = self.allocated_leaves.index(leaf)
 		page = self.allocated_pages[index]
-		os.remove(self.path + str(self.allocated_pages[index]) + self.extension)
+		os.remove(self.get_filename(self.allocated_pages[index]))
 		del self.allocated_leaves[index]
 		del self.allocated_pages[index]
 		[tracking.removed_pages.append(page) for tracking in self.tracking_objects]
@@ -611,7 +614,7 @@ class BTreeFileLeafFactory(BTreeLeafFactory):
 		page = leafjson["page"]
 		if page in self.allocated_pages:
 			raise ValueError("Page already allocated")
-		leaf = BTreeFileLeafNode(parent, self.path + str(page) + self.extension)
+		leaf = BTreeFileLeafNode(parent, self.get_filename(page))
 
 		self.allocated_leaves.append(leaf)
 		self.allocated_pages.append(page)
