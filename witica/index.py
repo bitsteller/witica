@@ -671,7 +671,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.count = 0
 
 	def __getitem__(self, key):
-		self.ensureLoad()
+		self.ensure_load()
 		return self.values[self.keys.index(key)]
 
 	def __setitem__(self, key, value):
@@ -682,10 +682,10 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.insert(key, value)
 
 	def __contains__(self, key):
-		self.ensureLoad()
+		self.ensure_load()
 		return key in self.keys
 
-	def ensureLoad(self):
+	def ensure_load(self):
 		if not(self.isloaded):
 			if os.path.isfile(self.filename):
 				leafjson = json.loads(open(self.filename).read())
@@ -708,7 +708,7 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 				self.isloaded  = True
 				self.count = 0
 
-	def writeToFile(self):
+	def write(self):
 		if self.isloaded:
 			self.count = len(self.keys)
 			leafjson = {}
@@ -748,35 +748,35 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		return self.count
 
 	def __str__(self):
-		self.ensureLoad()
+		self.ensure_load()
 		return str([str(key) for key in self.keys])
 
 	def insert(self, key, value):
-		self.ensureLoad()
+		self.ensure_load()
 		super(BTreeFileLeafNode, self).insert(key, value)
-		self.writeToFile()
+		self.write()
 
 	def remove(self, key):
-		self.ensureLoad()
+		self.ensure_load()
 		super(BTreeFileLeafNode, self).remove(key)
-		self.writeToFile()
+		self.write()
 
 	def borrowLeft(self, key, leaf):
-		self.ensureLoad()
-		leaf.ensureLoad()
+		self.ensure_load()
+		leaf.ensure_load()
 		super(BTreeFileLeafNode, self).borrowLeft(key, leaf)
-		self.writeToFile()
-		leaf.writeToFile()
+		self.write()
+		leaf.write()
 
 	def borrowRight(self, key, leaf):
-		self.ensureLoad()
-		leaf.ensureLoad()
+		self.ensure_load()
+		leaf.ensure_load()
 		super(BTreeFileLeafNode, self).borrowRight(key, leaf)
-		self.writeToFile()
-		leaf.writeToFile()
+		self.write()
+		leaf.write()
 
 	def split(self):
-		self.ensureLoad()
+		self.ensure_load()
 		center = len(self)//2
 		key = self.keys[center]
 
@@ -786,12 +786,12 @@ class BTreeFileLeafNode(BTreeMemoryLeafNode):
 		self.keys = self.keys[:center]
 		self.values = self.values[:center]
 
-		self.writeToFile()
-		newnode.writeToFile()
+		self.write()
+		newnode.write()
 		return key, newnode
 
 	def merge(self, leaf):
-		leaf.ensureLoad()
+		leaf.ensure_load()
 		super(BTreeFileLeafNode, self).merge(leaf)
 
 class BTreeMemoryLeafFactory(BTreeLeafFactory):

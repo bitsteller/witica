@@ -129,14 +129,14 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		random.shuffle(numbers)
 		for number in numbers:
 			leaf = self.btree.root.search(IntClass(number))
-			leaf.ensureLoad()
+			leaf.ensure_load()
 			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
 			self.btree.remove(IntClass(number))
 
 			leaf = self.btree.root.search(IntClass(number))
-			leaf.ensureLoad()
+			leaf.ensure_load()
 			self.assertNotIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertNotIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 			self.leaffactory.cleanup()
@@ -162,7 +162,7 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		#check for numbers
 		for number in numbers:
 			leaf = self.btree.root.search(IntClass(number))
-			leaf.ensureLoad()
+			leaf.ensure_load()
 			self.assertIn(number, [key.integer for key in leaf.keys])
 
 		self.assertGreater(len(self.leaffactory.allocated_leaves),2)
@@ -171,14 +171,14 @@ class TestBTreeFileLeaves(unittest.TestCase):
 		random.shuffle(numbers)
 		for number in numbers:
 			leaf = self.btree.root.search(IntClass(number))
-			leaf.ensureLoad()
+			leaf.ensure_load()
 			self.assertIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 
 			self.btree.remove(IntClass(number))
 
 			leaf = self.btree.root.search(IntClass(number))
-			leaf.ensureLoad()
+			leaf.ensure_load()
 			self.assertNotIn(number, [key.integer for key in self.btree.root.search(IntClass(number)).keys])
 			self.assertNotIn(100+number, [value.integer for value in self.btree.root.search(IntClass(number)).values])
 			self.leaffactory.cleanup()
