@@ -15,7 +15,7 @@ Witica.util = Witica.util || {};
 /* Witica: globals                         */
 /*-----------------------------------------*/
 
-Witica.VERSION = "1.0.0"
+Witica.VERSION = "1.1.0"
 Witica.CACHESIZE = 50;
 
 Witica.itemcache = new Array();
@@ -250,6 +250,10 @@ Witica.Item.prototype._loadMeta = function(hash) {
 					}
 				}
 				this.metadata = this._processMetadata(metadata);
+
+				if ("witica:index" in metadata) {
+					this.items = new Witica.ItemIndex(this);
+				}
 			}
 			this.isLoaded = true;
 			this.hash = hash;
@@ -537,6 +541,120 @@ Witica.loadItem = function () {
 		Witica.mainView.showItem(Witica.getItem(Witica.defaultItemId));
 	}
 };
+
+
+/*-----------------------------------------*/
+/*	Witica: Indexes                        */
+/*-----------------------------------------*/
+
+Witica.ItemIndex = function (item) {
+	if (item.isLoaded = false) {
+		throw Error("Index item not loaded");
+	}
+	this.item = item;
+	this.cachedPages = {};
+	this.metadata = this.item.metadata["witica:index"];
+}
+
+Witica.ItemIndex.prototype.getPage = function(page, hash, callback) {
+	//try to find in cache
+	if (hash in this.cachedPages) {
+		callback(this.cachedPages[hash], true);
+	}
+	else {
+		var http_request = new XMLHttpRequest();
+		http_request.open("GET", Witica._prefix + this.item.itemId + "@" + page + ".index?bustCache=" + hash, true);
+		http_request.onreadystatechange = function () {
+			var done = 4, ok = 200;
+			if (http_request.readyState == done) {
+				if (http_request.status == ok) {
+					var page_json = JSON.parse(http_request.responseText);
+					this.cachedPages[hash] = page_json;
+					callback(page_json, true)
+				}
+				else {
+					callback(undefined, false);
+				}
+			}
+		}.bind(this);
+		http_request.send(null);
+	}
+};
+
+Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callback) {
+	var startIndex = index;
+	var endIndex = index + no_elements - 1;
+	var relevantPages = [];
+	var relevantHashes = [];
+	var counts = this.metadata.counts;
+	var startPageIndex = -1;
+	var endPageIndex = -1;
+
+	var i = 0;
+	while (startIndex > counts[i]) {
+		if (i == counts.length - 1) {
+			callback([], false);
+			return;
+		}
+		i++;
+	}
+	while (endIndex < counts[i] || i == counts.length-1) {
+		if (relevantPages.length == 0) {
+			if (i == 0) {
+				startPageIndex = startIndex;
+			}
+			else {
+				startPageIndex = startIndex - counts[i-1];
+			}
+		}
+		relevantPages.push(this.metadata.pages[i].page)
+		relevantHashes.push(this.metadata.pages[i].hash)
+		if (i == counts.length - 1) {
+			break;
+		}
+		i++
+	}
+
+	if (i == 0) {
+		endPageIndex = endIndex;
+	}
+	else {
+		endPageIndex = endIndex - counts[i-1];
+	}
+
+	var pages = {};
+
+	for (var i = 0; i < relevantPages.length; i++) {
+		this.getPage(relevantPages[i], relevantHashes[i], function (page, pagejson, success) {
+			if (success) {
+				pages[page] = [];
+				var start = 0;
+				var end = undefined;
+
+				if (page == relevantPages[0]) {
+					start = startPageIndex;
+				}
+				if (page == relevantPages[-1]) {
+					end = endPageIndex+1;
+				}
+
+				item_ids = pagejson["values"].slice(start, end);
+				for (var j = 0; j < item_ids.length; j++) {
+					pages[page].push(Witica.getItem(item_ids[j]));
+				};
+			}
+
+			if (Object.keys(pages).length == relevantPages.length) {
+				var items = [];
+				for (var i = 0; i < relevantPages.length; i++) {
+					Array.prototype.push.apply(items,pages[relevantPages[i]]) //apppend items
+				};
+				callback(items, true)
+			}
+		}.bind(this, relevantPages[i]))
+	};
+};
+
 
 /*-----------------------------------------*/
 /*	Witica: Views and renderer             */
