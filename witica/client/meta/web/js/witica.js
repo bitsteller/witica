@@ -638,7 +638,7 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 					end = endPageIndex+1;
 				}
 
-				item_ids = pagejson["values"].slice(start, end);
+				var item_ids = pagejson["values"].slice(start, end);
 				for (var j = 0; j < item_ids.length; j++) {
 					pages[page].push(Witica.getItem(item_ids[j]));
 				};
@@ -647,11 +647,11 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 			if (Object.keys(pages).length == relevantPages.length) {
 				var items = [];
 				for (var i = 0; i < relevantPages.length; i++) {
-					Array.prototype.push.apply(items,pages[relevantPages[i]]) //apppend items
+					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
 				};
-				callback(items, true)
+				callback(items, true);
 			}
-		}.bind(this, relevantPages[i]))
+		}.bind(this, relevantPages[i]));
 	};
 };
 
