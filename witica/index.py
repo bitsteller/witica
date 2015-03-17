@@ -234,8 +234,16 @@ class KeySpec(object):
 
 	@staticmethod
 	def from_JSON(keyjson):
-		key = keyjson
-		order = KeyOrder.ASCENDING
+		match = re.match(extractor.RE_META_KEYSPEC, keyjson)
+
+		key = match.group(2)
+		order = None
+
+		if match.group(1) == ">":
+			order = KeyOrder.DESCENDING
+		else:
+			order = KeyOrder.ASCENDING
+
 		return KeySpec(key, order)
 
 class KeyOrder(object):
