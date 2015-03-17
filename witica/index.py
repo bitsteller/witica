@@ -239,8 +239,8 @@ class KeySpec(object):
 		return KeySpec(key, order)
 
 class KeyOrder(object):
-	DESCENDING = -1,
-	ASCENDING = 1
+	DESCENDING = -1
+	ASCENDING = 0
 
 @total_ordering
 class Key(object):
@@ -258,11 +258,11 @@ class Key(object):
 		return not(self == other)
 
 	def __lt__(self, other):
-		for (self_component, other_component) in zip(self.components, other.components):
-			if self_component.__lt__(other_component):
-				return True
-			elif self_component.__gt__(other_component):
-				return False
+		for (self_component, keyspec, other_component) in zip(self.components, self.keyspecs, other.components):
+			if self_component < other_component:
+				return bool(1+keyspec.order)
+			elif self_component > other_component:
+				return bool(0-keyspec.order)
 		return False
 
 	def __str__(self):

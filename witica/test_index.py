@@ -4,8 +4,23 @@ import os, random, tempfile, shutil
 import unittest
 import pkg_resources
 
-from witica.index import BTree, BTreeFileLeafFactory
+from witica.index import BTree, BTreeFileLeafFactory, Key, KeyOrder, KeySpec
 from witica.publish import DeleteJob
+
+class TestKey(unittest.TestCase):
+	def test_compare(self):
+		specs = [KeySpec("title", KeyOrder.ASCENDING)]
+		self.assertLess(Key(specs, ["a"]), Key(specs, ["b"]))
+
+		specs = [KeySpec("title", KeyOrder.DESCENDING)]
+		self.assertGreater(Key(specs, ["a"]), Key(specs, ["b"]))
+
+		specs = [KeySpec("int", KeyOrder.ASCENDING)]
+		self.assertLess(Key(specs, [1]), Key(specs, [2]))
+		self.assertLess(Key(specs, [1]), Key(specs, ["a"]))
+		self.assertLess(Key(specs, [None]), Key(specs, [1]))
+		self.assertLess(Key(specs, [False]), Key(specs, [True]))
+
 
 class TestBTree(unittest.TestCase):
 	def setUp(self):
