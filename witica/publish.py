@@ -31,7 +31,7 @@ class Publish(AsyncWorker):
 
 		super(Publish, self).__init__(self.name)
 
-	def init(): #called when no previous state found
+	def init(self): #called when no previous state found
 		pass
 
 	def get_current_statefile_version(self):

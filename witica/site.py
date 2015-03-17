@@ -62,7 +62,7 @@ class Site(Loggable):
 			self.log_exception("Removing index '" + index.name + "' failed.", Logtype.WARNING)
 		finally:
 			self.indexes.remove(index)
-			self.index_event(IndexRemoved(index.item_id))
+			self.index_event(index, IndexRemoved(index.index_id))
 			self.write_state()
 
 	def get_target_by_id(self, target_id):

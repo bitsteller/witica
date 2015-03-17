@@ -14,7 +14,7 @@ from witica.log import *
 from witica.metadata import extractor
 from witica.targets.target import Target
 from witica.check import IntegrityChecker, Severity
-from witica.index import IndexChanged, ItemIndex
+from witica.index import IndexChanged, IndexRemoved, ItemIndex
 
 
 cache_folder = get_cache_folder("Target")
@@ -94,9 +94,11 @@ class WebTarget(Target):
 				self.unpublish(filename)
 			#TODO: check if dir is empty and delete if so
 		elif change.__class__ == IndexChanged:
-			self.update_index(change.get_index(self.site), change)
+			if change.get_index(self.site) != None:
+				self.update_index(change.get_index(self.site), change)
 		elif change.__class__ == IndexRemoved:
-			self.remove_index(change.get_index(self.site))
+			if change.get_index(self.site) != None:
+				self.remove_index(change.get_index(self.site))
 
 		#update HASH file
 		self.update_target_hash()
@@ -134,9 +136,9 @@ class WebTarget(Target):
 
 	def remove_index(self, index):
 		#remove all index page files
-		re_index_files = re.compile('^' + index.item_id + '@[\s\S]*.index$')
-		old_index_files = [filename for filename in self.get_content_files(index.item_id) if re_index_files.match(filename)]
-		for filename in old_image_files:
+		re_index_files = re.compile('^' + index.index_id + '@[\s\S]*.index$')
+		old_index_files = [filename for filename in self.get_content_files(index.index_id) if re_index_files.match(filename)]
+		for filename in old_index_files:
 			self.unpublish(filename)
 
 		#update metadata to remove index metadata
@@ -146,7 +148,7 @@ class WebTarget(Target):
 		metadata = item.metadata
 
 		#internal metadata: witica:index
-		if item.is_index():
+		if item.is_index() and self.site.get_index_by_id(item.item_id) != None:
 			metadata["witica:index"] = self.site.get_index_by_id(item.item_id).get_metadata()
 
 		#internal metadata: witica:contentfiles

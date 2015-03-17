@@ -1,4 +1,4 @@
-import os, json, time, shutil, hashlib
+import os, json, time, shutil, hashlib, re
 from abc import ABCMeta, abstractmethod
 from inspect import isclass, getmembers
 from sys import modules
@@ -10,6 +10,7 @@ from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfi
 from witica import *
 from witica.log import Logtype
 from witica.source import SourceItemList
+from witica.metadata import extractor
 
 cache_folder = get_cache_folder("Index")
 
