@@ -13,6 +13,8 @@ class Site(Loggable):
 		self.targets = []
 		self.indexes = []
 		self.index_event = Event()
+		self.stopped_event = Event()
+
 		self.source.update_cache()
 
 		#load indexes
@@ -27,6 +29,7 @@ class Site(Loggable):
 		self.targets = [Target.construct_from_id(self, tid) for tid in target_ids]
 
 		self.source.changeEvent += self.manage_indexes
+		self.source.stoppedEvent += self.handle_stop
 
 	def manage_indexes(self, sender, event):
 		if isinstance(event, source.ItemChanged):
@@ -50,6 +53,7 @@ class Site(Loggable):
 		try:
 			index = Index.construct_from_json(self, index_id, config)
 			self.indexes.append(index)
+			index.stoppedEvent += self.handle_stop
 			self.write_state()
 		except Exception, e:
 			self.log_exception("Error: Index '" + index_id + "' could not be instanciated.\n" + "JSON: " + sstr(config) + "\n", Logtype.ERROR)
@@ -62,6 +66,7 @@ class Site(Loggable):
 			self.log_exception("Removing index '" + index.name + "' failed.", Logtype.WARNING)
 		finally:
 			self.indexes.remove(index)
+			index.stoppedEvent -= self.handle_stop
 			self.index_event(index, IndexRemoved(index.index_id))
 			self.write_state()
 
@@ -83,6 +88,15 @@ class Site(Loggable):
 			indexes_json[index.index_id] = index.config
 		self.source.state["indexes"] = indexes_json
 		self.source.write_state()
+
+	def handle_stop(self, sender, args):
+		if not self.source.stopped:
+			return
+		for index in self.indexes:
+			if not index.stopped:
+				return
+
+		self.stopped_event(self, None)
 
 	def shutdown(self):
 		self.source.stop()

@@ -106,6 +106,7 @@ class AsyncWorker(Loggable):
 			self.write_state_lock = Lock()
 			self.load_state()
 			self.worker_thread = Thread(target=self.work, name = name)
+			self.stopped = False
 
 			self.worker_thread.start()
 			self.log("Initialized " + name + ".", Logtype.DEBUG)
@@ -125,6 +126,7 @@ class AsyncWorker(Loggable):
 				else:
 					self.state = self.migrate_state(self.state, self.state["version"], self.get_current_statefile_version())
 
+				self.pending_events_lock.acquire()
 				self.pending_events.clear()
 				for event_JSON in self.state["pendingEvents"]:
 					try:
@@ -135,6 +137,7 @@ class AsyncWorker(Loggable):
 						self.log_exception("Ignored corrupt pending event in '" + self.get_state_filename() + "'.", Logtype.WARNING)
 				if len(self.pending_events) > 0:
 					self.log("Recovered " + str(len(self.pending_events)) + " pending events.", Logtype.DEBUG)
+				self.pending_events_lock.release()
 			else:
 				self.set_initial_state()
 				self.init()
@@ -188,6 +191,7 @@ class AsyncWorker(Loggable):
 				if self.accept_events:
 					time.sleep(1)
 				else:
+					self.stopped = True
 					self.stoppedEvent(self,None)
 					self.log("Worker thread stopped.", Logtype.DEBUG)
 					return

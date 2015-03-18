@@ -78,7 +78,7 @@ class Target(AsyncWorker):
 		site.source.changeEvent += self.enqueue_event
 		site.index_event += self.enqueue_event
 		site.source.cursorEvent += self.save_source_cursor
-		site.source.stoppedEvent += lambda sender, args: self.close_queue()
+		site.stopped_event += lambda sender, args: self.close_queue()
 		self.stoppedEvent += lambda sender, args: [p.close_queue() for p in self.publishing]
 
 	def save_source_cursor(self, sender, cursor):

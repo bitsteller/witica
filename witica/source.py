@@ -34,6 +34,7 @@ class Source(Loggable):
 		self.stoppedEvent = Event()
 		self.continuous = True
 		self._stop = TEvent()
+		self.stopped = False
 
 		self.worker_thread = Thread(target=self.work, name=self.source_id)
 
@@ -71,6 +72,7 @@ class Source(Loggable):
 							self.write_state()
 					except Exception, e:
 						self.log_exception("Fetching changes failed.", Logtype.ERROR)
+		self.stopped = True
 		self.stoppedEvent(self,None)
 		self.log("Worker thread stopped.", Logtype.DEBUG)
 
