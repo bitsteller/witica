@@ -54,9 +54,16 @@ class Index(AsyncWorker):
 
 	def destroy(self):
 		self.stop()
-		self.stoppedEvent += self.destroy_cache
 
-	def destroy_cache(self, sender, event):
+		#clear event queue
+		self.pending_events_lock.acquire()
+		self.pending_events.clear()
+		self.pending_events_lock.release()
+
+		self.worker_thread.join()
+		self.destroy_cache()
+
+	def destroy_cache(self):
 		if os.path.isdir(self.get_cache_dir()):
 			shutil.rmtree(self.get_cache_dir())
 		os.remove(self.get_state_filename())
