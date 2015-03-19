@@ -275,6 +275,13 @@ class Key(object):
 
 	def __lt__(self, other):
 		for (self_component, keyspec, other_component) in zip(self.components, self.keyspecs, other.components):
+			if self_component.__class__ != other_component.__class__:
+				type_order = [bool, int, float, str, unicode, datetime]
+				if type_order.index(self_component) < type_order.index(other_component):
+					return bool(1+keyspec.order)
+				elif type_order.index(self_component) > type_order.index(other_component):
+					return bool(0-keyspec.order)
+
 			if self_component < other_component:
 				return bool(1+keyspec.order)
 			elif self_component > other_component:
