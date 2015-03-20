@@ -590,6 +590,7 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 	var startPageIndex = -1;
 	var endPageIndex = -1;
 
+	//find relevant pages
 	var i = 0;
 	while (startIndex > counts[i]) {
 		if (i == counts.length - 1) {
@@ -622,14 +623,18 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 		endPageIndex = endIndex - counts[i-1];
 	}
 
+	//load relevant pages and return items
 	var pages = {};
+	var key_pages = {};
+	var index_pages = {};
 
 	for (var i = 0; i < relevantPages.length; i++) {
 		this.getPage(relevantPages[i], relevantHashes[i], function (page, pagejson, success) {
 			if (success) {
 				pages[page] = [];
+				index_pages[page] = [];
 				var start = 0;
-				var end = undefined;
+				var end = pagejson["keys"].length;
 
 				if (page == relevantPages[0]) {
 					start = startPageIndex;
@@ -637,8 +642,13 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 				if (page == relevantPages[-1]) {
 					end = endPageIndex+1;
 				}
+				key_pages[page] = pagejson["keys"].slice(start, end);
+				for (var ind = start; ind < end; ind++) {
+					index_pages[page].push(ind);
+				};
 
 				var item_ids = pagejson["values"].slice(start, end);
+
 				for (var j = 0; j < item_ids.length; j++) {
 					pages[page].push(Witica.getItem(item_ids[j]));
 				};
@@ -646,6 +656,21 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 
 			if (Object.keys(pages).length == relevantPages.length) {
 				var items = [];
+				var keys = [];
+				var indices = [];
+				for (var i = 0; i < relevantPages.length; i++) {
+					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
+					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
+					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
+				};
+				items.keys = keys;
+				items.indices = indices;
+				callback(items, true);
+			}
+		}.bind(this, relevantPages[i]));
+	};
+};
+
 				for (var i = 0; i < relevantPages.length; i++) {
 					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
 				};
