@@ -5,6 +5,8 @@ from sys import modules
 from threading import Thread, Lock
 from threading import Event as TEvent
 from functools import total_ordering
+from datetime import datetime
+from types import NoneType
 
 from witica.util import throw, AsyncWorker, sstr, suni, get_cache_folder, copyfile, Event
 from witica import *
@@ -276,10 +278,10 @@ class Key(object):
 	def __lt__(self, other):
 		for (self_component, keyspec, other_component) in zip(self.components, self.keyspecs, other.components):
 			if self_component.__class__ != other_component.__class__:
-				type_order = [bool, int, float, str, unicode, datetime]
-				if type_order.index(self_component) < type_order.index(other_component):
+				type_order = [NoneType, bool, int, float, str, unicode, datetime]
+				if type_order.index(self_component.__class__) < type_order.index(other_component.__class__):
 					return bool(1+keyspec.order)
-				elif type_order.index(self_component) > type_order.index(other_component):
+				elif type_order.index(self_component.__class__) > type_order.index(other_component.__class__):
 					return bool(0-keyspec.order)
 
 			if self_component < other_component:
