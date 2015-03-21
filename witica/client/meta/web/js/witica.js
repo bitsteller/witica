@@ -570,7 +570,7 @@ Witica.ItemIndex.prototype.getPage = function(page, hash, callback) {
 				if (http_request.status == ok) {
 					var page_json = JSON.parse(http_request.responseText);
 					this.cachedPages[hash] = page_json;
-					callback(page_json, true)
+					callback(page_json, true);
 				}
 				else {
 					callback(undefined, false);
@@ -671,15 +671,152 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 	};
 };
 
+
+Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
+	//find relevant pages
+	var relevantPages = [];
+	var relevantHashes = [];
+	var counts = this.metadata.counts;
+	var keys = this.metadata.keys;
+	var offsets = [];
+
+	var i = 0;
+
+	if (keys.length == 0 || this._compareKeys(key, keys[0]) < 0) {
+		i = 0;
+	}
+	else if (this._compareKeys(key, keys[-1]) >= 0) {
+		i = self.keys.length-1;
+	}
+	else {
+		while (!(this._compareKeys(keys[i], key) <= 0 && this._compareKeys(key, keys[i+1]) < 0)) { //not(keys[i] <= key < keys[i+1])
+			i++;
+		}
+	}
+
+	relevantPages.push(this.metadata.pages[i].page);
+	relevantHashes.push(this.metadata.pages[i].hash);
+	if (i > 0) {
+		offsets.push(this.metadata.counts[i-1]);
+	}
+	else {
+		offsets.push(0);
+	}
+
+	i++;
+
+	while (keys.length > 0 && i < this.metadata.pages.length && this._compareKeys(key, keys[i-1]) <= 0){
+		relevantPages.push(this.metadata.pages[i].page);
+		relevantHashes.push(this.metadata.pages[i].hash);
+		if (i > 0) {
+			offsets.push(this.metadata.counts[i-1]);
+		}
+		else {
+			offsets.push(0);
+		}
+
+		i++;
+	}
+
+	//load relevant pages and return items
+	var count = 0;
+	var pages = {};
+	var key_pages = {};
+	var index_pages = {};
+
+	for (var i = 0; i < relevantPages.length; i++) {
+		this.getPage(relevantPages[i], relevantHashes[i], function (page, offset, pagejson, success) {
+			if (success) {
+				pages[page] = [];
+				index_pages[page] = [];
+				key_pages[page] = [];
+
+				var keys = pagejson["keys"];
+				var j = 0;
+				while (this._compareKeys(key, keys[j]) < 0) {
+					j++;
+				}
+
+				while (this._compareKeys(key, keys[j]) == 0) {
+					key_pages[page].push(keys[j]);
+					index_pages[page].push(offset + j);
+					pages[page].push(Witica.getItem(pagejson["values"][j]));
+					j++;
+				}
+			}
+
+			if (Object.keys(pages).length == relevantPages.length) {
+				var items = [];
+				var keys = [];
+				var indices = [];
 				for (var i = 0; i < relevantPages.length; i++) {
 					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
+					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
+					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
 				};
+				items.keys = keys;
+				items.indices = indices;
 				callback(items, true);
 			}
-		}.bind(this, relevantPages[i]));
+		}.bind(this, relevantPages[i], offsets[i]));
 	};
+
 };
 
+Witica.ItemIndex.prototype._compareKeys = function(key1, key2) {
+	var keyOrders = [];
+	for (var i = 0; i < this.item.metadata.items.keys.length; i++) {
+		if (/^([<>]?)([\s\S]*)$/.exec(this.item.metadata.items.keys[i])[1] == ">") {
+			keyOrders.push(-1);
+		}
+		else {
+			keyOrders.push(1);
+		}
+	};
+
+	for (var i = 0; i < Math.min(key1.length, key2.length); i++) {
+		if (this._compareTypes(key1[i], key2[i]) < 0) {
+			return keyOrders[i];
+		}
+		else if (this._compareTypes(key1[i], key2[i]) > 0) {
+			return -keyOrders[i];
+		}
+		else if (key1[i] < key2[i]) {
+			return keyOrders[i];
+		}
+		else if (key1[i] > key2[i]) {
+			return -keyOrders[i];
+		}
+	};
+	return 0;
+};
+
+Witica.ItemIndex.prototype._compareTypes = function(value1, value2) {
+	if (this._typeOrder(value1) < this._typeOrder(value2)) {
+		return -1;
+	}
+	else if (this._typeOrder(value1) > this._typeOrder(value2)) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+};
+
+Witica.ItemIndex.prototype._typeOrder = function (value) {
+	if (typeof value === 'boolean') {
+		return 1;
+	}
+	else if (typeof value === 'number') {
+		return 2;
+	}
+	else if (typeof value === 'string') {
+		return 3;
+	}
+	else if (value instanceof Date) {
+		return 4;
+	}
+};
 
 /*-----------------------------------------*/
 /*	Witica: Views and renderer             */
