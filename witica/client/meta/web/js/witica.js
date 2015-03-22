@@ -742,7 +742,7 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 					j++;
 				}
 
-				while (this._compareKeys(key, keys[j]) == 0) {
+				while (j < keys.length && this._compareKeys(key, keys[j]) == 0) {
 					key_pages[page].push(keys[j]);
 					index_pages[page].push(offset + j);
 					pages[page].push(Witica.getItem(pagejson["values"][j]));
@@ -766,7 +766,102 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 			}
 		}.bind(this, relevantPages[i], offsets[i]));
 	};
+};
 
+Witica.ItemIndex.prototype.getItemsByAnchor = function(key, no_elements, callback) {
+	//find relevant pages
+	var relevantPages = [];
+	var relevantHashes = [];
+	var counts = this.metadata.counts;
+	var keys = this.metadata.keys;
+	var offsets = [];
+	var remaining = no_elements;
+
+	var i = 0;
+
+	if (keys.length == 0 || this._compareKeys(key, keys[0]) < 0) {
+		i = 0;
+	}
+	else if (this._compareKeys(key, keys[-1]) >= 0) {
+		i = self.keys.length-1;
+	}
+	else {
+		while (!(this._compareKeys(keys[i], key) <= 0 && this._compareKeys(key, keys[i+1]) < 0)) { //not(keys[i] <= key < keys[i+1])
+			i++;
+		}
+	}
+
+	relevantPages.push(this.metadata.pages[i].page);
+	relevantHashes.push(this.metadata.pages[i].hash);
+
+	if (i > 0) {
+		offsets.push(this.metadata.counts[i-1]);
+	}
+	else {
+		offsets.push(0);
+	}
+	remaining--;
+
+	i++;
+
+	while (keys.length > 0 && remaining > 0){
+		relevantPages.push(this.metadata.pages[i].page);
+		relevantHashes.push(this.metadata.pages[i].hash);
+		if (i > 0) {
+			offsets.push(this.metadata.counts[i] - this.metadata.counts[i-1]);
+			this.metadata.counts[i-1]
+		}
+		else {
+			offsets.push(0);
+			remaining -= this.metadata.counts[i];
+		}
+
+		i++;
+	}
+
+	//load relevant pages and return items
+	var count = 0;
+	var pages = {};
+	var key_pages = {};
+	var index_pages = {};
+
+	for (var i = 0; i < relevantPages.length; i++) {
+		this.getPage(relevantPages[i], relevantHashes[i], function (page, offset, pagejson, success) {
+			if (success) {
+				pages[page] = [];
+				index_pages[page] = [];
+				key_pages[page] = [];
+
+				var keys = pagejson["keys"];
+				var j = 0;
+				while (this._compareKeys(key, keys[j]) < 0) {
+					j++;
+				}
+
+				while (j < keys.length) {
+					key_pages[page].push(keys[j]);
+					index_pages[page].push(offset + j);
+					pages[page].push(Witica.getItem(pagejson["values"][j]));
+					j++;
+				}
+			}
+
+			if (Object.keys(pages).length == relevantPages.length) {
+				var items = [];
+				var keys = [];
+				var indices = [];
+				for (var i = 0; i < relevantPages.length; i++) {
+					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
+					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
+					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
+				};
+				items = items.slice(0,no_elements+1);
+				items.keys = keys.slice(0,no_elements+1);
+				items.indices = indices.slice(0,no_elements+1);
+				callback(items, true);
+			}
+		}.bind(this, relevantPages[i], offsets[i]));
+	};
 };
 
 Witica.ItemIndex.prototype._compareKeys = function(key1, key2) {
