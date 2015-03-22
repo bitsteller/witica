@@ -679,6 +679,7 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 	var counts = this.metadata.counts;
 	var keys = this.metadata.keys;
 	var offsets = [];
+	var remaining = limit;
 
 	var i = 0;
 
@@ -696,23 +697,27 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 
 	relevantPages.push(this.metadata.pages[i].page);
 	relevantHashes.push(this.metadata.pages[i].hash);
+
 	if (i > 0) {
 		offsets.push(this.metadata.counts[i-1]);
 	}
 	else {
 		offsets.push(0);
 	}
+	remaining--;
 
 	i++;
 
-	while (keys.length > 0 && i < this.metadata.pages.length && this._compareKeys(key, keys[i-1]) <= 0){
+	while (keys.length > 0 && remaining > 0 && i < this.metadata.pages.length && this._compareKeys(key, keys[i-1]) <= 0){
 		relevantPages.push(this.metadata.pages[i].page);
 		relevantHashes.push(this.metadata.pages[i].hash);
 		if (i > 0) {
-			offsets.push(this.metadata.counts[i-1]);
+			offsets.push(this.metadata.counts[i] - this.metadata.counts[i-1]);
+			this.metadata.counts[i-1]
 		}
 		else {
 			offsets.push(0);
+			remaining -= this.metadata.counts[i];
 		}
 
 		i++;
@@ -754,8 +759,9 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
 					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
 				};
-				items.keys = keys;
-				items.indices = indices;
+				items = items.slice(0,limit+1);
+				items.keys = keys.slice(0,limit+1);
+				items.indices = indices.slice(0,limit+1);
 				callback(items, true);
 			}
 		}.bind(this, relevantPages[i], offsets[i]));
