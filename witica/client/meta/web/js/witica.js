@@ -760,9 +760,9 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
 					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
 				};
-				items = items.slice(0,limit+1);
-				items.keys = keys.slice(0,limit+1);
-				items.indices = indices.slice(0,limit+1);
+				items = items.slice(0,limit);
+				items.keys = keys.slice(0,limit);
+				items.indices = indices.slice(0,limit);
 				callback(items, true);
 			}
 		}.bind(this, relevantPages[i], offsets[i]));
@@ -856,9 +856,9 @@ Witica.ItemIndex.prototype.getItemsByAnchor = function(key, no_elements, callbac
 					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
 					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
 				};
-				items = items.slice(0,no_elements+1);
-				items.keys = keys.slice(0,no_elements+1);
-				items.indices = indices.slice(0,no_elements+1);
+				items = items.slice(0,no_elements);
+				items.keys = keys.slice(0,no_elements);
+				items.indices = indices.slice(0,no_elements);
 				callback(items, true);
 			}
 		}.bind(this, relevantPages[i], offsets[i]));
