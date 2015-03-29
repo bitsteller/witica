@@ -18,7 +18,7 @@ RE_ITEM_REFERENCE = r'^!(?:.\/)?' + RE_FIRST_ITEMID + '$'
 RE_META_KEYSPEC = r'^([<>]?)([\s\S]*)$'
 
 #regular expressions to be used for md files parsing
-RE_MD_SPLIT_JSON_MD = "^\s*({[\s\S]*?})?[\s]*([^}\s][\s\S]*)$" #splits md file into the json metadata and markdown sections as caputre groups
+RE_MD_SPLIT_JSON_MD = "^\s*({[\s\S]*?}\n)?[\s]*([^}\s][\s\S]*)$" #splits md file into the json metadata and markdown sections as caputre groups
 RE_MD_SPLIT_TITLE_BODY = "^(?:#(?!#)[\t ]*([\S][^\n\r]*)(?:\n|\r\n?|$))?([\s\S]*)$" #splits markdown section into title and body sections as capture groups
 
 RE_MD_NOBRACKET = r'[^\]\[]*'
