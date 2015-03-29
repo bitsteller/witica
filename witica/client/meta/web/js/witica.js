@@ -554,6 +554,7 @@ Witica.ItemIndex = function (item) {
 	this.item = item;
 	this.cachedPages = {};
 	this.metadata = this.item.metadata["witica:index"];
+	this.length = this.metadata.counts[-1];
 }
 
 Witica.ItemIndex.prototype.getPage = function(page, hash, callback) {
