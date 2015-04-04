@@ -21,8 +21,6 @@ cache_folder = get_cache_folder("Target")
 
 class WebTarget(Target):
 	def __init__(self, site, target_id, config):
-		Target.__init__(self,site,target_id, config)
-
 		self.imgconfig = { #default image config
 			"keep-original": "no",
 			"variants": [
@@ -43,12 +41,14 @@ class WebTarget(Target):
 				}
 			]
 		}
-		if "image" in self.config:
-			self.imgconfig.update(self.config["image"])
+		if "image" in config:
+			self.imgconfig.update(config["image"])
 
 		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
 		if len(sizes) > len(set(sizes)):
 			raise IOError("Configuration of target '" + target_id + "' is invalid. All image variants must have unique sizes.")
+
+		Target.__init__(self,site,target_id, config)
 
 	def process_event(self, change):
 		if change.__class__ == MetaChanged:

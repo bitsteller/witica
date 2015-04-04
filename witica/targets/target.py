@@ -71,7 +71,7 @@ class Target(AsyncWorker):
 															self.site.source.source_id, 
 															self.target_id, 
 															pubconfig
-														))					
+														))
 			except Exception as e:
 				self.log_exception("Error: Publishing module could not be instanciated.\n" + "JSON: " + sstr(pubconfig) + "\n", Logtype.ERROR)
 
