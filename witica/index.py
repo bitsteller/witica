@@ -335,6 +335,9 @@ class IndexChanged(object):
 		self.removed_pages = removed_pages
 		self.index_id = index_id
 
+	def __str__(self):
+		return "<" + self.__class__.__name__ + " " + sstr(self.index_id) + ">"
+
 	def get_index(self, site):
 		return site.get_index_by_id(self.index_id)
 		
