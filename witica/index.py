@@ -268,7 +268,7 @@ class Key(object):
 
 	def __eq__(self, other):
 		for (self_component, other_component) in zip(self.components, other.components):
-			if self_component.__ne__(other_component):
+			if self_component.__class__ != other_component.__class__ or self_component != other_component:#"__ne__" in dir(self_component) and self_component.__ne__(other_component):
 				return False
 		return True
 
