@@ -205,15 +205,52 @@ class ItemIndex(Index):
 		self.site.index_event(self, changed_event)
 
 	def _remove_item(self, item_id):
-	def compute_keys(self, item, keyspecs):
-		components = []
-		for keyspec in keyspecs:
+		self.index_lock.acquire()
+		try:
+			keylookup_list = KeyList(self.keyfactory)
+			if item_id in self.keylookup:
+				keylookup_list = self.keylookup[item_id]
+
+			for key in keylookup_list:
+				if key in self.index:
+					self.index.remove(key)
+			if item_id in self.keylookup:
+				self.keylookup.remove(item_id)
+
+			self.state["index"] = self.index.to_JSON()
+			self.state["keylookup"] = self.keylookup.to_JSON()
+			self.write_state()
+		except Exception, e:
+			raise e
+		finally:
+			self.index_lock.release()
+
+	def compute_keys(self, item, keyspecs, components = []):
+		if len(components) == len(keyspecs):
+			components_copy = components[:]
+			components_copy.append(item.item_id)
+			yield Key(keyspecs, components_copy)
+		else:
+			keyspec = keyspecs[len(components)]
 			if keyspec.key in item.metadata:
-				components.append(item.metadata[keyspec.key])
+				value = item.metadata[keyspec.key]
+				if isinstance(value, list):
+					for entry in value:
+						components_copy = components[:]
+						components_copy.append(entry)
+						for key in self.compute_keys(item, keyspecs, components_copy):
+							yield key
+				else:
+					components_copy = components[:]
+					components_copy.append(item.metadata[keyspec.key])
+					for key in self.compute_keys(item, keyspecs, components_copy):
+						yield key
 			else:
-				components.append(None)
-		components.append(item.item_id)
-		return [Key(keyspecs, components)]
+				print(keyspec.key)
+				components_copy = components[:]
+				components_copy.append(None)
+				for key in self.compute_keys(item, keyspecs, components_copy):
+					yield key
 
 	def get_index_filename(self,page):
 		return self.index.leaffactory.get_filename(page)
