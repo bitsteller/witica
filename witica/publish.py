@@ -278,7 +278,7 @@ class FTPServer(Loggable):
 				self._ftp = None
 				self.log("Disconnected from server.", Logtype.DEBUG)
 
-	def _upload_file(self, local_path, server_path, attempts = 3):
+	def _upload_file(self, local_path, server_path, attempts = 5):
 		conn = None
 		_file = None
 		try:
@@ -362,7 +362,7 @@ class FTPServer(Loggable):
 				self._ftp_lock.release()
 				self._stop.clear()
 
-	def _delete_file(self, server_path, attempts = 3):
+	def _delete_file(self, server_path, attempts = 5):
 		try:
 			self._ftp_lock.acquire()
 			if self._ftp == None:
