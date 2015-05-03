@@ -125,6 +125,8 @@ class Index(AsyncWorker):
 class ItemIndex(Index):
 	"""docstring for ItemIndex"""
 	def __init__(self, site, index_id, config):
+		self.index_lock = Lock()
+
 		if isinstance(config["from"], list):
 			self.from_list = config["from"]
 		else:
@@ -135,21 +137,28 @@ class ItemIndex(Index):
 		if index_item.exists:
 			self.from_list = [SourceItemList.absolute_itemid(fromspec, index_item) for fromspec in self.from_list]
 
-		super(ItemIndex, self).__init__(site, index_id, config)
 
-		self.keyspecs = [KeySpec.from_JSON(keyspec) for keyspec in config["keys"]]
-		self.keyfactory = KeyFactory(self.keyspecs)
+		self.index_lock.acquire()
+		try:
+			super(ItemIndex, self).__init__(site, index_id, config)
 
-		index_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "index"), ".index")
-		keylookup_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "keylookup"), ".index")
+			self.keyspecs = [KeySpec.from_JSON(keyspec) for keyspec in config["keys"]]
+			self.keyfactory = KeyFactory(self.keyspecs)
 
-		if "index" in self.state:
-			self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, KeyList(self.keyfactory), keylookup_leaffactory)
-		else:
-			self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
-			self.keylookup = BTree(50, unicode, KeyList(self.keyfactory), keylookup_leaffactory)
+			index_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "index"), ".index")
+			keylookup_leaffactory = BTreeFileLeafFactory(os.path.join(self.get_cache_dir(), "keylookup"), ".index")
 
+			if "index" in self.state:
+				self.index = BTree.from_JSON(self.state["index"], self.keyfactory, unicode, index_leaffactory)
+				self.keylookup = BTree.from_JSON(self.state["keylookup"], unicode, KeyList(self.keyfactory), keylookup_leaffactory)
+			else:
+				self.index = BTree(50, self.keyfactory, unicode, index_leaffactory)
+				self.keylookup = BTree(50, unicode, KeyList(self.keyfactory), keylookup_leaffactory)
+		except Exception, e:
+			raise e
+		finally:
+			self.index_lock.release()
+		
 	def is_relevant(self, event):
 		if not event.__class__ in self.accepted_event_classes:
 			return False
@@ -160,26 +169,31 @@ class ItemIndex(Index):
 		return False
 
 	def update_item(self, item):
-		tracking = self.index.leaffactory.track_changes()
-
 		self._remove_item(item.item_id)
 
-		key_list = self.compute_keys(item, self.keyspecs)
-		for key in key_list:
-			self.index[key] = item.item_id
+		self.index_lock.acquire()
+		try:
+			key_list = self.compute_keys(item, self.keyspecs)
+			keylookup_list = KeyList(self.keyfactory)
+			tracking = self.index.leaffactory.track_changes()
 
-		keylookup_list = KeyList(self.keyfactory)
-		keylookup_list.extend(key_list)
-		self.keylookup[item.item_id] = keylookup_list
+			for key in key_list:
+				self.index[key] = item.item_id
+				keylookup_list.append(key)
+			self.keylookup[item.item_id] = keylookup_list
 
+			tracking.stop_tracking()
+			changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
+			self.site.index_event(self, changed_event)
 
-		tracking.stop_tracking()
-		changed_event = IndexChanged(self.index_id, tracking.changed_pages, tracking.removed_pages)
-		self.site.index_event(self, changed_event)
+			self.state["index"] = self.index.to_JSON()
+			self.state["keylookup"] = self.keylookup.to_JSON()
+			self.write_state()
+		except Exception, e:
+			raise e
+		finally:
+			self.index_lock.release()
 
-		self.state["index"] = self.index.to_JSON()
-		self.state["keylookup"] = self.keylookup.to_JSON()
-		self.write_state()
 
 	def remove_item(self, item_id):
 		tracking = self.index.leaffactory.track_changes()
@@ -191,20 +205,6 @@ class ItemIndex(Index):
 		self.site.index_event(self, changed_event)
 
 	def _remove_item(self, item_id):
-		keylookup_list = KeyList(self.keyfactory)
-		if item_id in self.keylookup:
-			keylookup_list = self.keylookup[item_id]
-
-		for key in keylookup_list:
-			if key in self.index:
-				self.index.remove(key)
-		if item_id in self.keylookup:
-			self.keylookup.remove(item_id)
-
-		self.state["index"] = self.index.to_JSON()
-		self.state["keylookup"] = self.keylookup.to_JSON()
-		self.write_state()
-
 	def compute_keys(self, item, keyspecs):
 		components = []
 		for keyspec in keyspecs:
@@ -219,21 +219,28 @@ class ItemIndex(Index):
 		return self.index.leaffactory.get_filename(page)
 
 	def get_metadata(self):
-		metadata = {}
-		metadata["type"] = self.__class__.__name__
+		self.index_lock.acquire()
+		try:
+			metadata = {}
+			metadata["type"] = self.__class__.__name__
 
-		keys, leafs = zip(*self.index.get_leafs())
-		metadata["keys"] = list(keys)[1:]
-		metadata["counts"] = []
-		metadata["pages"] = []
-		count = 0
-		for leaf in leafs:
-			count += len(leaf)
-			metadata["counts"].append(count)
-			metadata["pages"].append({"page": self.index.leaffactory.get_page_no(leaf),
-									  "hash": leaf.hash})
+			keys, leafs = zip(*self.index.get_leafs())
+			metadata["keys"] = [key.to_JSON() for key in list(keys)[1:]] 
+			metadata["counts"] = []
+			metadata["pages"] = []
+			count = 0
+			for leaf in leafs:
+				count += len(leaf)
+				metadata["counts"].append(count)
+				metadata["pages"].append({"page": self.index.leaffactory.get_page_no(leaf),
+										  "hash": leaf.hash})
 
-		return metadata
+			return metadata
+		except Exception, e:
+			raise e
+		finally:
+			self.index_lock.release()
+
 		
 class KeySpec(object):
 	"""stores a index key specification"""
