@@ -207,15 +207,15 @@ class WebTarget(Target):
 	def convert_image(self, srcfile, item):
 		filename, sep, extension = srcfile.rpartition(".")
 		dstfiles = []
+		img = Image.open(self.site.source.get_absolute_path(srcfile))
 
 		keep_original = False
-		if self.imgconfig["keep-original"] == "yes":
+		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
+		if self.imgconfig["keep-original"] == "yes" or max(img.size) < max(sizes): #keep original if smaller than biggest variant
 			keep_original = True
 			util.copyfile(self.site.source.get_absolute_path(srcfile), self.get_absolute_path(srcfile))
 			dstfiles.append(srcfile)
 
-		img = Image.open(self.site.source.get_absolute_path(srcfile))
-		sizes = [variant["size"] for variant in self.imgconfig["variants"]]
 		max_size = max([size for size in sizes if size <= max(img.size)])
 
 		for variant in self.imgconfig["variants"]:
