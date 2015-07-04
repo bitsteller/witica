@@ -664,8 +664,9 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
 					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
 				};
-				items.keys = keys;
-				items.indices = indices;
+				items = items.slice(0,no_elements);
+				items.keys = keys.slice(0,no_elements);
+				items.indices = indices.slice(0,no_elements);
 				callback(items, true);
 			}
 		}.bind(this, relevantPages[i]));
