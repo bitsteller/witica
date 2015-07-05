@@ -662,7 +662,7 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 				for (var i = 0; i < relevantPages.length; i++) {
 					Array.prototype.push.apply(items,pages[relevantPages[i]]); //apppend items
 					Array.prototype.push.apply(keys,key_pages[relevantPages[i]]); //apppend keys
-					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies
+					Array.prototype.push.apply(indices,index_pages[relevantPages[i]]); //apppend indicies //FIXME
 				};
 				items = items.slice(0,no_elements);
 				items.keys = keys.slice(0,no_elements);
@@ -710,7 +710,7 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 
 	i++;
 
-	while (keys.length > 0 && remaining > 0 && i < this.metadata.pages.length && this._compareKeys(key, keys[i-1]) <= 0){
+	while (keys.length > 0 && remaining > 0 && i < this.metadata.pages.length && this._compareKeys(key, keys[i-1]) <= 0){ //FIXME: probably i <= keys.length + 1
 		relevantPages.push(this.metadata.pages[i].page);
 		relevantHashes.push(this.metadata.pages[i].hash);
 		if (i > 0) {
@@ -806,7 +806,7 @@ Witica.ItemIndex.prototype.getItemsByAnchor = function(key, no_elements, callbac
 
 	i++;
 
-	while (keys.length > 0 && remaining > 0){
+	while (keys.length > 0 && remaining > 0){ //FIXME: probably i <= keys.length + 1
 		relevantPages.push(this.metadata.pages[i].page);
 		relevantHashes.push(this.metadata.pages[i].hash);
 		if (i > 0) {
