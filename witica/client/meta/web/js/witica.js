@@ -600,7 +600,7 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 		}
 		i++;
 	}
-	while (endIndex < counts[i] || i == counts.length-1) {
+	while (i == 0 || counts[i-1] <= endIndex) {
 		if (relevantPages.length == 0) {
 			if (i == 0) {
 				startPageIndex = startIndex;
@@ -640,7 +640,7 @@ Witica.ItemIndex.prototype.getItemsByIndex = function(index, no_elements, callba
 				if (page == relevantPages[0]) {
 					start = startPageIndex;
 				}
-				if (page == relevantPages[-1]) {
+				if (page == relevantPages[relevantPages.length-1]) {
 					end = endPageIndex+1;
 				}
 				key_pages[page] = pagejson["keys"].slice(start, end);
@@ -688,8 +688,8 @@ Witica.ItemIndex.prototype.getItemsByKey = function(key, limit, callback) {
 	if (keys.length == 0 || this._compareKeys(key, keys[0]) < 0) {
 		i = 0;
 	}
-	else if (this._compareKeys(key, keys[-1]) >= 0) {
-		i = self.keys.length-1;
+	else if (this._compareKeys(key, keys[keys.length-1]) >= 0) {
+		i = keys.length-1;
 	}
 	else {
 		while (!(this._compareKeys(keys[i], key) <= 0 && this._compareKeys(key, keys[i+1]) < 0)) { //not(keys[i] <= key < keys[i+1])
@@ -784,8 +784,8 @@ Witica.ItemIndex.prototype.getItemsByAnchor = function(key, no_elements, callbac
 	if (keys.length == 0 || this._compareKeys(key, keys[0]) < 0) {
 		i = 0;
 	}
-	else if (this._compareKeys(key, keys[-1]) >= 0) {
-		i = self.keys.length-1;
+	else if (this._compareKeys(key, keys[keys.length-1]) >= 0) {
+		i = keys.length-1;
 	}
 	else {
 		while (!(this._compareKeys(keys[i], key) <= 0 && this._compareKeys(key, keys[i+1]) < 0)) { //not(keys[i] <= key < keys[i+1])
