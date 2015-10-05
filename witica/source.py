@@ -49,7 +49,7 @@ class Source(Loggable):
 
 		if self.continuous == False: #fetch changes only once
 			try:
-				cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
+				cursor = self.fetch_changes(self.changeEvent, self.state["cursor"], allow_reset = True)
 
 				if not(cursor == None):
 					self.state["cursor"] = cursor
@@ -57,14 +57,14 @@ class Source(Loggable):
 					self.write_state()
 			except Exception, e:
 				self.log_exception("Fetching changes failed.", Logtype.ERROR)
-		else: #fetch changes every 30s	
+		else: #fetch changes continously
 			while not self._stop.is_set():
 				self.update_change_status()
 				if self._stop.is_set(): break
 
 				if self.changes_available:
 					try:
-						cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
+						cursor = self.fetch_changes(self.changeEvent, self.state["cursor"], allow_reset = True)
 						if cursor:
 							self.state["cursor"] = cursor
 							self.cursorEvent(self,self.state["cursor"])
@@ -251,14 +251,14 @@ class Dropbox(Source):
 		self.session.obtain_access_token(request_token)
 		self.write_state()
 
-	def update_cache(self):
+	def update_cache(self, allow_reset = False):
 		if os.path.isdir(self.source_dir):
 			delta = self.api_client.delta(self.cache_cursor, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 		else:
 			os.makedirs(self.source_dir)
 			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 
-		if delta["reset"]:
+		if allow_reset and delta["reset"]:
 			self.log("Cache reset. Cleaning up and rebuilding source cache...", Logtype.INFO)
 			shutil.rmtree(self.source_dir)
 			os.makedirs(self.source_dir)
@@ -344,7 +344,7 @@ class Dropbox(Source):
 		else:
 			self.changes_available = True
 
-	def fetch_changes(self,change_event,cursor=None):
+	def fetch_changes(self,change_event, cursor=None, allow_reset=False):
 		global cache_folder
 
 		self.log("Fetching changes...", Logtype.DEBUG)
@@ -357,7 +357,7 @@ class Dropbox(Source):
 			os.makedirs(self.source_dir)
 			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 
-		self.update_cache()
+		self.update_cache(allow_reset=allow_reset)
 		if self._stop.is_set(): return
 
 		#fire change events
