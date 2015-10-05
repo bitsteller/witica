@@ -7,7 +7,7 @@ from witica.targets.target import Target
 class Site:
 	def __init__(self, source, target_ids = None):
 		self.source = source
-		self.source.update_cache()
+		self.source.update_cache(allow_reset=True)
 		self.targets = []
 
 		if target_ids == None:
