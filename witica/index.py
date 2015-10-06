@@ -262,6 +262,7 @@ class ItemIndex(Index):
 			metadata["type"] = self.__class__.__name__
 
 			keys, leafs = zip(*self.index.get_leafs())
+
 			metadata["keys"] = [key.to_JSON() for key in list(keys)[1:]] 
 			metadata["counts"] = []
 			metadata["pages"] = []

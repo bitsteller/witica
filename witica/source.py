@@ -15,6 +15,11 @@ from witica import *
 from witica.log import *
 from witica.metadata import extractor
 
+TOKEN_REGEX = { #wildcards supported in item id references
+	"**": "[\s\S]*", #matches all character sequences
+	"*": "[^\/]*",  #matches all character sequences that don't contain /
+	"?": "[\s\S]" #matches any single character
+}
 
 cache_folder = get_cache_folder("Source")
 
@@ -460,15 +465,12 @@ class SourceItemList(object):
 	@staticmethod
 	def match(pattern, itemid):
 		"""checks if an itemid matches a specific itemid pattern (that can contain *, ** or ? as placeholders"""
+
 		tokenized = re.split(r"(\*\*|\*|\?)", pattern)
 		regex = ""
 		for token in tokenized:
-			if token == "**": #matches all character sequences
-				regex += "[\s\S]*"
-			elif token == "*": #matches all character sequences that don't contain /
-				regex += "[^\/]*"
-			elif token == "?": #matches any single character
-				regex += "[\s\S]"
+			if token in TOKEN_REGEX:
+				regex += TOKEN_REGEX[token]
 			else: #escape the remaining strings
 				regex += re.escape(token)
 		if re.match("^" + regex + "$", itemid):
@@ -490,7 +492,10 @@ class SourceItemList(object):
 
 	def get_items(self, itemidpattern):
 		"""Returns all items where the itemid expression matches. The expression can contain * as placeholder."""
-		return [item for item in self if SourceItemList.match(itemidpattern, item.item_id)]
+		for token in TOKEN_REGEX:
+			if token in itemidpattern: #contains wildcards, use regex matching
+				return [item for item in self if SourceItemList.match(itemidpattern, item.item_id)]
+		return [self[itemidpattern]] #no wildcard, get item directly
 
 class SourceItem(Loggable):
 	"""Represents an item in a source"""
@@ -553,9 +558,8 @@ class SourceItem(Loggable):
 						throw(ValueError, "No metadata extracted from file '" + self.contentfile + "'.", e)
 		#item file metadata
 		metadata.update(extractor.extract_metadata(self.source.get_absolute_path(self.itemfile)))
-		
-		metadata = self.postprocess_metadata(metadata)
 
+		metadata = self.postprocess_metadata(metadata)
 		return metadata
 
 	def postprocess_metadata(self, metadata):
