@@ -257,3 +257,14 @@ class KillableThread(Thread):
 
 class ThreadKilledException (Exception):
 	pass
+
+class Timer(object):
+	"""measures time"""
+	def __init__(self, description):
+		super(Timer, self).__init__()
+		self.start = time.time()
+		self.description = description
+
+	def stop(self):
+		self.end = time.time()
+		print(self.description + " took " + str(self.end-self.start) + "s.")
