@@ -79,7 +79,7 @@ class BTreeLeafNode(BTreeNode):
 		super(BTreeLeafNode, self).__init__(parent)
 
 	def get_leafs(self, key = None):
-		return (key, self)
+		return [(key, self)]
 
 class BTreeLeafFactory(object):
 	"""abstract class for btree leaf allocation"""
@@ -753,7 +753,9 @@ class BTreeInteriorNode(BTreeNode):
 					return
 
 	def get_leafs(self, key = None):
-		yield self.childs[0].get_leafs(None)
+		leafs = self.childs[0].get_leafs(None)
 		for i in range(1,len(self.childs)):
-			yield self.childs[i].get_leafs(self.keys[i-1])
+			leafs.extend(self.childs[i].get_leafs(self.keys[i-1]))
+
+		return leafs
 
