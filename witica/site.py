@@ -7,8 +7,8 @@ from witica.targets.target import Target
 class Site:
 	def __init__(self, source, target_ids = None):
 		self.source = source
-		self.source.update_cache(allow_reset=True)
 		self.targets = []
+		self.source.update_cache()
 
 		if target_ids == None:
 			target_files = glob.glob(self.source.get_abs_meta_filename("") + os.sep + "*.target")

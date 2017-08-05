@@ -1,4 +1,4 @@
-import os, json, shutil, time, glob, calendar, codecs, fnmatch, re, unicodedata, errno
+import os, json, shutil, glob, calendar, codecs, fnmatch, re, unicodedata, errno
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from threading import Thread
@@ -8,7 +8,8 @@ from inspect import isclass, getmembers
 from sys import modules
 
 # Include the Dropbox SDK libraries
-from dropbox import client, rest, session
+import dropbox
+from dropbox import Dropbox, DropboxOAuth2FlowNoRedirect, files
 
 from witica.util import Event, KillableThread, sstr, suni, throw, get_cache_folder
 from witica import *
@@ -49,7 +50,7 @@ class Source(Loggable):
 
 		if self.continuous == False: #fetch changes only once
 			try:
-				cursor = self.fetch_changes(self.changeEvent, self.state["cursor"], allow_reset = True)
+				cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
 
 				if not(cursor == None):
 					self.state["cursor"] = cursor
@@ -64,7 +65,7 @@ class Source(Loggable):
 
 				if self.changes_available:
 					try:
-						cursor = self.fetch_changes(self.changeEvent, self.state["cursor"], allow_reset = True)
+						cursor = self.fetch_changes(self.changeEvent, self.state["cursor"])
 						if cursor:
 							self.state["cursor"] = cursor
 							self.cursorEvent(self,self.state["cursor"])
@@ -185,13 +186,13 @@ class Source(Loggable):
 	def get_absolute_path(self, local_path):
 		pass
 
-class Dropbox(Source):
+class DropboxSource(Source):
 	doc = "Dropbox folder containing a witica source"
 
 	__metaclass__ = ABCMeta
 
 	def __init__(self, source_id, config, prefix = ""):
-		super(Dropbox, self).__init__(source_id, config, prefix)
+		super(DropboxSource, self).__init__(source_id, config, prefix)
 
 		self.source_dir = cache_folder + os.sep + self.source_id
 		self.state_filename = cache_folder + os.sep + self.source_id + ".source"
@@ -199,36 +200,47 @@ class Dropbox(Source):
 		self.app_key = config["app_key"]
 		self.app_secret = config["app_secret"]
 
-	def start_session(self):
-		self.session = session.DropboxSession(self.app_key, self.app_secret)
-		self.api_client = client.DropboxClient(self.session)
-		
+	def start_session(self):		
 		self.state = {}
 		self.load_state()
 
+		try:
+			self.dbx = Dropbox(self.state["access_token"])
+		except Exception, e:
+			try:
+				self.link()
+				self.dbx = Dropbox(self.state["access_token"])
+			except Exception, e1:
+				throw(IOError, "Could not get access to Dropbox. OAuth failed.", e1)
+
 		self.log("Initialized source.", Logtype.DEBUG)
+
 
 	def load_state(self):
 		if os.path.isfile(self.state_filename):
 			self.state = json.loads(codecs.open(self.state_filename, "r", "utf-8").read())
-			if self.state["version"] != 1:
-				raise IOError("Version of source file is not compatible. Must be 1.")
-			self.cache_cursor = self.state["cursor"]
+			if self.state["version"] == 1:
+				#migrate from state version 1
+				#upgrade to drobpox api v2 / remove old token data from state
+				self.log_exception("Upgrading to Dropbox API v2. You will be asked to grant access again.", Logtype.WARNING)
+
+
+				self.state.pop("token_key", None)
+				self.state.pop("token_secret", None)
+				self.state["version"] == 2
+
+			if self.state["version"] != 2:
+				raise IOError("Version of source file is not compatible.")
+			
+			self.cache_cursor = self.state["cache_cursor"]
 		else:
-			self.state["version"] = 1
+			self.state["version"] = 2
 			self.state["cursor"] = ""
+			self.state["cache_cursor"] = ""
 			self.cache_cursor = ""
-		try:
-			self.session.set_token(self.state["token_key"], self.state["token_secret"])
-		except Exception, e:
-			try:
-				self.link()
-			except Exception, e1:
-				throw(IOError, "Could not get access to Dropbox. OAuth failed.", e1)
 
 	def write_state(self):
-		self.state["token_key"] = self.session.token.key
-		self.state["token_secret"] = self.session.token.secret
+		self.state["cache_cursor"] = self.cache_cursor
 
 		if not(os.path.isdir(self.source_dir)):
 			os.makedirs(self.source_dir)
@@ -240,38 +252,47 @@ class Dropbox(Source):
 		self.load_state()
 
 	def link(self):
-		request_token = self.session.obtain_request_token()
-		url = self.session.build_authorize_url(request_token)
+		auth_flow = DropboxOAuth2FlowNoRedirect(self.app_key, self.app_secret)
+		url = auth_flow.start()
 		Logger.get_printlock().acquire()
 		print "url:", url
-		print "Please authorize in the browser. After you're done, press enter."
-		raw_input()
+		print "Please authorize in the browser. After you're done, copy and paste the authorization code and press enter."
+		auth_code = raw_input("Enter the authorization code here: ").strip()
 		Logger.get_printlock().release()
 
-		self.session.obtain_access_token(request_token)
+		
+		try:
+			oauth_result = auth_flow.finish(auth_code)
+		except Exception, e:
+			self.log_exception("Dropbox authorization failed.", Logtype.ERROR)
+			raise e
+
+		self.state["access_token"] = oauth_result.access_token
 		self.write_state()
 
-	def update_cache(self, allow_reset = False):
+	def update_cache(self):
 		if os.path.isdir(self.source_dir):
-			delta = self.api_client.delta(self.cache_cursor, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
+			try:
+				delta = self.dbx.files_list_folder_continue(self.cache_cursor)
+			except Exception as e:
+				self.log_exception("Could not use delta. Trying to rebuild the cache.", Logtype.WARNING)
+				shutil.rmtree(self.source_dir)
+				os.makedirs(self.source_dir)
+				delta = self.dbx.files_list_folder(path = self.path_prefix if not self.path_prefix == "" else None, recursive=True)
 		else:
 			os.makedirs(self.source_dir)
-			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
+			delta = self.dbx.files_list_folder(path = self.path_prefix if not self.path_prefix == "" else None, recursive=True)
 
-		if allow_reset and delta["reset"]:
-			self.log("Cache reset. Cleaning up and rebuilding source cache...", Logtype.INFO)
-			shutil.rmtree(self.source_dir)
-			os.makedirs(self.source_dir)
 		if self._stop.is_set(): return
 
 		#update cache
 		filecount = 0
-		for entry in delta["entries"]:
-			path, metadata = entry
-			path = unicodedata.normalize("NFC",unicode(path))
+		for metadata in delta.entries:
+			path = unicodedata.normalize("NFC",unicode(metadata.path_lower))
 			if path.startswith(self.path_prefix):
 				path = path[len(self.path_prefix):]
-			if metadata == None: #removed file/directory
+
+			if isinstance(metadata, files.DeletedMetadata): #deleted file or directory
 				if os.path.exists(self.source_dir + path):
 					if os.path.isdir(self.source_dir + path):
 						try:
@@ -285,23 +306,23 @@ class Dropbox(Source):
 						except Exception, e:
 							if not(e.errno == errno.ENOENT): #don't treat as error, if file didn't exist
 								self.log_exception("File '" + self.source_dir + path + "' in source cache could not be removed.", Logtype.WARNING)
-			elif metadata["is_dir"]: #directory
+
+			elif isinstance(metadata, files.FolderMetadata): #directory
 				if not(os.path.exists(self.source_dir + path)):
 					try:
 						os.makedirs(self.source_dir + path)
 					except Exception, e:
 						self.log_exception("Directory '" + self.source_dir + path + "' in source cache could not be created.", Logtype.ERROR)
-			else: #new/changed file
+
+			elif isinstance(metadata, files.FileMetadata): #new/changed file
 				self.log("Downloading '" + path + "'...", Logtype.DEBUG)
 				try:
 					#download file
-					out = open(self.source_dir + path, 'w')
-					f = self.api_client.get_file(self.path_prefix + os.sep + path).read()
-					out.write(f)
-					out.close()
+					self.dbx.files_download_to_file(self.source_dir + path, self.path_prefix + path)
+
 					#set modified time
 					try:
-						mtime = calendar.timegm(time.strptime(metadata["modified"],"%a, %d %b %Y %H:%M:%S +0000"))
+						mtime = calendar.timegm(metadata.server_modified.timetuple())
 						st = os.stat(self.source_dir + path)
 						atime = st[ST_ATIME]
 						os.utime(self.source_dir + path,(atime,mtime))
@@ -310,13 +331,14 @@ class Dropbox(Source):
 
 					filecount += 1				
 				except Exception, e:
-					self.log_exception("Downloading '" + sstr(path) + "' failed (skipping file).", Logtype.ERROR)
+					self.log_exception("Downloading '" + sstr(self.path_prefix + path) + "' failed (skipping file).", Logtype.ERROR)
 
 			if self._stop.is_set(): return
 		
-		self.cache_cursor = delta["cursor"]
+		self.cache_cursor = delta.cursor
+		self.write_state()
 
-		if delta["has_more"]:
+		if delta.has_more:
 			self.update_cache()
 
 		self.log("Cache updated. Updated files: " + sstr(filecount), Logtype.DEBUG)
@@ -337,39 +359,38 @@ class Dropbox(Source):
 	def update_change_status_blocking(self):
 		if self.state["cursor"]:
 			try:
-				delta = self.api_client.longpoll_delta(self.state["cursor"],30)
-				self.changes_available = delta["changes"]
+				delta = self.dbx.files_list_folder_longpoll(self.state["cursor"],30)
+				self.changes_available = delta.changes
 			except Exception, e:
 				self.changes_available = False
 		else:
 			self.changes_available = True
 
-	def fetch_changes(self,change_event, cursor=None, allow_reset=False):
+	def fetch_changes(self,change_event, cursor=None):
 		global cache_folder
+
+		self.update_cache()
+		if self._stop.is_set(): return
 
 		self.log("Fetching changes...", Logtype.DEBUG)
 
 		if cursor == "":
 			cursor = None
-		if os.path.isdir(self.source_dir):
-			delta = self.api_client.delta(cursor, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
-		else:
-			os.makedirs(self.source_dir)
-			delta = self.api_client.delta(None, path_prefix = self.path_prefix if not self.path_prefix == "" else None)
 
-		self.update_cache(allow_reset=allow_reset)
-		if self._stop.is_set(): return
+		if cursor != None:
+			delta = self.dbx.files_list_folder_continue(cursor)
+		else:
+			delta = self.dbx.files_list_folder(path = self.path_prefix if not self.path_prefix == "" else None, recursive=True)
 
 		#fire change events
-		for entry in delta["entries"]:
-			path, metadata = entry #if metadata == None: removed file/directory
-			path = unicodedata.normalize("NFC",unicode(path))
+		for metadata in delta.entries:
+			path = unicodedata.normalize("NFC", unicode(metadata.path_lower))
 			if path.startswith(self.path_prefix):
 				path = path[len(self.path_prefix):]
 			if path.startswith("/"):
 				path = path[1:]
 
-			if metadata == None or metadata["is_dir"] == False:
+			if isinstance(metadata, files.FileMetadata) or isinstance(metadata, files.DeletedMetadata):
 				if re.match(extractor.RE_METAFILE, path): #site metadata change
 					self.log("Metafile changed: " + sstr(path), Logtype.INFO)
 					change_event(self,MetaChanged(self,path.partition("meta/")[2]))
@@ -381,14 +402,14 @@ class Dropbox(Source):
 					else:
 						self.log("Item removed: " + sstr(path), Logtype.INFO)
 						change_event(self,ItemRemoved(self, self.get_item_id(path)))
-				elif not(metadata == None) and metadata["is_dir"] == False:
+				elif isinstance(metadata, files.FileMetadata):
 					self.log("File '" + path + "' is not supported and will be ignored. Filenames containing '@' are currently not supported.", Logtype.WARNING)
 
 			if self._stop.is_set(): return
 
-		cursor = delta["cursor"]
-		if delta["has_more"]:
-			cursor = self.fetch_changes(change_event,delta["cursor"])
+		cursor = delta.cursor
+		if delta.has_more:
+			cursor = self.fetch_changes(change_event, delta.cursor)
 		
 		return cursor
 
@@ -398,13 +419,13 @@ class Dropbox(Source):
 	def get_absolute_path(self, localpath):
 		return os.path.abspath(os.path.join(self.source_dir, localpath))
 
-class DropboxAppFolder(Dropbox): #TODO: remove (legacy)
+class DropboxAppFolder(DropboxSource): #TODO: remove (legacy)
 	def __init__(self, source_id, config, prefix = ""):
 		super(DropboxAppFolder, self).__init__(source_id, config, prefix)
 		self.path_prefix = ""
 		self.start_session()
 
-class DropboxFolder(Dropbox):
+class DropboxFolder(DropboxSource):
 	def __init__(self,source_id,config, prefix = ""):
 		super(DropboxFolder, self).__init__(source_id, config, prefix)
 		self.path_prefix = unicodedata.normalize("NFC",config["folder"].lower())
