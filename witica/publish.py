@@ -156,21 +156,21 @@ class FTPPublish(Publish):
 			
 			self._ftp_password = keyring.get_password(domain, user)
 			if self._ftp_password == None or force_password == True:
-				while 1:
-					print("A password is needed to continue. Please enter the password for")
-					print(" * service: ftp")
-					print(" * domain: " + domain)
-					print(" * user: " + user)
-					print("to continue. Note: To change the username and the domain alter the publish section in your target configuration file.")
-					self._ftp_password = getpass.getpass("Please enter the password:\n")
-					if self._ftp_password != "":
-						break
-					else:
-						print ("Authorization failed (no password entered).")
+				Logger.get_printlock().acquire()
+				print("A password is needed to continue. Please enter the password for")
+				print(" * service: ftp")
+				print(" * domain: " + domain)
+				print(" * user: " + user)
+				print("to continue. Note: To change the username and the domain alter the publish section in your target configuration file.")
+				self._ftp_password = getpass.getpass("Please enter the password:\n")
+				if self._ftp_password == "":
+					self.log("No password provided. Authentification may fail.", Logtype.WARNING)
+
 				# store the password
 				if util.confirm("Do you want to securely store the password in the keyring of your operating system?",default=True):
 					keyring.set_password(domain, user, self._ftp_password)
-					print("Password has been stored. You will not have to enter it again the next time. If you need to edit the password use the keychain manager of your system.")
+					self.log("Password has been stored. You will not have to enter it again the next time. If you need to edit the password use the keychain manager of your system.", Logtype.INFO)
+				Logger.get_printlock().release()
 			self.ftp_init = True
 			if not path.startswith("/"):
 				self.log("FTP path should begin with '/', otherwise evil things could happen. You should check your publishing section in the target file.", Logtype.WARNING)
