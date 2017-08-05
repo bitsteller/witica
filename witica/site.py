@@ -15,7 +15,7 @@ class Site(Loggable):
 		self.index_event = Event()
 		self.stopped_event = Event()
 
-		self.source.update_cache(allow_reset=True)
+		self.source.update_cache()
 
 		#load indexes
 		if "indexes" in self.source.state:
