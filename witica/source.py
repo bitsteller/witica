@@ -369,19 +369,18 @@ class DropboxSource(Source):
 	def fetch_changes(self,change_event, cursor=None):
 		global cache_folder
 
+		self.update_cache()
+		if self._stop.is_set(): return
+
 		self.log("Fetching changes...", Logtype.DEBUG)
 
 		if cursor == "":
 			cursor = None
 
-		if os.path.isdir(self.source_dir):
+		if cursor != None:
 			delta = self.dbx.files_list_folder_continue(cursor)
 		else:
-			os.makedirs(self.source_dir)
 			delta = self.dbx.files_list_folder(path = self.path_prefix if not self.path_prefix == "" else None, recursive=True)
-
-		self.update_cache()
-		if self._stop.is_set(): return
 
 		#fire change events
 		for metadata in delta.entries:
@@ -410,7 +409,7 @@ class DropboxSource(Source):
 
 		cursor = delta.cursor
 		if delta.has_more:
-			cursor = self.fetch_changes(change_event,delta["cursor"])
+			cursor = self.fetch_changes(change_event, delta.cursor)
 		
 		return cursor
 
