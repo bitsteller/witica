@@ -3,7 +3,8 @@
 1.1 (unreleased)
 ****************
 
-- Nothing changed yet.
+- CHANGE: If an image is smaller than the biggest requested variant, the original image is kept
+- FIX: Removed unnecessary cache resets
 
 
 1.0.0 (2015-03-02)
