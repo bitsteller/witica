@@ -360,7 +360,7 @@ class DropboxSource(Source):
 		if self.state["cursor"]:
 			try:
 				delta = self.dbx.files_list_folder_longpoll(self.state["cursor"],30)
-				self.changes_available = delta["changes"]
+				self.changes_available = delta.changes
 			except Exception, e:
 				self.changes_available = False
 		else:
