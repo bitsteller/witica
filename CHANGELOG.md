@@ -1,6 +1,6 @@
 # Changelog
 
-1.1 (unreleased)
+1.1 (2017-08-06)
 ****************
 
 - CHANGE: Upgrade to Dropbox API v2
