@@ -3,6 +3,7 @@
 1.1 (unreleased)
 ****************
 
+- CHANGE: Upgrade to Dropbox API v2
 - CHANGE: If an image is smaller than the biggest requested variant, the original image is kept
 - FIX: Removed unnecessary cache resets
 
