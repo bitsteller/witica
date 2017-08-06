@@ -22,7 +22,7 @@ Witica is a new way to publish things on the internet. The goal is to make editi
       keywords='web dropbox html markdown javascript publishing incremental ftp',
       author='Nils Breyer',
       author_email='mail@witica.org',
-      url='witica.org',
+      url='http://witica.org/',
       license='MIT License',
       packages=find_packages(),
       include_package_data=True,
