@@ -28,11 +28,11 @@ Witica is a new way to publish things on the internet. The goal is to make editi
       include_package_data=True,
       zip_safe=True,
       install_requires=[
-          "markdown>=2.4",
-          "keyring>=3.2",
-          "dropbox>=2.2.0",
-          "kitchen>=1.1.1",
-          "pillow>=2.7.0"
+          "markdown>=2.6.7",
+          "keyring>=10.0.2",
+          "dropbox>=8.0.0",
+          "kitchen>=1.2.4",
+          "pillow>=3.4.2"
       ],
       entry_points= {
             "console_scripts": [
