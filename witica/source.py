@@ -39,7 +39,7 @@ class Source(Loggable):
 		self.worker_thread = Thread(target=self.work, name=self.source_id)
 
 		if config["version"] != 1:
-			raise IOError("Version of source config file is not compatible. Must be 1.")
+			raise IOError("Version of source config file is not compatible. Must be 1 but is " + str(config["version"]) + ".")
 
 	def start_update(self, continuous=True):
 		self.continuous = continuous
@@ -222,17 +222,20 @@ class DropboxSource(Source):
 			if self.state["version"] == 1:
 				#migrate from state version 1
 				#upgrade to drobpox api v2 / remove old token data from state
-				self.log_exception("Upgrading to Dropbox API v2. You will be asked to grant access again.", Logtype.WARNING)
+				self.log("Upgrading to Dropbox API v2. You will be asked to grant access again.", Logtype.WARNING)
 
 
 				self.state.pop("token_key", None)
 				self.state.pop("token_secret", None)
-				self.state["version"] == 2
+				self.state["version"] = 2
 
 			if self.state["version"] != 2:
-				raise IOError("Version of source file is not compatible.")
+				raise IOError("Version of source state file is not compatible. Should be 2 but is " + str(self.state["version"]) + ".")
 			
-			self.cache_cursor = self.state["cache_cursor"]
+			if "cache_cursor" in self.state:
+				self.cache_cursor = self.state["cache_cursor"]
+			else:
+				self.cache_cursor = ""
 		else:
 			self.state["version"] = 2
 			self.state["cursor"] = ""
