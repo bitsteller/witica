@@ -258,12 +258,15 @@ class DropboxSource(Source):
 		auth_flow = DropboxOAuth2FlowNoRedirect(self.app_key, self.app_secret)
 		url = auth_flow.start()
 		Logger.get_printlock().acquire()
-		print "url:", url
-		print "Please authorize in the browser. After you're done, copy and paste the authorization code and press enter."
-		auth_code = raw_input("Enter the authorization code here: ").strip()
-		Logger.get_printlock().release()
+		try:
+			print "url:", url
+			print "Please authorize in the browser. After you're done, copy and paste the authorization code and press enter."
+			auth_code = raw_input("Enter the authorization code here: ").strip()
+		except Exception as e:
+			raise e
+		finally:
+			Logger.get_printlock().release()
 
-		
 		try:
 			oauth_result = auth_flow.finish(auth_code)
 		except Exception, e:
