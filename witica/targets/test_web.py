@@ -12,6 +12,7 @@ from witica.source import Source, ItemChanged
 from witica.targets.web import WebTarget
 from witica.metadata.extractor import MDExtractor, ImageExtractor
 from witica.metadata import extractor
+from witica.test_source import FolderSource
 
 class TestWebTarget(unittest.TestCase):
 	def setUp(self):
@@ -99,31 +100,4 @@ class TestWebTarget(unittest.TestCase):
 		self.assertTrue('<a href="#!simple">linktext</a>' in result[0])
 		#self.assertTrue('<a href="#!öäüß¡““¢≠}{|¢¶“∞…–∞œäö()">öäüß¡““¢≠}{|¢¶“∞…–∞œäö()</a>"' in result[1])
 		self.assertTrue('<a href="#!simple">relative</a>' in result[2])
-
-
-class FolderSource(Source):
-	def __init__(self, source_id, config, prefix = ""):
-		super(FolderSource, self).__init__(source_id, config, prefix)
-
-		self.source_dir = config["path"]
-		self.state = {"cursor" : ""}
-
-		if not(os.path.exists(self.source_dir)):
-			raise IOError("Source folder '" + self.source_dir + "' does not exist.")
-
-	def update_cache(self):
-		pass
-
-	def update_change_status(self):
-		pass
-
-	def fetch_changes(self):
-		pass
-
-	def get_abs_meta_filename(self, local_filename):
-		return self.get_absolute_path(os.path.join('meta' + os.sep + local_filename))
-
-	def get_absolute_path(self, localpath):
-		return os.path.abspath(os.path.join(self.source_dir, localpath))
-
 
