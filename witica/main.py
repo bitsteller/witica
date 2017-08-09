@@ -219,6 +219,7 @@ def list_command(args):
 		return
 
 	items = get_matching_items(currentsite.source, args)
+
 	s = u"\n"
 	count = 0
 	for item in items:

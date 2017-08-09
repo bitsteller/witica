@@ -444,44 +444,33 @@ class SourceItemList(object):
 		self.source = source
 
 	def __getitem__(self,key):
-		if isinstance(key, int):
-			count = 0
-			last_item_id = ""
-			for root, dirs, files in os.walk(self.source.get_absolute_path(""), topdown=True):
-				for filename in files:
-					local_path = self.source.get_local_path(os.path.join(root,filename))
-					item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
-					if item_id:
-						item_id = item_id.group(1)
-						if item_id != last_item_id and self.source.item_exists(item_id):#only count valid items
-							if count == key:
-								return SourceItem(self.source, item_id)
-							count += 1
-							last_item_id = item_id
-					
-			raise (IndexError("Index out of range (" + str(key) + ")"))
-		elif isinstance(key, basestring):
+		if isinstance(key, basestring):
 			if self.source.item_exists(key):
 				return SourceItem(self.source, key)
 			else:
 				raise(KeyError("An item with id '" + key + "' does not exist in source '" + self.source.source_id + "'."))
 		else:
-			raise(TypeError("The type '" + key.__class__.__name__ + "'' is not supported. Use 'int' or 'str' instead to access items."))
+			raise(TypeError("The type '" + key.__class__.__name__ + "'' is not supported. Use 'str' instead to access items."))
 
 	def __len__(self):
 		count = 0
-		last_item_id = ""
+		for item in self:
+			count += 1
+		
+		return count
+
+	def __iter__(self):
 		for root, dirs, files in os.walk(self.source.get_absolute_path(""), topdown=True):
+			last_item_id = ""
 			for filename in files:
 				local_path = self.source.get_local_path(os.path.join(root,filename))
 				item_id = re.match(extractor.RE_ITEM_SPLIT_ITEMID_EXTENSION, local_path)
 				if item_id:
 					item_id = item_id.group(1)
-					if item_id != last_item_id and self.source.item_exists(item_id):#only count valid items
-						count += 1
+					if self.source.item_exists(item_id) and item_id != last_item_id: #only yield valid items and only once
+						yield SourceItem(self.source, item_id)
 						last_item_id = item_id
-		return count
-
+				
 	@staticmethod
 	def match(pattern, itemid):
 		"""checks if an itemid matches a specific itemid pattern (that can contain *, ** or ? as placeholders"""
