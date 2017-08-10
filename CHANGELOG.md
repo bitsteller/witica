@@ -3,7 +3,10 @@
 1.2 (unreleased)
 ****************
 
-- Nothing changed yet.
+- NEW: added severity option to `witica check`
+- NEW: added more unit tests for source
+- CHANGE: improved performance when iterating through items in a source
+- FIX: fixed an issue where witica does not continue after entering an FTP password
 
 
 1.1 (2017-08-06)
