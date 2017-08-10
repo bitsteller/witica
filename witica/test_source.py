@@ -22,7 +22,9 @@ class TestSourceItemList(unittest.TestCase):
 
 	def tearDown(self):
 		extractor.registered_extractors = []
+		pkg_resources.cleanup_resources()
 		Logger.stop()
+
 
 	def test_match(self):
 		self.assertTrue(SourceItemList.match("test/*", "test/abc"))
@@ -34,6 +36,9 @@ class TestSourceItemList(unittest.TestCase):
 
 	def test_count_items(self):
 		self.assertEqual(9, len(self.source.items))
+
+	def test_item_exists(self):
+		self.assertTrue(self.source.items["simple"].exists)
 
 
 class FolderSource(Source):
