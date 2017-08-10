@@ -302,7 +302,7 @@ def main():
 	parser_check = subparsers.add_parser('check', help='checks the integrity of the source')
 	parser_check.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_check.add_argument('-s', '--source', help="the source configuration file to use")
-	parser_check.add_argument('-y', '--severity', nargs=1, default=0, choices=[str(x) for x in range(0,11)], help="only show issues with minimum severity level (0..10)")
+	parser_check.add_argument('-y', '--severity', nargs=1, default=['0'], choices=[str(x) for x in range(0,11)], help="only show issues with minimum severity level (0..10)")
 	parser_check.add_argument('item', nargs='*', help="list of ids of items or indicies that should be checked")
 	parser_check.set_defaults(func=check_command)
 
