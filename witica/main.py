@@ -195,16 +195,23 @@ def check_command(args):
 		shutdown()
 		return
 
-	items = get_matching_items(currentsite.source, args)
+	try:
+		items = get_matching_items(currentsite.source, args)
 
-	numberfaults = 0
-	ic = IntegrityChecker(currentsite.source)
-	for item in items:
-		for fault in ic.check(item):
-			log(sstr(fault), Logtype.WARNING)
-			numberfaults += 1
-	log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.INFO)
-	currentsite.source.stoppedEvent(currentsite.source, None)
+		numberfaults = 0
+		ic = IntegrityChecker(currentsite.source)
+		for item in items:
+			for fault in ic.check(item):
+				if fault.severity >= int(args.severity[0]):
+					log(sstr(fault), Logtype.WARNING)
+					numberfaults += 1
+		log("Checked " + str(len(items)) + " items. " + str(numberfaults) + " integrity fault" + (" was" if numberfaults==1 else "s were") + " found.", Logtype.INFO)
+		currentsite.source.stoppedEvent(currentsite.source, None)
+	except Exception as e:
+		log_exception("Checking integrity failed.", Logtype.ERROR)
+	finally:
+		shutdown()
+
 
 def list_command(args):
 	global currentsite
@@ -295,6 +302,7 @@ def main():
 	parser_check = subparsers.add_parser('check', help='checks the integrity of the source')
 	parser_check.add_argument('-V', '--verbose', action='store_true', help="show also info messages and debbuging info")
 	parser_check.add_argument('-s', '--source', help="the source configuration file to use")
+	parser_check.add_argument('-y', '--severity', nargs=1, default=0, choices=[str(x) for x in range(0,11)], help="only show issues with minimum severity level (0..10)")
 	parser_check.add_argument('item', nargs='*', help="list of ids of items or indicies that should be checked")
 	parser_check.set_defaults(func=check_command)
 
