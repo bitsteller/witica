@@ -1,5 +1,11 @@
 # Changelog
 
+1.3 (unreleased)
+****************
+
+- Nothing changed yet.
+
+
 1.2 (2017-08-12)
 ****************
 
