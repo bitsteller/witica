@@ -4,9 +4,11 @@
 ****************
 
 - NEW: added severity option to `witica check`
+- NEW: display warning when FTP disconnect fails
 - NEW: added more unit tests for source
 - CHANGE: improved performance when iterating through items in a source
 - FIX: fixed an issue where witica does not continue after entering an FTP password
+- FIX: FTP connection reconnecting randomly when uploading many files
 
 
 1.1 (2017-08-06)
@@ -14,6 +16,7 @@
 
 - CHANGE: Upgrade to Dropbox API v2
 - CHANGE: If an image is smaller than the biggest requested variant, the original image is kept
+- CHANGE: updated dependency requirements
 - FIX: Removed unnecessary cache resets
 
 
