@@ -1,6 +1,6 @@
 # Changelog
 
-1.2 (unreleased)
+1.2 (2017-08-12)
 ****************
 
 - NEW: added severity option to `witica check`
