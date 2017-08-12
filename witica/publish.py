@@ -279,6 +279,7 @@ class FTPServer(Loggable):
 				with self._ftp_lock:
 					self._ftp.quit()
 			except Exception, e:
+				self.log_exception("Irregular disconnect.", Logtype.WARNING)
 				pass
 			finally:
 				self._ftp = None
