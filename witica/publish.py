@@ -211,6 +211,7 @@ class FTPServer(Loggable):
 		self.idle_event = TEvent()
 		self.idle_event.set()
 		self._ftp_lock = Lock()
+		self.auto_disconnect_thread = None
 
 	def upload_file_async(self, local_path, server_path):
 		if not self.idle_event.is_set():
@@ -242,10 +243,41 @@ class FTPServer(Loggable):
 						)
 		thread.start()
 
+	def stop(self):
+		if not self._stop.is_set():
+			self._stop.set()
+
+	def _auto_disconnect(self):
+		#Close FTP connection when idle for the set timeout
+		while not self.idle_event.wait(self.TIMEOUT):
+			if not self._stop.is_set():
+				time.sleep(self.TIMEOUT)
+			if self.idle_event.is_set():
+				self._close_ftp()
+				return
+
+	def _connect_ftp(self):
+		try:
+			with self._ftp_lock:
+				if self._ftp == None:
+					self._ftp = UnicodeFTP(self.host,self.user,self._passwd, timeout = self.TIMEOUT)
+					self.log("Connected to server.", Logtype.DEBUG)
+
+			#start auto disconnect thread watching when timeout is reached
+			if not self.auto_disconnect_thread or not self.auto_disconnect_thread.is_alive():
+				self.auto_disconnect_thread = Thread(
+								target = self._auto_disconnect,
+								name = "ftp://" + sstr(self.host) + ": Auto disconnect"
+								)
+				self.auto_disconnect_thread.start()
+		except Exception, e:
+			raise e
+
 	def _close_ftp(self):
 		if self._ftp:
 			try:
-				self._ftp.quit()
+				with self._ftp_lock:
+					self._ftp.quit()
 			except Exception, e:
 				pass
 			finally:
@@ -256,50 +288,45 @@ class FTPServer(Loggable):
 		conn = None
 		_file = None
 		try:
-			self._ftp_lock.acquire()
-			if self._ftp == None:
-				self._ftp = UnicodeFTP(self.host,self.user,self._passwd, timeout = self.TIMEOUT)
-				self.log("Connected to server.", Logtype.DEBUG)
+			self._connect_ftp()
 
-			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
-			self._ftp.cwd(self.path) #go home
+			with self._ftp_lock:
+				directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
+				self._ftp.cwd(self.path) #go home
 
-			#create directories recursively
-			directories = directory.split("/")
-			for index in range(len(directories)):
-				directory_part = "/".join(directories[:index+1])
-				try:
-					self._ftp.mkd(directory_part)
-				except Exception, e:
-					pass
+				#create directories recursively
+				directories = directory.split("/")
+				for index in range(len(directories)):
+					directory_part = "/".join(directories[:index+1])
+					try:
+						self._ftp.mkd(directory_part)
+					except Exception, e:
+						pass
 
-			self._ftp.cwd(self.path) #go home
+				self._ftp.cwd(self.path) #go home
 
-			#enter directory
-			self._ftp.cwd(directory)
+				#enter directory
+				self._ftp.cwd(directory)
 
-			#transfer file
-			if os.path.exists(local_path):
-				_file = open(local_path, "rb")
-				self._ftp.voidcmd('TYPE I')
-				conn = self._ftp.transfercmd('STOR ' + sstr(filename))
-				while 1:
-					if self._stop.is_set(): 
-						self.last_error = IOError("Uploading '" + server_path + "' failed. Upload was aborted.")
-						break
-					buf = _file.read(1024)
-					if not buf: break
-					conn.send(buf)
-				#close connection
-				try:
-					conn.close()
-					_file.close()
-				except Exception, e:
-					pass
-				self._ftp.voidresp()
-
-			self._ftp_lock.release()
-			self.idle_event.set()
+				#transfer file
+				if os.path.exists(local_path):
+					_file = open(local_path, "rb")
+					self._ftp.voidcmd('TYPE I')
+					conn = self._ftp.transfercmd('STOR ' + sstr(filename))
+					while 1:
+						if self._stop.is_set(): 
+							self.last_error = IOError("Uploading '" + server_path + "' failed. Upload was aborted.")
+							break
+						buf = _file.read(1024)
+						if not buf: break
+						conn.send(buf)
+					#close connection
+					try:
+						conn.close()
+						_file.close()
+					except Exception, e:
+						pass
+					self._ftp.voidresp()
 		except ftplib.error_perm as e:
 			try:
 				conn.close()
@@ -307,9 +334,7 @@ class FTPServer(Loggable):
 			except Exception, e1:
 				pass
 			self._close_ftp()
-			self._ftp_lock.release()
 			self.last_error = e
-			self.idle_event.set()
 		except Exception as e:
 			if attempts > 0:
 				self.log_exception("Uploading '" + server_path + "' failed.", Logtype.WARNING)
@@ -318,67 +343,42 @@ class FTPServer(Loggable):
 				_file.close()
 			except Exception, e1:
 				pass
+
 			self._close_ftp()
-			self._ftp_lock.release()
-			if attempts > 0:
-				if self._stop.is_set(): return
+
+			if attempts > 0 and not self._stop.is_set():
 				time.sleep(self.TIMEOUT)
 				self.log("Trying to upload '" + server_path + "' again...", Logtype.INFO)
 				self._upload_file(local_path, server_path, attempts-1)
 			else:
 				self.last_error = e
-				self.idle_event.set()
 		finally:
-			if not self._stop.is_set():
-				time.sleep(self.TIMEOUT)
-			if self._ftp_lock.acquire(False):
-				self._close_ftp()
-				self._ftp_lock.release()
-				self._stop.clear()
+			self.idle_event.set()
 
 	def _delete_file(self, server_path, attempts = 3):
 		try:
-			self._ftp_lock.acquire()
-			if self._ftp == None:
-				self._ftp = UnicodeFTP(self.host,self.user,self._passwd, timeout = self.TIMEOUT)
-				self.log("Connected to server.", Logtype.DEBUG)
+			self._connect_ftp()
 
-			directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
-			self._ftp.cwd(self.path) #go home
-			self._ftp.cwd(directory)
-			self._ftp.delete(sstr(filename))
-			self._ftp_lock.release()
-			self.idle_event.set()
+			with self._ftp_lock:
+				directory, filename = server_path.rpartition("/")[0], server_path.rpartition("/")[2]
+				self._ftp.cwd(self.path) #go home
+				self._ftp.cwd(directory)
+				self._ftp.delete(sstr(filename))
 		except ftplib.error_perm as e:
 			self._close_ftp()
-			self._ftp_lock.release()
 			self.last_error = e
-			self.idle_event.set()
 		except Exception as e:
 			if attempts > 0:
 				self.log_exception("Deleting '" + server_path + "' failed.", Logtype.WARNING)
 			self._close_ftp()
-			self._ftp_lock.release()
-			if attempts > 0:
-				if self._stop.is_set(): return
+			if attempts > 0 and not self._stop.is_set():
 				time.sleep(self.TIMEOUT)
 				self.log("Trying to delete '" + server_path + "' again...", Logtype.INFO)
 				self._delete_file(server_path, attempts-1)
 			else:
 				self.last_error = e
-				self.idle_event.set()
 		finally:
-			if not self._stop.is_set():
-				time.sleep(self.TIMEOUT)
-
-			if self._ftp_lock.acquire(False):
-				self._close_ftp()
-				self._ftp_lock.release()
-				self._stop.clear()
-
-	def stop(self):
-		if not self._stop.is_set():
-			self._stop.set()
+			self.idle_event.set()
 
 
 class UnicodeFTP(ftplib.FTP):
